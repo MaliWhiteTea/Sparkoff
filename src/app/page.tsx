@@ -58,7 +58,7 @@ export default function Home() {
             <a href="#yardim">Yardım</a>
           </nav>
 
-          <a className="header-button" href="#randevu">Randevu oluştur <ArrowIcon /></a>
+          <a className="header-button" href="/randevu">Randevu oluştur <ArrowIcon /></a>
         </div>
       </header>
 
@@ -68,7 +68,7 @@ export default function Home() {
           <h1>3D yazıcı randevusu</h1>
           <p>Uygun zamanı seçin, baskı dosyanızı yükleyin ve başvurunuzu e-posta üzerinden kolayca takip edin.</p>
           <div className="hero-actions">
-            <a className="button primary" href="#nasil-calisir">Randevu oluştur <ArrowIcon /></a>
+            <a className="button primary" href="/randevu">Randevu oluştur <ArrowIcon /></a>
             <a className="button secondary" href="#yardim">Randevumu takip et</a>
           </div>
           <ul className="benefit-list" aria-label="Hizmet özellikleri">
@@ -93,7 +93,7 @@ export default function Home() {
             <span>EN YAKIN UYGUN ZAMAN</span>
             <strong>Pazartesi, 09.00</strong>
             <p>Atölye Yazıcısı 01</p>
-            <a href="#nasil-calisir">Uygun saatleri görüntüle <ArrowIcon /></a>
+            <a href="/randevu">Uygun saatleri görüntüle <ArrowIcon /></a>
           </div>
           <p className="card-note">Saatler yönetici tarafından güncellenebilir. Randevunuz onaylandıktan sonra e-posta ile bilgilendirilirsiniz.</p>
         </aside>
@@ -152,7 +152,7 @@ export default function Home() {
         <span>© 2026 Sparkoff Proje Atölyesi</span>
       </footer>
 
-      <a className="mobile-booking" href="#nasil-calisir">Randevu oluştur <ArrowIcon /></a>
+      <a className="mobile-booking" href="/randevu">Randevu oluştur <ArrowIcon /></a>
     </main>
   );
 }
