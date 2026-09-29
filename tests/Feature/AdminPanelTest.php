@@ -29,6 +29,7 @@ class AdminPanelTest extends TestCase
     public function test_guest_cannot_open_admin_appointments(): void
     {
         $this->get(route('admin.appointments.index'))->assertRedirect(route('admin.login'));
+        $this->get(route('admin.calendar.index'))->assertRedirect(route('admin.login'));
     }
 
     public function test_active_admin_can_log_in_and_view_appointments(): void
@@ -113,6 +114,37 @@ class AdminPanelTest extends TestCase
     {
         $this->assertFalse(config('filesystems.disks.local.serve'));
         $this->assertFalse(app('router')->getRoutes()->hasNamedRoute('storage.local'));
+    }
+
+    public function test_calendar_displays_an_overnight_print_on_both_days(): void
+    {
+        $admin = $this->admin();
+        $appointment = $this->appointment();
+        $start = CarbonImmutable::now('Europe/Istanbul')->next(CarbonImmutable::MONDAY)->setTime(22, 0);
+        $appointment->update([
+            'status' => AppointmentStatus::Approved,
+            'starts_at' => $start,
+            'ends_at' => $start->addHours(5),
+            'duration_minutes' => 300,
+        ]);
+
+        $this->actingAs($admin)->get(route('admin.calendar.index', [
+            'date' => $start->format('Y-m-d'),
+            'view' => 'week',
+        ]))->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->component('Admin/Calendar')
+            ->has('days', 7)
+            ->where('days.0.appointments.0.publicId', $appointment->public_id)
+            ->where('days.0.appointments.0.continuesNext', true)
+            ->where('days.1.appointments.0.publicId', $appointment->public_id)
+            ->where('days.1.appointments.0.continuesFromPrevious', true));
+    }
+
+    public function test_calendar_rejects_an_invalid_view(): void
+    {
+        $this->actingAs($this->admin())
+            ->get(route('admin.calendar.index', ['view' => 'year']))
+            ->assertSessionHasErrors('view');
     }
 
     private function admin(array $overrides = []): User

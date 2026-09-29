@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\AppointmentController as AdminAppointmentController;
 use App\Http\Controllers\Admin\AuthController as AdminAuthController;
+use App\Http\Controllers\Admin\CalendarController as AdminCalendarController;
 use App\Http\Controllers\AppointmentController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -21,6 +22,7 @@ Route::prefix('yonetim')->name('admin.')->group(function () {
 
     Route::middleware(['auth', 'admin.active'])->group(function () {
         Route::post('/cikis', [AdminAuthController::class, 'destroy'])->name('logout');
+        Route::get('/takvim', [AdminCalendarController::class, 'index'])->name('calendar.index');
         Route::get('/randevular', [AdminAppointmentController::class, 'index'])->name('appointments.index');
         Route::get('/randevular/{publicId}', [AdminAppointmentController::class, 'show'])->name('appointments.show');
         Route::patch('/randevular/{publicId}/durum', [AdminAppointmentController::class, 'updateStatus'])->name('appointments.status');
