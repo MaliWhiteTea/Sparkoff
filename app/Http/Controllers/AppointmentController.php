@@ -7,6 +7,8 @@ use App\Enums\FilamentSource;
 use App\Enums\PrinterStatus;
 use App\Exceptions\SlotUnavailableException;
 use App\Http\Requests\StoreAppointmentRequest;
+use App\Mail\AppointmentTrackingMail;
+use App\Mail\AppointmentVerificationMail;
 use App\Models\Appointment;
 use App\Models\Filament;
 use App\Models\Printer;
@@ -14,7 +16,9 @@ use App\Models\Setting;
 use App\Services\AppointmentAvailabilityService;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -48,7 +52,7 @@ class AppointmentController extends Controller
         $storedPath = null;
 
         try {
-            $appointment = DB::transaction(function () use ($validated, $startsAt, $request, $availability, &$storedPath) {
+            [$appointment, $verificationToken] = DB::transaction(function () use ($validated, $startsAt, $request, $availability, &$storedPath) {
                 $printer = Printer::query()
                     ->where('status', PrinterStatus::Active->value)
                     ->orderBy('sort_order')
@@ -111,7 +115,7 @@ class AppointmentController extends Controller
                     'note' => 'Randevu talebi oluşturuldu; e-posta doğrulaması bekleniyor.',
                 ]);
 
-                return $appointment;
+                return [$appointment, $verificationToken];
             }, 3);
         } catch (SlotUnavailableException $exception) {
             throw ValidationException::withMessages(['date' => $exception->getMessage()]);
@@ -123,9 +127,233 @@ class AppointmentController extends Controller
             throw $exception;
         }
 
+        try {
+            Mail::to($appointment->email)->send(new AppointmentVerificationMail($appointment, $verificationToken));
+        } catch (Throwable $exception) {
+            Storage::disk('local')->delete($storedPath);
+            $appointment->delete();
+            report($exception);
+
+            throw ValidationException::withMessages([
+                'email' => 'Doğrulama e-postası gönderilemedi. Lütfen daha sonra tekrar deneyin.',
+            ]);
+        }
+
         return to_route('booking.create')->with('booking_submitted', [
             'publicId' => $appointment->public_id,
             'email' => $appointment->email,
         ]);
+    }
+
+    public function showVerification(string $publicId, string $token): Response
+    {
+        $appointment = Appointment::query()
+            ->where('public_id', $publicId)
+            ->firstOrFail();
+
+        abort_unless(
+            $appointment->verification_token_hash
+                && hash_equals($appointment->verification_token_hash, hash('sha256', $token)),
+            404,
+        );
+
+        abort_unless($appointment->status === AppointmentStatus::PendingVerification, 404);
+
+        return Inertia::render('VerificationResult', [
+            'verified' => false,
+            'expired' => $appointment->verification_expires_at?->isPast() ?? true,
+            'message' => $appointment->verification_expires_at?->isPast()
+                ? 'Doğrulama bağlantısının süresi dolmuş. Yeni bir randevu talebi oluşturabilirsiniz.'
+                : 'Randevu talebinizi yönetici incelemesine göndermek için doğrulamayı tamamlayın.',
+            'confirmUrl' => route('booking.verify.confirm', compact('publicId', 'token')),
+        ]);
+    }
+
+    public function verify(string $publicId, string $token): Response
+    {
+        $trackingToken = Str::random(64);
+
+        $result = DB::transaction(function () use ($publicId, $token, $trackingToken) {
+            $lockedAppointment = Appointment::query()
+                ->where('public_id', $publicId)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            abort_unless(
+                $lockedAppointment->status === AppointmentStatus::PendingVerification
+                    && $lockedAppointment->verification_token_hash
+                    && hash_equals($lockedAppointment->verification_token_hash, hash('sha256', $token)),
+                404,
+            );
+
+            if ($lockedAppointment->verification_expires_at?->isPast()) {
+                $lockedAppointment->update([
+                    'status' => AppointmentStatus::Expired,
+                    'verification_token_hash' => null,
+                ]);
+                $lockedAppointment->statusHistory()->create([
+                    'from_status' => AppointmentStatus::PendingVerification,
+                    'to_status' => AppointmentStatus::Expired,
+                    'note' => 'E-posta doğrulama süresi doldu.',
+                ]);
+
+                return ['expired' => true, 'appointment' => $lockedAppointment];
+            }
+
+            $lockedAppointment->update([
+                'status' => AppointmentStatus::PendingApproval,
+                'email_verified_at' => now(),
+                'verification_token_hash' => null,
+                'verification_expires_at' => null,
+                'tracking_token_hash' => hash('sha256', $trackingToken),
+            ]);
+            $lockedAppointment->statusHistory()->create([
+                'from_status' => AppointmentStatus::PendingVerification,
+                'to_status' => AppointmentStatus::PendingApproval,
+                'note' => 'E-posta adresi doğrulandı; yönetici onayı bekleniyor.',
+            ]);
+
+            return ['expired' => false, 'appointment' => $lockedAppointment];
+        });
+
+        /** @var Appointment $appointment */
+        $appointment = $result['appointment'];
+
+        if ($result['expired']) {
+            return Inertia::render('VerificationResult', [
+                'verified' => false,
+                'expired' => true,
+                'message' => 'Doğrulama bağlantısının süresi dolmuş. Yeni bir randevu talebi oluşturabilirsiniz.',
+            ]);
+        }
+
+        $appointment->refresh()->load('printer');
+
+        try {
+            Mail::to($appointment->email)->send(new AppointmentTrackingMail($appointment, $trackingToken));
+        } catch (Throwable $exception) {
+            report($exception);
+        }
+
+        return Inertia::render('VerificationResult', [
+            'verified' => true,
+            'expired' => false,
+            'message' => 'E-posta adresiniz doğrulandı. Randevu talebiniz yönetici incelemesine alındı.',
+            'trackingUrl' => route('booking.track', [
+                'publicId' => $appointment->public_id,
+                'token' => $trackingToken,
+            ]),
+        ]);
+    }
+
+    public function track(string $publicId, string $token): Response
+    {
+        $appointment = $this->findTrackableAppointment($publicId, $token);
+
+        return Inertia::render('TrackAppointment', [
+            'appointment' => [
+                'publicId' => $appointment->public_id,
+                'status' => $appointment->status->value,
+                'statusLabel' => $this->statusLabel($appointment->status),
+                'printer' => $appointment->printer->name,
+                'startsAt' => $appointment->starts_at->translatedFormat('d F Y, H:i'),
+                'endsAt' => $appointment->ends_at->translatedFormat('d F Y, H:i'),
+                'durationMinutes' => $appointment->duration_minutes,
+                'filament' => "{$appointment->filament_material} · {$appointment->filament_color}",
+                'fileName' => $appointment->files->first()?->original_name,
+                'canCancel' => ! in_array($appointment->status, [
+                    AppointmentStatus::Completed,
+                    AppointmentStatus::Canceled,
+                    AppointmentStatus::Rejected,
+                    AppointmentStatus::Expired,
+                ], true),
+                'history' => $appointment->statusHistory->map(fn ($history) => [
+                    'status' => $history->to_status->value,
+                    'label' => $this->statusLabel($history->to_status),
+                    'note' => $history->note,
+                    'date' => $history->created_at->translatedFormat('d F Y, H:i'),
+                ]),
+            ],
+            'cancelUrl' => route('booking.cancel', [
+                'publicId' => $appointment->public_id,
+                'token' => $token,
+            ]),
+        ]);
+    }
+
+    public function cancel(Request $request, string $publicId, string $token): RedirectResponse
+    {
+        $appointment = DB::transaction(function () use ($publicId, $token) {
+            $appointment = Appointment::query()
+                ->where('public_id', $publicId)
+                ->whereNotNull('email_verified_at')
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            abort_unless(
+                is_string($appointment->tracking_token_hash)
+                    && hash_equals($appointment->tracking_token_hash, hash('sha256', $token)),
+                404,
+            );
+
+            if (! in_array($appointment->status, [
+                AppointmentStatus::Completed,
+                AppointmentStatus::Canceled,
+                AppointmentStatus::Rejected,
+                AppointmentStatus::Expired,
+            ], true)) {
+                $previousStatus = $appointment->status;
+                $appointment->update([
+                    'status' => AppointmentStatus::Canceled,
+                    'canceled_at' => now(),
+                ]);
+                $appointment->statusHistory()->create([
+                    'from_status' => $previousStatus,
+                    'to_status' => AppointmentStatus::Canceled,
+                    'note' => 'Randevu kullanıcı tarafından iptal edildi.',
+                ]);
+            }
+
+            return $appointment;
+        });
+
+        return redirect()->route('booking.track', [
+            'publicId' => $appointment->public_id,
+            'token' => $token,
+        ]);
+    }
+
+    private function findTrackableAppointment(string $publicId, string $token): Appointment
+    {
+        $appointment = Appointment::query()
+            ->with(['printer', 'files', 'statusHistory' => fn ($query) => $query->oldest()])
+            ->where('public_id', $publicId)
+            ->whereNotNull('email_verified_at')
+            ->firstOrFail();
+
+        abort_unless(
+            is_string($appointment->tracking_token_hash)
+                && hash_equals($appointment->tracking_token_hash, hash('sha256', $token)),
+            404,
+        );
+
+        return $appointment;
+    }
+
+    private function statusLabel(AppointmentStatus $status): string
+    {
+        return match ($status) {
+            AppointmentStatus::PendingVerification => 'E-posta doğrulaması bekleniyor',
+            AppointmentStatus::PendingApproval => 'Yönetici onayı bekleniyor',
+            AppointmentStatus::ChangeRequested => 'Değişiklik istendi',
+            AppointmentStatus::Approved => 'Onaylandı',
+            AppointmentStatus::Ready => 'Baskıya hazır',
+            AppointmentStatus::Printing => 'Basılıyor',
+            AppointmentStatus::Completed => 'Tamamlandı',
+            AppointmentStatus::Failed => 'Baskı başarısız',
+            AppointmentStatus::Rejected => 'Reddedildi',
+            AppointmentStatus::Canceled => 'İptal edildi',
+            AppointmentStatus::Expired => 'Süresi doldu',
+        };
     }
 }

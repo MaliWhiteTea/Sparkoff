@@ -58,13 +58,32 @@ npm run build
 php artisan test
 ```
 
+## E-posta yapılandırması
+
+Yerel ortamda `MAIL_MAILER=log` kullanılır; gönderilen e-postalar `storage/logs/laravel.log` dosyasına yazılır.
+
+cPanel'de `randevu@sparkoff.com.tr` gibi bir posta hesabı oluşturduktan sonra production `.env` dosyasında SMTP bilgileri tanımlanmalıdır:
+
+```dotenv
+MAIL_MAILER=smtp
+MAIL_SCHEME=tls
+MAIL_HOST=mail.sparkoff.com.tr
+MAIL_PORT=587
+MAIL_USERNAME=randevu@sparkoff.com.tr
+MAIL_PASSWORD="güçlü-posta-parolası"
+MAIL_FROM_ADDRESS=randevu@sparkoff.com.tr
+MAIL_FROM_NAME="Sparkoff Proje Atölyesi"
+```
+
+Gerçek sunucu değerleri hosting sağlayıcısının **Connect Devices / Cihazları Bağla** ekranındaki bilgilere göre girilmelidir. Parolalar repoya eklenmemelidir.
+
 ## Dokümantasyon
 
 Ayrıntılı ürün ve geliştirme planı için [ROADMAP.md](./ROADMAP.md) dosyasına bakabilirsiniz.
 
 ## Proje durumu
 
-Ana sayfa ve çok adımlı randevu formunun arayüzü hazırdır. Veritabanı, gerçek randevu kaydı, uygunluk kontrolü, e-posta doğrulaması ve yönetici paneli sıradaki geliştirme aşamalarıdır.
+Ana sayfa, çok adımlı randevu formu, veritabanı kaydı, güvenli dosya yükleme, çakışma kontrolü, e-posta doğrulaması ve hesapsız takip/iptal akışı hazırdır. Yönetici girişi ve yönetim paneli sıradaki geliştirme aşamasıdır.
 
 ## Lisans
 
