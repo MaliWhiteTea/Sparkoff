@@ -58,7 +58,7 @@ class DatabaseSeeder extends Seeder
             ['key' => 'booking.maximum_duration_hours', 'value' => 24, 'group' => 'booking'],
             ['key' => 'booking.verification_hold_minutes', 'value' => 30, 'group' => 'booking'],
             ['key' => 'uploads.maximum_file_size_mb', 'value' => 100, 'group' => 'uploads'],
-            ['key' => 'uploads.allowed_extensions', 'value' => ['gcode', '3mf', 'stl', 'step', 'stp'], 'group' => 'uploads'],
+            ['key' => 'uploads.allowed_extensions', 'value' => ['gcode', '3mf', 'stl', 'step', 'stp', 'obj'], 'group' => 'uploads'],
             ['key' => 'privacy.notice_version', 'value' => '2026-09-29', 'group' => 'privacy'],
         ] as $setting) {
             Setting::query()->updateOrCreate(['key' => $setting['key']], $setting);

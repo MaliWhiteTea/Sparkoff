@@ -163,6 +163,7 @@ footer p, footer > span { margin: 0; color: #8e9ba9; font-size: .68rem; }
 .field small { color: var(--muted); font-size: .63rem; line-height: 1.45; }
 .time-info { margin-top: 25px; padding: 19px 21px; border-left: 4px solid var(--navy); background: #edf6f9; }
 .time-info strong { display: block; color: var(--navy); font-size: .68rem; text-transform: uppercase; letter-spacing: .07em; }.time-info span { display: block; margin: 8px 0 7px; font-size: 1rem; font-weight: 800; }.time-info p { margin: 0; color: var(--muted); font-size: .67rem; }
+.time-info .long-print-note { margin-top: 12px; padding-top: 11px; border-top: 1px solid #ccdee6; color: var(--burgundy); font-weight: 700; }
 .upload-area { min-height: 260px; padding: 35px; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1.5px dashed #a8b7c3; border-radius: 10px; background: #fafcfd; cursor: pointer; text-align: center; transition: border .18s, background .18s; }
 .upload-area:hover, .upload-area.has-file { border-color: var(--navy); background: #f2f8fb; }.upload-area input { position: absolute; width: 1px; height: 1px; opacity: 0; }
 .upload-icon { width: 55px; height: 55px; margin-bottom: 18px; display: grid; place-items: center; border-radius: 50%; background: var(--sky); color: var(--navy); }.upload-icon svg { width: 24px; }

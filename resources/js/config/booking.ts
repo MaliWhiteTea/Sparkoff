@@ -4,7 +4,7 @@ export const bookingSettings = {
   slotMinutes: 30,
   minimumDurationMinutes: 30,
   maximumDurationHours: 24,
-  allowedFileExtensions: ["gcode", "3mf", "stl", "step", "stp"],
+  allowedFileExtensions: ["gcode", "3mf", "stl", "step", "stp", "obj"],
   maximumFileSizeMb: 100,
 } as const;
 

@@ -20,7 +20,7 @@ class StoreAppointmentRequest extends FormRequest
         $maximumDuration = (int) Setting::valueOf('booking.maximum_duration_hours', 24) * 60;
         $slotMinutes = (int) Setting::valueOf('booking.slot_minutes', 30);
         $maximumFileSize = (int) Setting::valueOf('uploads.maximum_file_size_mb', 100) * 1024;
-        $allowedExtensions = Setting::valueOf('uploads.allowed_extensions', ['gcode', '3mf', 'stl', 'step', 'stp']);
+        $allowedExtensions = Setting::valueOf('uploads.allowed_extensions', ['gcode', '3mf', 'stl', 'step', 'stp', 'obj']);
 
         return [
             'date' => ['required', 'date_format:Y-m-d', 'after_or_equal:today'],
@@ -104,6 +104,9 @@ class StoreAppointmentRequest extends FormRequest
                 && str_contains(strtoupper($prefix), 'HEADER;'),
             'stl' => $this->isValidStl($path, $prefix, (int) $file->getSize()),
             '3mf' => $this->isValidThreeMf($path),
+            'obj' => ! str_contains($prefix, "\0")
+                && preg_match('/(^|\R)\s*v\s+[-+]?(?:\d*\.?\d+)(?:e[-+]?\d+)?\s+[-+]?(?:\d*\.?\d+)(?:e[-+]?\d+)?\s+[-+]?(?:\d*\.?\d+)(?:e[-+]?\d+)?/i', $prefix) === 1
+                && preg_match('/(^|\R)\s*f\s+-?\d+(?:\/[^\s]+)?\s+-?\d+(?:\/[^\s]+)?\s+-?\d+(?:\/[^\s]+)?/i', $prefix) === 1,
             default => false,
         };
     }

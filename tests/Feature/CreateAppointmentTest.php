@@ -82,6 +82,24 @@ class CreateAppointmentTest extends TestCase
         $this->assertDatabaseCount('appointments', 0);
     }
 
+    public function test_a_valid_obj_file_is_accepted(): void
+    {
+        Storage::fake('local');
+        Mail::fake();
+        $payload = $this->validPayload();
+        $payload['file'] = UploadedFile::fake()->createWithContent(
+            'model.obj',
+            "# Sparkoff test model\nv 0.0 0.0 0.0\nv 1.0 0.0 0.0\nv 0.0 1.0 0.0\nf 1 2 3\n",
+        );
+
+        $this->post(route('booking.store'), $payload)->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('appointment_files', [
+            'original_name' => 'model.obj',
+            'extension' => 'obj',
+        ]);
+    }
+
     public function test_appointment_creation_is_rate_limited(): void
     {
         Storage::fake('local');

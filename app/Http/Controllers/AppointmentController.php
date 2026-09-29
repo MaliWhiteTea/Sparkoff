@@ -36,7 +36,7 @@ class AppointmentController extends Controller
                 'maximumDurationHours' => (int) Setting::valueOf('booking.maximum_duration_hours', 24),
                 'slotMinutes' => (int) Setting::valueOf('booking.slot_minutes', 30),
                 'maximumFileSizeMb' => (int) Setting::valueOf('uploads.maximum_file_size_mb', 100),
-                'allowedFileExtensions' => Setting::valueOf('uploads.allowed_extensions', ['gcode', '3mf', 'stl', 'step', 'stp']),
+                'allowedFileExtensions' => Setting::valueOf('uploads.allowed_extensions', ['gcode', '3mf', 'stl', 'step', 'stp', 'obj']),
             ],
         ]);
     }

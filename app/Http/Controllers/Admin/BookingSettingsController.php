@@ -15,7 +15,7 @@ use Inertia\Response;
 
 class BookingSettingsController extends Controller
 {
-    private const SUPPORTED_EXTENSIONS = ['gcode', '3mf', 'stl', 'step', 'stp'];
+    private const SUPPORTED_EXTENSIONS = ['gcode', '3mf', 'stl', 'step', 'stp', 'obj'];
 
     public function edit(): Response
     {
