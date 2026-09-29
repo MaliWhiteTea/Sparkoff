@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Enums\AppointmentStatus;
 use App\Mail\AppointmentVerificationMail;
 use App\Models\Appointment;
+use App\Models\Filament;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -127,6 +128,7 @@ class CreateAppointmentTest extends TestCase
                 "solid model\nfacet normal 0 0 0\nouter loop\nvertex 0 0 0\nvertex 1 0 0\nvertex 0 1 0\nendloop\nendfacet\nendsolid model\n",
             ),
             'filament_source' => 'workshop',
+            'filament_id' => Filament::query()->where('is_available', true)->value('id'),
             'material' => 'PLA',
             'color' => 'Siyah',
             'first_name' => 'Test',

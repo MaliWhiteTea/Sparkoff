@@ -49,7 +49,13 @@ class DatabaseSeeder extends Seeder
         ] as $filament) {
             Filament::query()->updateOrCreate(
                 ['material' => $filament['material'], 'color' => $filament['color']],
-                ['is_available' => true, 'sort_order' => $filament['sort_order']],
+                [
+                    'is_available' => true, 'sort_order' => $filament['sort_order'],
+                    'diameter_mm' => 1.75, 'spool_weight_grams' => 1000,
+                    'nozzle_temp_min' => 190, 'nozzle_temp_max' => 220,
+                    'bed_temp_min' => 50, 'bed_temp_max' => 60,
+                    'technical_notes' => 'Genel amaçlı, düşük çekme yapan ve başlangıç seviyesi baskılara uygun filament.',
+                ],
             );
         }
 

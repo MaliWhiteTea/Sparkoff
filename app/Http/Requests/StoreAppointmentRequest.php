@@ -6,6 +6,7 @@ use App\Models\Setting;
 use Closure;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Validation\Rule;
 use ZipArchive;
 
 class StoreAppointmentRequest extends FormRequest
@@ -44,8 +45,14 @@ class StoreAppointmentRequest extends FormRequest
                 },
             ],
             'filament_source' => ['required', 'in:workshop,own'],
-            'material' => ['required', 'string', 'max:40'],
-            'color' => ['required', 'string', 'max:80'],
+            'filament_id' => [
+                'nullable',
+                'integer',
+                'required_if:filament_source,workshop',
+                Rule::exists('filaments', 'id')->where(fn ($query) => $query->where('is_available', true)),
+            ],
+            'material' => ['nullable', 'required_if:filament_source,own', 'string', 'max:40'],
+            'color' => ['nullable', 'required_if:filament_source,own', 'string', 'max:80'],
             'first_name' => ['required', 'string', 'max:100'],
             'last_name' => ['required', 'string', 'max:100'],
             'email' => ['required', 'email:rfc', 'max:255'],
@@ -78,6 +85,7 @@ class StoreAppointmentRequest extends FormRequest
             'file' => 'Baskı dosyası',
             'material' => 'Malzeme',
             'color' => 'Renk',
+            'filament_id' => 'Atölye filamenti',
             'first_name' => 'Ad',
             'last_name' => 'Soyad',
             'email' => 'E-posta',

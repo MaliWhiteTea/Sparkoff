@@ -38,7 +38,7 @@ const CheckIcon = () => (
 
 const steps = [
   { icon: <CalendarIcon />, title: "Uygun zamanı seçin", text: "Takvimde yalnızca müsait olan gün ve saatleri görüntüleyin." },
-  { icon: <UploadIcon />, title: "Dosyanızı yükleyin", text: "G-code, 3MF, STL veya STEP dosyanızı randevuya ekleyin." },
+  { icon: <UploadIcon />, title: "Dosyanızı yükleyin", text: "G-code, 3MF, STL, STEP veya OBJ dosyanızı randevuya ekleyin." },
   { icon: <MailIcon />, title: "E-postadan takip edin", text: "Başvurunuzu doğrulayın ve tüm durum değişikliklerini takip edin." },
 ];
 
@@ -62,6 +62,7 @@ export default function Home({ workshop, nextSlot, printers }: HomeProps) {
           <nav className="desktop-nav" aria-label="Ana menü">
             <a href="#nasil-calisir">Nasıl çalışır?</a>
             <a href="#yazicilar">Yazıcılar</a>
+            <Link href="/filamentler">Filamentler</Link>
             <a href="#yardim">Yardım</a>
           </nav>
 
@@ -139,6 +140,15 @@ export default function Home({ workshop, nextSlot, printers }: HomeProps) {
             </article>
           ))}
         </div>
+      </section>
+
+      <section className="filament-home-callout">
+        <div>
+          <span className="eyebrow">ATÖLYE FİLAMENTLERİ</span>
+          <h2>Baskınıza uygun malzemeyi önceden inceleyin</h2>
+          <p>Mevcut renkleri, marka bilgilerini, sıcaklık aralıklarını ve geçici kullanım kısıtlarını görüntüleyin.</p>
+        </div>
+        <Link className="button secondary" href="/filamentler">Mevcut filamentler <ArrowIcon /></Link>
       </section>
 
       <section className="help" id="yardim">

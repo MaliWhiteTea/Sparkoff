@@ -4,12 +4,15 @@ use App\Http\Controllers\Admin\AppointmentController as AdminAppointmentControll
 use App\Http\Controllers\Admin\AuthController as AdminAuthController;
 use App\Http\Controllers\Admin\BookingSettingsController as AdminBookingSettingsController;
 use App\Http\Controllers\Admin\CalendarController as AdminCalendarController;
+use App\Http\Controllers\Admin\FilamentSettingsController as AdminFilamentSettingsController;
 use App\Http\Controllers\Admin\PrinterSettingsController as AdminPrinterSettingsController;
 use App\Http\Controllers\AppointmentController;
+use App\Http\Controllers\FilamentController;
 use App\Http\Controllers\HomeController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomeController::class)->name('home');
+Route::get('/filamentler', [FilamentController::class, 'index'])->name('filaments.index');
 Route::get('/randevu', [AppointmentController::class, 'create'])->name('booking.create');
 Route::get('/randevu/musaitlik', [AppointmentController::class, 'availability'])->middleware('throttle:60,1')->name('booking.availability');
 Route::post('/randevu', [AppointmentController::class, 'store'])->middleware('throttle:5,1')->name('booking.store');
@@ -38,6 +41,10 @@ Route::prefix('yonetim')->name('admin.')->group(function () {
             Route::patch('/yazicilar/{printer}', [AdminPrinterSettingsController::class, 'update'])->name('printers.update');
             Route::post('/kapali-zamanlar', [AdminPrinterSettingsController::class, 'storeBlackout'])->name('blackouts.store');
             Route::delete('/kapali-zamanlar/{blackout}', [AdminPrinterSettingsController::class, 'destroyBlackout'])->name('blackouts.destroy');
+            Route::get('/filamentler', [AdminFilamentSettingsController::class, 'index'])->name('filaments.index');
+            Route::post('/filamentler', [AdminFilamentSettingsController::class, 'store'])->name('filaments.store');
+            Route::patch('/filamentler/{filament}', [AdminFilamentSettingsController::class, 'update'])->name('filaments.update');
+            Route::patch('/filament-turleri/{material}/kullanilabilirlik', [AdminFilamentSettingsController::class, 'updateMaterialAvailability'])->name('filaments.material-availability');
         });
     });
 });

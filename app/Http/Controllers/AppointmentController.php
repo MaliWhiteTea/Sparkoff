@@ -38,6 +38,16 @@ class AppointmentController extends Controller
                 'maximumFileSizeMb' => (int) Setting::valueOf('uploads.maximum_file_size_mb', 100),
                 'allowedFileExtensions' => Setting::valueOf('uploads.allowed_extensions', ['gcode', '3mf', 'stl', 'step', 'stp', 'obj']),
             ],
+            'filaments' => Filament::query()->where('is_available', true)->orderBy('material')->orderBy('sort_order')->get()->map(fn (Filament $filament) => [
+                'id' => $filament->id,
+                'material' => $filament->material,
+                'color' => $filament->color,
+                'brand' => $filament->brand,
+                'diameterMm' => $filament->diameter_mm,
+                'nozzleTemperature' => $filament->nozzle_temp_min && $filament->nozzle_temp_max ? "{$filament->nozzle_temp_min}–{$filament->nozzle_temp_max} °C" : null,
+                'bedTemperature' => $filament->bed_temp_min !== null && $filament->bed_temp_max !== null ? "{$filament->bed_temp_min}–{$filament->bed_temp_max} °C" : null,
+                'technicalNotes' => $filament->technical_notes,
+            ]),
         ]);
     }
 
@@ -91,13 +101,19 @@ class AppointmentController extends Controller
                 $endsAt = $availability->assertAvailable($printer, $startsAt, $validated['duration_minutes']);
                 $verificationToken = Str::random(64);
 
-                $filament = $validated['filament_source'] === FilamentSource::Workshop->value
-                    ? Filament::query()
+                $filament = null;
+                if ($validated['filament_source'] === FilamentSource::Workshop->value) {
+                    $filament = Filament::query()
+                        ->lockForUpdate()
                         ->where('is_available', true)
-                        ->where('material', $validated['material'])
-                        ->when($validated['color'] !== 'Fark etmez', fn ($query) => $query->where('color', $validated['color']))
-                        ->first()
-                    : null;
+                        ->find($validated['filament_id']);
+
+                    if (! $filament) {
+                        throw ValidationException::withMessages([
+                            'filament_id' => 'Seçtiğiniz atölye filamenti artık kullanılamıyor. Lütfen başka bir seçenek belirleyin.',
+                        ]);
+                    }
+                }
 
                 $appointment = Appointment::query()->create([
                     'printer_id' => $printer->id,
@@ -111,8 +127,8 @@ class AppointmentController extends Controller
                     'duration_minutes' => $validated['duration_minutes'],
                     'filament_source' => $validated['filament_source'],
                     'filament_id' => $filament?->id,
-                    'filament_material' => $validated['material'],
-                    'filament_color' => $validated['color'],
+                    'filament_material' => $filament?->material ?? $validated['material'],
+                    'filament_color' => $filament?->color ?? $validated['color'],
                     'user_note' => $validated['note'] ?? null,
                     'verification_token_hash' => hash('sha256', $verificationToken),
                     'tracking_token_hash' => hash('sha256', Str::random(64)),

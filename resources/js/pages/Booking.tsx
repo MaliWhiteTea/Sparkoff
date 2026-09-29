@@ -22,6 +22,7 @@ type FormData = {
   duration: number;
   file: File | null;
   filamentSource: "workshop" | "own";
+  filamentId: number | null;
   material: string;
   color: string;
   firstName: string;
@@ -38,6 +39,7 @@ const initialData: FormData = {
   duration: 60,
   file: null,
   filamentSource: "workshop",
+  filamentId: null,
   material: "PLA",
   color: "Fark etmez",
   firstName: "",
@@ -55,9 +57,10 @@ type BookingProps = {
     maximumFileSizeMb: number;
     allowedFileExtensions: string[];
   };
+  filaments: { id: number; material: string; color: string; brand: string | null; diameterMm: string; nozzleTemperature: string | null; bedTemperature: string | null; technicalNotes: string | null }[];
 };
 
-export default function BookingForm({ settings }: BookingProps) {
+export default function BookingForm({ settings, filaments }: BookingProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [data, setData] = useState<FormData>(initialData);
   const [error, setError] = useState("");
@@ -75,6 +78,13 @@ export default function BookingForm({ settings }: BookingProps) {
     return `${year}-${month}-${day}`;
   }, []);
   const endTime = calculateEndTime(data.date, data.startTime, data.duration);
+  const selectedFilament = filaments.find((filament) => filament.id === data.filamentId) ?? null;
+
+  useEffect(() => {
+    if (data.filamentSource === "workshop" && !data.filamentId && filaments[0]) {
+      setData((current) => ({ ...current, filamentId: filaments[0].id }));
+    }
+  }, [data.filamentSource, data.filamentId, filaments]);
 
   useEffect(() => {
     if (!data.date) {
@@ -122,7 +132,8 @@ export default function BookingForm({ settings }: BookingProps) {
     if (currentStep === 0 && !data.date) return "Lütfen randevu tarihini seçin.";
     if (currentStep === 0 && (loadingSlots || !data.startTime)) return loadingSlots ? "Müsait saatler yükleniyor." : "Bu tarih ve süre için müsait başlangıç saati bulunmuyor.";
     if (currentStep === 1 && !data.file) return "Desteklenen formatlardan bir dosya yüklemelisiniz.";
-    if (currentStep === 2 && (!data.material || !data.color)) return "Filament bilgilerini tamamlayın.";
+    if (currentStep === 2 && data.filamentSource === "workshop" && !data.filamentId) return "Şu anda kullanılabilir atölye filamenti bulunmuyor.";
+    if (currentStep === 2 && data.filamentSource === "own" && (!data.material || !data.color)) return "Filament bilgilerini tamamlayın.";
     if (currentStep === 3 && (!data.firstName || !data.lastName || !data.email || !data.phone)) return "İletişim alanlarının tamamını doldurun.";
     if (currentStep === 4 && !data.rulesAccepted) return "Randevu kurallarını onaylamalısınız.";
     return "";
@@ -169,6 +180,7 @@ export default function BookingForm({ settings }: BookingProps) {
       duration_minutes: data.duration,
       file: data.file,
       filament_source: data.filamentSource,
+      filament_id: data.filamentId,
       material: data.material,
       color: data.color,
       first_name: data.firstName,
@@ -265,13 +277,10 @@ export default function BookingForm({ settings }: BookingProps) {
             <section className="form-step">
               <div className="form-heading"><span>03</span><div><h2>Filament tercihi</h2><p>Baskıda kullanılacak filamentin kaynağını ve özelliklerini seçin.</p></div></div>
               <div className="choice-grid">
-                <label className={data.filamentSource === "workshop" ? "selected" : ""}><input type="radio" name="source" checked={data.filamentSource === "workshop"} onChange={() => update("filamentSource", "workshop")} /><strong>Atölye filamenti</strong><span>Mevcut atölye stoklarından kullanmak istiyorum.</span></label>
+                <label className={data.filamentSource === "workshop" ? "selected" : ""}><input type="radio" name="source" checked={data.filamentSource === "workshop"} onChange={() => update("filamentSource", "workshop")} /><strong>Atölye filamenti</strong><span>Mevcut ve kullanıma açık atölye stoklarından seçin.</span></label>
                 <label className={data.filamentSource === "own" ? "selected" : ""}><input type="radio" name="source" checked={data.filamentSource === "own"} onChange={() => update("filamentSource", "own")} /><strong>Kendi filamentim</strong><span>Uyumlu filamentimi randevuya getireceğim.</span></label>
               </div>
-              <div className="field-grid">
-                <label className="field"><span>Malzeme türü</span><select value={data.material} onChange={(e) => update("material", e.target.value)}><option>PLA</option><option>PETG</option><option>ABS</option><option>TPU</option><option>Diğer</option></select></label>
-                <label className="field"><span>Renk tercihi</span><select value={data.color} onChange={(e) => update("color", e.target.value)}><option>Fark etmez</option><option>Siyah</option><option>Beyaz</option><option>Kırmızı</option><option>Mavi</option><option>Diğer</option></select></label>
-              </div>
+              {data.filamentSource === "workshop" ? <div className="workshop-filament-picker"><label className="field"><span>Mevcut filament</span><select value={data.filamentId ?? ""} onChange={(e) => update("filamentId", Number(e.target.value))}><option value="" disabled>Filament seçin</option>{filaments.map((filament) => <option value={filament.id} key={filament.id}>{filament.material} · {filament.color}{filament.brand ? ` · ${filament.brand}` : ""}</option>)}</select></label>{selectedFilament && <div className="filament-inline-detail"><strong>{selectedFilament.material} · {selectedFilament.color}</strong><span>{selectedFilament.diameterMm} mm{selectedFilament.nozzleTemperature ? ` · Nozzle ${selectedFilament.nozzleTemperature}` : ""}{selectedFilament.bedTemperature ? ` · Tabla ${selectedFilament.bedTemperature}` : ""}</span>{selectedFilament.technicalNotes && <p>{selectedFilament.technicalNotes}</p>}</div>}<Link href="/filamentler" className="filament-detail-link">Tüm atölye filamentlerinin özelliklerini incele →</Link></div> : <div className="field-grid"><label className="field"><span>Malzeme türü</span><input value={data.material} onChange={(e) => update("material", e.target.value)} placeholder="PLA, PETG, ABS…" /></label><label className="field"><span>Renk</span><input value={data.color} onChange={(e) => update("color", e.target.value)} placeholder="Filament rengi" /></label></div>}
             </section>
           )}
 
@@ -296,7 +305,7 @@ export default function BookingForm({ settings }: BookingProps) {
                 <div><span>Tarih ve başlangıç</span><strong>{data.date} · {data.startTime}</strong><button type="button" onClick={() => setCurrentStep(0)}>Düzenle</button></div>
                 <div><span>Süre ve bitiş</span><strong>{formatDuration(data.duration)}</strong><small>{endTime}</small></div>
                 <div><span>Baskı dosyası</span><strong>{data.file?.name}</strong><button type="button" onClick={() => setCurrentStep(1)}>Düzenle</button></div>
-                <div><span>Filament</span><strong>{data.filamentSource === "workshop" ? "Atölye filamenti" : "Kendi filamentim"} · {data.material} · {data.color}</strong><button type="button" onClick={() => setCurrentStep(2)}>Düzenle</button></div>
+                <div><span>Filament</span><strong>{data.filamentSource === "workshop" ? `Atölye filamenti · ${selectedFilament?.material ?? "—"} · ${selectedFilament?.color ?? "—"}` : `Kendi filamentim · ${data.material} · ${data.color}`}</strong><button type="button" onClick={() => setCurrentStep(2)}>Düzenle</button></div>
                 <div><span>İletişim</span><strong>{data.firstName} {data.lastName}</strong><small>{data.email} · {data.phone}</small><button type="button" onClick={() => setCurrentStep(3)}>Düzenle</button></div>
               </div>
               <label className="rules-check"><input type="checkbox" checked={data.rulesAccepted} onChange={(e) => update("rulesAccepted", e.target.checked)} /><span><strong>Randevu kurallarını okudum.</strong> Başvurunun yönetici onayından sonra kesinleşeceğini biliyorum.</span></label>
