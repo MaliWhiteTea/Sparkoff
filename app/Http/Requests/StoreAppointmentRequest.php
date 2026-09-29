@@ -67,6 +67,8 @@ class StoreAppointmentRequest extends FormRequest
     {
         return [
             'required' => ':attribute alanı zorunludur.',
+            'file.uploaded' => 'Dosya sunucunun yükleme sınırını aşıyor veya yükleme tamamlanamadı. Daha küçük bir dosya deneyin ya da yöneticiyle iletişime geçin.',
+            'file.max' => 'Baskı dosyası izin verilen boyut sınırını aşıyor.',
             'date_format' => ':attribute biçimi geçersizdir.',
             'after_or_equal' => 'Geçmiş bir tarih için randevu oluşturamazsınız.',
             'email' => 'Geçerli bir e-posta adresi girin.',

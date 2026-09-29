@@ -31,11 +31,20 @@ class AppointmentController extends Controller
 {
     public function create(): Response
     {
+        $configuredMaximumFileSize = (int) Setting::valueOf('uploads.maximum_file_size_mb', 100);
+        $serverMaximumFileSize = min(
+            $this->iniSizeInMegabytes((string) ini_get('upload_max_filesize')),
+            $this->iniSizeInMegabytes((string) ini_get('post_max_size')),
+        );
+
         return Inertia::render('Booking', [
             'settings' => [
                 'maximumDurationHours' => (int) Setting::valueOf('booking.maximum_duration_hours', 24),
                 'slotMinutes' => (int) Setting::valueOf('booking.slot_minutes', 30),
-                'maximumFileSizeMb' => (int) Setting::valueOf('uploads.maximum_file_size_mb', 100),
+                'maximumFileSizeMb' => $configuredMaximumFileSize,
+                'effectiveMaximumFileSizeMb' => min($configuredMaximumFileSize, $serverMaximumFileSize),
+                'configuredMaximumFileSizeMb' => $configuredMaximumFileSize,
+                'serverMaximumFileSizeMb' => $serverMaximumFileSize,
                 'allowedFileExtensions' => Setting::valueOf('uploads.allowed_extensions', ['gcode', '3mf', 'stl', 'step', 'stp', 'obj']),
             ],
             'filaments' => Filament::query()->where('is_available', true)->orderBy('material')->orderBy('sort_order')->get()->map(fn (Filament $filament) => [
@@ -49,6 +58,19 @@ class AppointmentController extends Controller
                 'technicalNotes' => $filament->technical_notes,
             ]),
         ]);
+    }
+
+    private function iniSizeInMegabytes(string $value): int
+    {
+        $value = trim($value);
+        $unit = strtolower(substr($value, -1));
+        $number = (float) $value;
+
+        return max(1, (int) floor(match ($unit) {
+            'g' => $number * 1024,
+            'k' => $number / 1024,
+            default => $number,
+        }));
     }
 
     public function availability(Request $request, AppointmentAvailabilityService $availability): JsonResponse

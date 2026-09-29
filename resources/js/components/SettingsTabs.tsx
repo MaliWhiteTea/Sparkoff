@@ -7,5 +7,6 @@ export default function SettingsTabs() {
         <Link className={path.includes('/randevu-kurallari') ? 'active' : ''} href="/yonetim/ayarlar/randevu-kurallari">Randevu kuralları</Link>
         <Link className={path.includes('/yazicilar') ? 'active' : ''} href="/yonetim/ayarlar/yazicilar">Yazıcılar ve bakım</Link>
         <Link className={path.includes('/filamentler') ? 'active' : ''} href="/yonetim/ayarlar/filamentler">Filamentler</Link>
+        <Link className={path.includes('/kvkk') ? 'active' : ''} href="/yonetim/ayarlar/kvkk">KVKK ve saklama</Link>
     </nav>;
 }

@@ -55,6 +55,9 @@ type BookingProps = {
     maximumDurationHours: number;
     slotMinutes: number;
     maximumFileSizeMb: number;
+    effectiveMaximumFileSizeMb: number;
+    configuredMaximumFileSizeMb: number;
+    serverMaximumFileSizeMb: number;
     allowedFileExtensions: string[];
   };
   filaments: { id: number; material: string; color: string; brand: string | null; diameterMm: string; nozzleTemperature: string | null; bedTemperature: string | null; technicalNotes: string | null }[];
@@ -161,9 +164,9 @@ export default function BookingForm({ settings, filaments }: BookingProps) {
       event.target.value = "";
       return setError(`İzin verilen dosya türleri: ${settings.allowedFileExtensions.map((item) => item.toUpperCase()).join(", ")}.`);
     }
-    if (file.size > settings.maximumFileSizeMb * 1024 * 1024) {
+    if (file.size > settings.effectiveMaximumFileSizeMb * 1024 * 1024) {
       event.target.value = "";
-      return setError(`Dosya boyutu ${settings.maximumFileSizeMb} MB sınırını aşamaz.`);
+      return setError(`Dosya boyutu ${settings.effectiveMaximumFileSizeMb} MB sınırını aşamaz.`);
     }
     update("file", file);
   }
@@ -267,9 +270,10 @@ export default function BookingForm({ settings, filaments }: BookingProps) {
                 <input type="file" accept={settings.allowedFileExtensions.map((extension) => `.${extension}`).join(",")} onChange={handleFile} />
                 <div className="upload-icon">{data.file ? <CheckIcon /> : <UploadIcon />}</div>
                 <strong>{data.file ? data.file.name : "Dosya seçin veya buraya bırakın"}</strong>
-                <span>{data.file ? `${(data.file.size / 1024 / 1024).toFixed(2)} MB` : `${settings.allowedFileExtensions.map((item) => item.toUpperCase()).join(", ")} · En fazla ${settings.maximumFileSizeMb} MB`}</span>
+                <span>{data.file ? `${(data.file.size / 1024 / 1024).toFixed(2)} MB` : `${settings.allowedFileExtensions.map((item) => item.toUpperCase()).join(", ")} · En fazla ${settings.effectiveMaximumFileSizeMb} MB`}</span>
               </label>
               <div className="security-note"><strong>Dosya güvenliği</strong><p>Dosyanız yalnızca yetkili atölye yöneticileri tarafından görüntülenir ve sunucuda çalıştırılmaz.</p></div>
+              {settings.serverMaximumFileSizeMb < settings.configuredMaximumFileSizeMb && <div className="upload-limit-warning"><strong>Sunucu yükleme sınırı: {settings.serverMaximumFileSizeMb} MB</strong><p>Uygulama ayarı {settings.configuredMaximumFileSizeMb} MB olsa da PHP sunucu limiti daha düşük. Daha büyük dosyalar için yöneticiyle iletişime geçin.</p></div>}
             </section>
           )}
 
@@ -294,7 +298,7 @@ export default function BookingForm({ settings, filaments }: BookingProps) {
                 <label className="field"><span>Telefon numarası</span><input type="tel" autoComplete="tel" value={data.phone} onChange={(e) => update("phone", e.target.value)} placeholder="05xx xxx xx xx" /><small>Yalnızca randevunuzla ilgili acil ve operasyonel durumlarda kullanılır.</small></label>
                 <label className="field full"><span>Yöneticiye not <em>İsteğe bağlı</em></span><textarea value={data.note} onChange={(e) => update("note", e.target.value)} placeholder="Baskınızla ilgili bilinmesi gereken ayrıntıları yazabilirsiniz." rows={4} /></label>
               </div>
-              <p className="privacy-copy">Kişisel verilerinizin nasıl işlendiğini <a href="#">Aydınlatma Metni</a> üzerinden inceleyebilirsiniz.</p>
+              <p className="privacy-copy">Kişisel verilerinizin nasıl işlendiğini <a href="/kvkk-aydinlatma" target="_blank" rel="noreferrer">KVKK Aydınlatma Metni</a> üzerinden inceleyebilirsiniz. Bu bilgilendirme açık rıza talebi değildir.</p>
             </section>
           )}
 

@@ -66,6 +66,12 @@ class DatabaseSeeder extends Seeder
             ['key' => 'uploads.maximum_file_size_mb', 'value' => 100, 'group' => 'uploads'],
             ['key' => 'uploads.allowed_extensions', 'value' => ['gcode', '3mf', 'stl', 'step', 'stp', 'obj'], 'group' => 'uploads'],
             ['key' => 'privacy.notice_version', 'value' => '2026-09-29', 'group' => 'privacy'],
+            ['key' => 'privacy.controller_name', 'value' => 'Sparkoff Proje Atölyesi’nin bağlı bulunduğu okul yönetimi', 'group' => 'privacy'],
+            ['key' => 'privacy.controller_address', 'value' => 'Okulun resmî adresi yönetici panelinden eklenmelidir.', 'group' => 'privacy'],
+            ['key' => 'privacy.contact_email', 'value' => 'atolye@sparkoff.tr', 'group' => 'privacy'],
+            ['key' => 'privacy.appointment_retention_months', 'value' => 12, 'group' => 'privacy'],
+            ['key' => 'privacy.file_retention_days', 'value' => 30, 'group' => 'privacy'],
+            ['key' => 'privacy.is_draft', 'value' => true, 'group' => 'privacy'],
         ] as $setting) {
             Setting::query()->updateOrCreate(['key' => $setting['key']], $setting);
         }

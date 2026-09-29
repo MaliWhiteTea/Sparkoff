@@ -6,13 +6,16 @@ use App\Http\Controllers\Admin\BookingSettingsController as AdminBookingSettings
 use App\Http\Controllers\Admin\CalendarController as AdminCalendarController;
 use App\Http\Controllers\Admin\FilamentSettingsController as AdminFilamentSettingsController;
 use App\Http\Controllers\Admin\PrinterSettingsController as AdminPrinterSettingsController;
+use App\Http\Controllers\Admin\PrivacySettingsController as AdminPrivacySettingsController;
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\FilamentController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\PrivacyController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomeController::class)->name('home');
 Route::get('/filamentler', [FilamentController::class, 'index'])->name('filaments.index');
+Route::get('/kvkk-aydinlatma', PrivacyController::class)->name('privacy.notice');
 Route::get('/randevu', [AppointmentController::class, 'create'])->name('booking.create');
 Route::get('/randevu/musaitlik', [AppointmentController::class, 'availability'])->middleware('throttle:60,1')->name('booking.availability');
 Route::post('/randevu', [AppointmentController::class, 'store'])->middleware('throttle:5,1')->name('booking.store');
@@ -45,6 +48,8 @@ Route::prefix('yonetim')->name('admin.')->group(function () {
             Route::post('/filamentler', [AdminFilamentSettingsController::class, 'store'])->name('filaments.store');
             Route::patch('/filamentler/{filament}', [AdminFilamentSettingsController::class, 'update'])->name('filaments.update');
             Route::patch('/filament-turleri/{material}/kullanilabilirlik', [AdminFilamentSettingsController::class, 'updateMaterialAvailability'])->name('filaments.material-availability');
+            Route::get('/kvkk', [AdminPrivacySettingsController::class, 'edit'])->name('privacy.edit');
+            Route::put('/kvkk', [AdminPrivacySettingsController::class, 'update'])->name('privacy.update');
         });
     });
 });
