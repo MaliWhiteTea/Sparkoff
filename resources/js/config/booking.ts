@@ -24,14 +24,17 @@ export function createStartTimes() {
   return times;
 }
 
-export function createDurations() {
+export function createDurations(
+  maximumDurationHours: number = bookingSettings.maximumDurationHours,
+  slotMinutes: number = bookingSettings.slotMinutes,
+) {
   const durations: number[] = [];
-  const maximumMinutes = bookingSettings.maximumDurationHours * 60;
+  const maximumMinutes = maximumDurationHours * 60;
 
   for (
-    let minutes = bookingSettings.minimumDurationMinutes;
+    let minutes = slotMinutes;
     minutes <= maximumMinutes;
-    minutes += bookingSettings.slotMinutes
+    minutes += slotMinutes
   ) {
     durations.push(minutes);
   }

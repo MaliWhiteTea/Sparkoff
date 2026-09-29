@@ -15,6 +15,7 @@ use App\Models\Printer;
 use App\Models\Setting;
 use App\Services\AppointmentAvailabilityService;
 use Carbon\CarbonImmutable;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -35,6 +36,31 @@ class AppointmentController extends Controller
                 'maximumDurationHours' => (int) Setting::valueOf('booking.maximum_duration_hours', 24),
                 'slotMinutes' => (int) Setting::valueOf('booking.slot_minutes', 30),
             ],
+        ]);
+    }
+
+    public function availability(Request $request, AppointmentAvailabilityService $availability): JsonResponse
+    {
+        $maximumDuration = (int) Setting::valueOf('booking.maximum_duration_hours', 24) * 60;
+        $validated = $request->validate([
+            'date' => ['required', 'date_format:Y-m-d', 'after_or_equal:today'],
+            'duration_minutes' => ['required', 'integer', 'min:30', "max:{$maximumDuration}"],
+        ]);
+
+        $printer = Printer::query()
+            ->where('status', PrinterStatus::Active->value)
+            ->orderBy('sort_order')
+            ->first();
+
+        if (! $printer) {
+            return response()->json(['slots' => [], 'printer' => null]);
+        }
+
+        $date = CarbonImmutable::createFromFormat('Y-m-d', $validated['date'], config('app.timezone'))->startOfDay();
+
+        return response()->json([
+            'slots' => $availability->availableStartTimes($printer, $date, (int) $validated['duration_minutes']),
+            'printer' => ['code' => $printer->code, 'name' => $printer->name],
         ]);
     }
 

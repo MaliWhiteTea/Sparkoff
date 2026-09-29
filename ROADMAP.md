@@ -39,7 +39,7 @@ Başlangıçta iki yazıcı sisteme tanımlanır:
 | Dosya yükleme | Zorunlu |
 | Desteklenen dosyalar | G-code, 3MF, STL ve STEP/STP |
 | Filament | Atölye filamenti veya kullanıcının kendi filamenti |
-| Varsayılan çalışma düzeni | Hafta içi 09.00–17.00, 30 dakikalık adımlar |
+| Varsayılan randevu başlangıç aralığı | Her gün 09.00–21.00, 30 dakikalık adımlar; baskı bitiş saati sınırlandırılmaz |
 | Yönetilebilirlik | Çalışma düzeni dahil operasyonel kurallar yönetici panelinden değiştirilebilir |
 | Barındırma | Mevcut cPanel sunucusu |
 

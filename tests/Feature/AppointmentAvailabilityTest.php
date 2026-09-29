@@ -101,6 +101,21 @@ class AppointmentAvailabilityTest extends TestCase
         $this->assertSame('13:00', $end->format('H:i'));
     }
 
+    public function test_availability_endpoint_only_returns_non_conflicting_start_times(): void
+    {
+        $this->createAppointment('2026-10-05 10:00:00', '2026-10-05 12:00:00');
+
+        $this->getJson(route('booking.availability', [
+            'date' => '2026-10-05',
+            'duration_minutes' => 60,
+        ]))
+            ->assertOk()
+            ->assertJsonPath('printer.code', 'P-01')
+            ->assertJsonMissing(['10:00'])
+            ->assertJsonMissing(['11:30'])
+            ->assertJsonFragment(['12:00']);
+    }
+
     public function test_a_blackout_period_is_rejected(): void
     {
         BlackoutPeriod::query()->create([

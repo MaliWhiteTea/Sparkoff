@@ -1,10 +1,9 @@
 import { Head, Link, router } from "@inertiajs/react";
-import { ChangeEvent, FormEvent, useMemo, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import {
   bookingSettings,
   calculateEndTime,
   createDurations,
-  createStartTimes,
   formatDuration,
 } from "@/config/booking";
 
@@ -18,9 +17,6 @@ const CheckIcon = () => <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m4 
 const UploadIcon = () => <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L7 9m5-5 5 5M5 15v5h14v-5" /></svg>;
 
 const steps = ["Tarih ve süre", "Baskı dosyası", "Filament", "İletişim", "Kontrol"];
-const startTimes = createStartTimes();
-const durations = createDurations();
-
 type FormData = {
   date: string;
   startTime: string;
@@ -53,15 +49,68 @@ const initialData: FormData = {
   rulesAccepted: false,
 };
 
-export default function BookingForm() {
+type BookingProps = {
+  settings: {
+    maximumDurationHours: number;
+    slotMinutes: number;
+  };
+};
+
+export default function BookingForm({ settings }: BookingProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [data, setData] = useState<FormData>(initialData);
   const [error, setError] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [processing, setProcessing] = useState(false);
+  const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
 
-  const today = useMemo(() => new Date().toISOString().split("T")[0], []);
+  const durations = useMemo(() => createDurations(settings.maximumDurationHours, settings.slotMinutes), [settings]);
+  const today = useMemo(() => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }, []);
   const endTime = calculateEndTime(data.date, data.startTime, data.duration);
+
+  useEffect(() => {
+    if (!data.date) {
+      setAvailableSlots([]);
+      return;
+    }
+
+    const controller = new AbortController();
+    setLoadingSlots(true);
+
+    fetch(`/randevu/musaitlik?date=${encodeURIComponent(data.date)}&duration_minutes=${data.duration}`, {
+      signal: controller.signal,
+      headers: { Accept: "application/json" },
+    })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Müsait saatler alınamadı.");
+        return response.json() as Promise<{ slots: string[] }>;
+      })
+      .then(({ slots }) => {
+        setAvailableSlots(slots);
+        setData((current) => ({
+          ...current,
+          startTime: slots.includes(current.startTime) ? current.startTime : (slots[0] ?? ""),
+        }));
+      })
+      .catch((requestError: unknown) => {
+        if (requestError instanceof DOMException && requestError.name === "AbortError") return;
+        setAvailableSlots([]);
+        setData((current) => ({ ...current, startTime: "" }));
+        setError("Müsait saatler yüklenemedi. Lütfen tekrar deneyin.");
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoadingSlots(false);
+      });
+
+    return () => controller.abort();
+  }, [data.date, data.duration]);
 
   function update<K extends keyof FormData>(key: K, value: FormData[K]) {
     setData((current) => ({ ...current, [key]: value }));
@@ -70,6 +119,7 @@ export default function BookingForm() {
 
   function validateStep() {
     if (currentStep === 0 && !data.date) return "Lütfen randevu tarihini seçin.";
+    if (currentStep === 0 && (loadingSlots || !data.startTime)) return loadingSlots ? "Müsait saatler yükleniyor." : "Bu tarih ve süre için müsait başlangıç saati bulunmuyor.";
     if (currentStep === 1 && !data.file) return "Desteklenen formatlardan bir dosya yüklemelisiniz.";
     if (currentStep === 2 && (!data.material || !data.color)) return "Filament bilgilerini tamamlayın.";
     if (currentStep === 3 && (!data.firstName || !data.lastName || !data.email || !data.phone)) return "İletişim alanlarının tamamını doldurun.";
@@ -190,7 +240,7 @@ export default function BookingForm() {
               <div className="form-heading"><span>01</span><div><h2>Tarih ve süre</h2><p>Baskının başlayacağı zamanı ve tahmini süresini seçin.</p></div></div>
               <div className="field-grid">
                 <label className="field full"><span>Randevu tarihi</span><input type="date" min={today} value={data.date} onChange={(e) => update("date", e.target.value)} /></label>
-                <label className="field"><span>Başlangıç saati</span><select value={data.startTime} onChange={(e) => update("startTime", e.target.value)}>{startTimes.map((time) => <option key={time}>{time}</option>)}</select></label>
+                <label className="field"><span>Başlangıç saati</span><select value={data.startTime} disabled={!data.date || loadingSlots || availableSlots.length === 0} onChange={(e) => update("startTime", e.target.value)}><option value="">{loadingSlots ? "Müsait saatler yükleniyor…" : availableSlots.length === 0 ? "Müsait saat bulunamadı" : "Saat seçin"}</option>{availableSlots.map((time) => <option value={time} key={time}>{time}</option>)}</select><small>{data.date && !loadingSlots ? `${availableSlots.length} uygun başlangıç saati` : "Önce tarih ve süre seçin."}</small></label>
                 <label className="field"><span>Tahmini baskı süresi</span><select value={data.duration} onChange={(e) => update("duration", Number(e.target.value))}>{durations.map((minutes) => <option value={minutes} key={minutes}>{formatDuration(minutes)}</option>)}</select></label>
               </div>
               <div className="time-info"><strong>Tahmini bitiş</strong><span>{endTime ?? "Tarih ve süre seçildikten sonra gösterilir"}</span><p>Baskı bitişi atölye çalışma saatlerinin dışına veya ertesi güne sarkabilir.</p></div>
