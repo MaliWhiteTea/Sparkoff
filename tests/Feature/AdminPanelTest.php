@@ -93,6 +93,44 @@ class AdminPanelTest extends TestCase
         Mail::assertSent(AppointmentStatusMail::class, fn ($mail) => $mail->hasTo($appointment->email));
     }
 
+    public function test_operational_statuses_must_follow_the_defined_order(): void
+    {
+        Mail::fake();
+        $admin = $this->admin();
+        $appointment = $this->appointment();
+        $appointment->update(['status' => AppointmentStatus::Approved]);
+        $route = route('admin.appointments.status', $appointment->public_id);
+
+        $this->actingAs($admin)->patch($route, ['status' => AppointmentStatus::Completed->value])
+            ->assertUnprocessable();
+        $this->assertSame(AppointmentStatus::Approved, $appointment->fresh()->status);
+
+        foreach ([AppointmentStatus::Ready, AppointmentStatus::Printing, AppointmentStatus::Completed] as $status) {
+            $this->actingAs($admin)->patch($route, ['status' => $status->value])
+                ->assertSessionHas('success');
+            $this->assertSame($status, $appointment->fresh()->status);
+        }
+
+        $this->assertSame(3, $appointment->statusHistory()
+            ->whereIn('to_status', [
+                AppointmentStatus::Ready->value,
+                AppointmentStatus::Printing->value,
+                AppointmentStatus::Completed->value,
+            ])->count());
+    }
+
+    public function test_change_request_requires_an_explanation(): void
+    {
+        $admin = $this->admin();
+        $appointment = $this->appointment();
+
+        $this->actingAs($admin)->patch(route('admin.appointments.status', $appointment->public_id), [
+            'status' => AppointmentStatus::ChangeRequested->value,
+        ])->assertSessionHasErrors('note');
+
+        $this->assertSame(AppointmentStatus::PendingApproval, $appointment->fresh()->status);
+    }
+
     public function test_only_authenticated_admin_can_download_an_appointment_file(): void
     {
         Storage::fake('local');

@@ -97,7 +97,12 @@ class AppointmentController extends Controller
                     'actor' => $history->actor?->name ?? 'Sistem',
                     'date' => $history->created_at->translatedFormat('d F Y, H:i'),
                 ]),
-                'canReview' => in_array($appointment->status, [AppointmentStatus::PendingApproval, AppointmentStatus::ChangeRequested], true),
+                'actions' => collect($this->allowedTransitions($appointment->status))->map(fn (AppointmentStatus $status) => [
+                    'status' => $status->value,
+                    'label' => $this->actionLabel($status),
+                    'requiresNote' => in_array($status, [AppointmentStatus::ChangeRequested, AppointmentStatus::Rejected, AppointmentStatus::Failed], true),
+                    'tone' => in_array($status, [AppointmentStatus::Rejected, AppointmentStatus::Failed], true) ? 'danger' : 'primary',
+                ]),
             ],
         ]);
     }
@@ -105,26 +110,36 @@ class AppointmentController extends Controller
     public function updateStatus(Request $request, string $publicId): RedirectResponse
     {
         $validated = $request->validate([
-            'status' => ['required', Rule::in([AppointmentStatus::Approved->value, AppointmentStatus::Rejected->value])],
-            'note' => ['nullable', 'string', 'max:2000', Rule::requiredIf($request->input('status') === AppointmentStatus::Rejected->value)],
+            'status' => ['required', Rule::in(array_column(AppointmentStatus::cases(), 'value'))],
+            'note' => [
+                'nullable',
+                'string',
+                'max:2000',
+                Rule::requiredIf(in_array($request->input('status'), [
+                    AppointmentStatus::ChangeRequested->value,
+                    AppointmentStatus::Rejected->value,
+                    AppointmentStatus::Failed->value,
+                ], true)),
+            ],
         ]);
 
         $appointment = DB::transaction(function () use ($publicId, $validated, $request) {
             $appointment = Appointment::query()->where('public_id', $publicId)->lockForUpdate()->firstOrFail();
 
-            abort_unless(in_array($appointment->status, [AppointmentStatus::PendingApproval, AppointmentStatus::ChangeRequested], true), 422);
-
             $previousStatus = $appointment->status;
             $newStatus = AppointmentStatus::from($validated['status']);
+            abort_unless(in_array($newStatus, $this->allowedTransitions($previousStatus), true), 422);
+
+            $note = $validated['note'] ?? $this->defaultStatusNote($newStatus);
             $appointment->update([
                 'status' => $newStatus,
-                'admin_note' => $validated['note'] ?? null,
+                'admin_note' => $validated['note'] ?? $appointment->admin_note,
             ]);
             $appointment->statusHistory()->create([
                 'actor_id' => $request->user()->id,
                 'from_status' => $previousStatus,
                 'to_status' => $newStatus,
-                'note' => $validated['note'] ?? ($newStatus === AppointmentStatus::Approved ? 'Randevu yönetici tarafından onaylandı.' : null),
+                'note' => $note,
             ]);
 
             return $appointment->fresh('printer');
@@ -160,6 +175,45 @@ class AppointmentController extends Controller
             ->with(['printer', 'files', 'statusHistory' => fn ($query) => $query->with('actor')->oldest()])
             ->where('public_id', $publicId)
             ->firstOrFail();
+    }
+
+    /** @return list<AppointmentStatus> */
+    private function allowedTransitions(AppointmentStatus $status): array
+    {
+        return match ($status) {
+            AppointmentStatus::PendingApproval => [AppointmentStatus::ChangeRequested, AppointmentStatus::Approved, AppointmentStatus::Rejected],
+            AppointmentStatus::ChangeRequested => [AppointmentStatus::Approved, AppointmentStatus::Rejected],
+            AppointmentStatus::Approved => [AppointmentStatus::Ready],
+            AppointmentStatus::Ready => [AppointmentStatus::Printing],
+            AppointmentStatus::Printing => [AppointmentStatus::Completed, AppointmentStatus::Failed],
+            AppointmentStatus::Failed => [AppointmentStatus::Ready],
+            default => [],
+        };
+    }
+
+    private function actionLabel(AppointmentStatus $status): string
+    {
+        return match ($status) {
+            AppointmentStatus::ChangeRequested => 'Değişiklik iste',
+            AppointmentStatus::Approved => 'Randevuyu onayla',
+            AppointmentStatus::Rejected => 'Randevuyu reddet',
+            AppointmentStatus::Ready => 'Baskıya hazır',
+            AppointmentStatus::Printing => 'Baskıyı başlat',
+            AppointmentStatus::Completed => 'Tamamlandı olarak işaretle',
+            AppointmentStatus::Failed => 'Başarısız olarak işaretle',
+            default => $this->statusLabel($status),
+        };
+    }
+
+    private function defaultStatusNote(AppointmentStatus $status): string
+    {
+        return match ($status) {
+            AppointmentStatus::Approved => 'Randevu yönetici tarafından onaylandı.',
+            AppointmentStatus::Ready => 'Baskı hazırlıkları tamamlandı.',
+            AppointmentStatus::Printing => '3D baskı başlatıldı.',
+            AppointmentStatus::Completed => '3D baskı tamamlandı.',
+            default => $this->statusLabel($status),
+        };
     }
 
     private function statusLabel(AppointmentStatus $status): string
