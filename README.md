@@ -62,16 +62,16 @@ php artisan test
 
 Yerel ortamda `MAIL_MAILER=log` kullanılır; gönderilen e-postalar `storage/logs/laravel.log` dosyasına yazılır.
 
-cPanel'de `randevu@sparkoff.com.tr` gibi bir posta hesabı oluşturduktan sonra production `.env` dosyasında SMTP bilgileri tanımlanmalıdır:
+cPanel'de `randevu@sparkoff.tr` gibi bir posta hesabı oluşturduktan sonra production `.env` dosyasında SMTP bilgileri tanımlanmalıdır:
 
 ```dotenv
 MAIL_MAILER=smtp
 MAIL_SCHEME=tls
-MAIL_HOST=mail.sparkoff.com.tr
+MAIL_HOST=mail.sparkoff.tr
 MAIL_PORT=587
-MAIL_USERNAME=randevu@sparkoff.com.tr
+MAIL_USERNAME=randevu@sparkoff.tr
 MAIL_PASSWORD="güçlü-posta-parolası"
-MAIL_FROM_ADDRESS=randevu@sparkoff.com.tr
+MAIL_FROM_ADDRESS=randevu@sparkoff.tr
 MAIL_FROM_NAME="Sparkoff Proje Atölyesi"
 ```
 

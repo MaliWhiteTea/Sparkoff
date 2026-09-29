@@ -13,7 +13,7 @@ Artisan::command('admin:create {email} {--name=} {--password=}', function () {
     $password = $this->option('password') ?: $this->secret('Yönetici parolası (en az 12 karakter)');
     $data = [
         'name' => $this->option('name') ?: 'Atölye Yöneticisi',
-        'email' => mb_strtolower($this->argument('email')),
+        'email' => mb_strtolower(trim($this->argument('email'))),
         'password' => $password,
     ];
 
@@ -29,6 +29,16 @@ Artisan::command('admin:create {email} {--name=} {--password=}', function () {
         }
 
         return self::FAILURE;
+    }
+
+    $this->newLine();
+    $this->line("E-posta: <info>{$data['email']}</info>");
+    $this->line("Ad:      <info>{$data['name']}</info>");
+
+    if (! $this->confirm('Bu bilgilerle yönetici hesabı kaydedilsin mi?', true)) {
+        $this->warn('İşlem iptal edildi; hiçbir kayıt değiştirilmedi.');
+
+        return self::SUCCESS;
     }
 
     User::query()->updateOrCreate(
