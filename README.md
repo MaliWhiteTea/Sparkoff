@@ -1,71 +1,70 @@
-# Sparkoff
+# Sparkoff Proje Atölyesi
 
-Sparkoff, okul atölyelerindeki 3D yazıcılar için geliştirilen modern bir randevu ve baskı takip sistemidir. Kullanıcılar hesap oluşturmadan uygun zaman aralığını seçebilir, baskı dosyasını yükleyebilir ve e-posta üzerinden randevularını takip edebilir.
+Okul atölyesindeki 3D yazıcılar için modern, mobil uyumlu randevu ve baskı takip sistemi.
 
-> Proje şu anda planlama ve tasarım aşamasındadır.
+Kullanıcılar hesap oluşturmadan uygun zamanı seçebilir, baskı dosyasını yükleyebilir ve e-posta üzerinden randevularını takip edebilir. Başlangıçta bütün randevular yönetici onayından geçer.
 
-## Öne çıkan özellikler
+## Özellikler
 
-- Hesap gerektirmeyen randevu akışı
-- E-posta adresi doğrulama
-- Güvenli randevu takip ve iptal bağlantısı
-- G-code, 3MF, STL ve STEP/STP dosya yükleme
+- Hesapsız randevu akışı
+- E-posta doğrulaması ve güvenli takip bağlantısı
+- G-code, 3MF, STL ve STEP/STP dosya desteği
 - Atölye filamenti veya kişisel filament seçimi
 - Yazıcı ve zaman uygunluğu kontrolü
 - Yönetici onaylı randevu sistemi
 - Yazıcı, bakım ve çalışma saatleri yönetimi
-- E-posta durum bildirimleri
 - KVKK odaklı veri ve dosya saklama yaklaşımı
-- Mobil öncelikli, özgün kullanıcı arayüzü
-
-## Planlanan randevu akışı
-
-```text
-Onay bekliyor
-    ├── Değişiklik istendi
-    ├── Reddedildi
-    ├── İptal edildi
-    └── Onaylandı
-          └── Baskıya hazır
-                └── Basılıyor
-                      ├── Tamamlandı
-                      └── Baskı başarısız
-```
-
-## Proje durumu
-
-İlk aşamada aşağıdaki çalışmalar yapılacaktır:
-
-1. cPanel sunucu özelliklerinin doğrulanması
-2. Teknik mimarinin kesinleştirilmesi
-3. Veritabanı ve iş kurallarının tasarlanması
-4. Mobil ve masaüstü arayüz prototiplerinin hazırlanması
-5. MVP randevu ve yönetici akışlarının geliştirilmesi
-
-Ayrıntılı ürün ve geliştirme planı için [ROADMAP.md](./ROADMAP.md) dosyasına bakabilirsiniz.
-
-## İlk sürüm kapsamı
-
-- Türkçe arayüz
-- Ücretsiz okul atölyesi kullanımı
-- Başlangıçta yönetici onaylı bütün randevular
-- Bir aktif ve bir bakımda 3D yazıcı
-- Hafta içi 09.00–17.00 varsayılan çalışma düzeni
-- Yönetici panelinden değiştirilebilir çalışma ve rezervasyon kuralları
-- E-posta bildirimleri; SMS kullanılmaz
+- Mobil öncelikli Türkçe arayüz
 
 ## Teknoloji
 
-Kesin teknoloji seçimi cPanel sunucusunun özellikleri doğrulandıktan sonra yapılacaktır. Değerlendirilen temel seçenekler:
+- PHP 8.3+
+- Laravel 13
+- React 19 ve TypeScript
+- Inertia.js
+- Vite ve Tailwind CSS
+- MySQL/MariaDB
 
-- Laravel, Inertia.js, React ve TypeScript
-- Next.js ve TypeScript
-- MySQL veya MariaDB
-- Tailwind CSS ve Framer Motion
+Sunucuda Node.js çalıştırmak gerekmez. Node.js yalnızca geliştirme sırasında React ve CSS dosyalarını derlemek için kullanılır; cPanel'e derlenmiş dosyalar yüklenir.
+
+## Yerel kurulum
+
+```bash
+composer install
+npm install
+cp .env.example .env
+php artisan key:generate
+```
+
+Yerel veritabanı ayarlarını `.env` dosyasında yapılandırdıktan sonra:
+
+```bash
+php artisan migrate
+npm run build
+php artisan serve
+```
+
+Geliştirme sırasında Vite'ı ayrı terminalde çalıştırabilirsiniz:
+
+```bash
+npm run dev
+```
+
+## Kontroller
+
+```bash
+npx tsc --noEmit
+npm run build
+php artisan test
+```
 
 ## Dokümantasyon
 
-- [Ürün ve geliştirme roadmap'i](./ROADMAP.md)
+Ayrıntılı ürün ve geliştirme planı için [ROADMAP.md](./ROADMAP.md) dosyasına bakabilirsiniz.
+
+## Proje durumu
+
+Ana sayfa ve çok adımlı randevu formunun arayüzü hazırdır. Veritabanı, gerçek randevu kaydı, uygunluk kontrolü, e-posta doğrulaması ve yönetici paneli sıradaki geliştirme aşamalarıdır.
 
 ## Lisans
 
