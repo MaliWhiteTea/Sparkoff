@@ -18,13 +18,14 @@ class StoreAppointmentRequest extends FormRequest
     public function rules(): array
     {
         $maximumDuration = (int) Setting::valueOf('booking.maximum_duration_hours', 24) * 60;
+        $slotMinutes = (int) Setting::valueOf('booking.slot_minutes', 30);
         $maximumFileSize = (int) Setting::valueOf('uploads.maximum_file_size_mb', 100) * 1024;
         $allowedExtensions = Setting::valueOf('uploads.allowed_extensions', ['gcode', '3mf', 'stl', 'step', 'stp']);
 
         return [
             'date' => ['required', 'date_format:Y-m-d', 'after_or_equal:today'],
             'start_time' => ['required', 'date_format:H:i'],
-            'duration_minutes' => ['required', 'integer', 'min:30', "max:{$maximumDuration}"],
+            'duration_minutes' => ['required', 'integer', "min:{$slotMinutes}", "max:{$maximumDuration}"],
             'file' => [
                 'required',
                 'file',
@@ -32,7 +33,7 @@ class StoreAppointmentRequest extends FormRequest
                 function (string $attribute, mixed $value, Closure $fail) use ($allowedExtensions) {
                     $extension = strtolower($value->getClientOriginalExtension());
                     if (! in_array($extension, $allowedExtensions, true)) {
-                        $fail('Yalnızca G-code, 3MF, STL, STEP veya STP dosyası yükleyebilirsiniz.');
+                        $fail('İzin verilen dosya türleri: '.implode(', ', array_map('strtoupper', $allowedExtensions)).'.');
 
                         return;
                     }

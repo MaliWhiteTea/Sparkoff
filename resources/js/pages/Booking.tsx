@@ -1,7 +1,6 @@
 import { Head, Link, router } from "@inertiajs/react";
 import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import {
-  bookingSettings,
   calculateEndTime,
   createDurations,
   formatDuration,
@@ -53,6 +52,8 @@ type BookingProps = {
   settings: {
     maximumDurationHours: number;
     slotMinutes: number;
+    maximumFileSizeMb: number;
+    allowedFileExtensions: string[];
   };
 };
 
@@ -145,13 +146,13 @@ export default function BookingForm({ settings }: BookingProps) {
     if (!file) return update("file", null);
 
     const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
-    if (!(bookingSettings.allowedFileExtensions as readonly string[]).includes(extension)) {
+    if (!settings.allowedFileExtensions.includes(extension)) {
       event.target.value = "";
-      return setError("Yalnızca G-code, 3MF, STL, STEP veya STP dosyası yükleyebilirsiniz.");
+      return setError(`İzin verilen dosya türleri: ${settings.allowedFileExtensions.map((item) => item.toUpperCase()).join(", ")}.`);
     }
-    if (file.size > bookingSettings.maximumFileSizeMb * 1024 * 1024) {
+    if (file.size > settings.maximumFileSizeMb * 1024 * 1024) {
       event.target.value = "";
-      return setError(`Dosya boyutu ${bookingSettings.maximumFileSizeMb} MB sınırını aşamaz.`);
+      return setError(`Dosya boyutu ${settings.maximumFileSizeMb} MB sınırını aşamaz.`);
     }
     update("file", file);
   }
@@ -251,10 +252,10 @@ export default function BookingForm({ settings }: BookingProps) {
             <section className="form-step">
               <div className="form-heading"><span>02</span><div><h2>Baskı dosyası</h2><p>Yöneticinin inceleyebilmesi için üretim dosyanızı ekleyin.</p></div></div>
               <label className={`upload-area ${data.file ? "has-file" : ""}`}>
-                <input type="file" accept=".gcode,.3mf,.stl,.step,.stp" onChange={handleFile} />
+                <input type="file" accept={settings.allowedFileExtensions.map((extension) => `.${extension}`).join(",")} onChange={handleFile} />
                 <div className="upload-icon">{data.file ? <CheckIcon /> : <UploadIcon />}</div>
                 <strong>{data.file ? data.file.name : "Dosya seçin veya buraya bırakın"}</strong>
-                <span>{data.file ? `${(data.file.size / 1024 / 1024).toFixed(2)} MB` : "GCODE, 3MF, STL, STEP veya STP · En fazla 100 MB"}</span>
+                <span>{data.file ? `${(data.file.size / 1024 / 1024).toFixed(2)} MB` : `${settings.allowedFileExtensions.map((item) => item.toUpperCase()).join(", ")} · En fazla ${settings.maximumFileSizeMb} MB`}</span>
               </label>
               <div className="security-note"><strong>Dosya güvenliği</strong><p>Dosyanız yalnızca yetkili atölye yöneticileri tarafından görüntülenir ve sunucuda çalıştırılmaz.</p></div>
             </section>

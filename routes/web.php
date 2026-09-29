@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\AppointmentController as AdminAppointmentController;
 use App\Http\Controllers\Admin\AuthController as AdminAuthController;
+use App\Http\Controllers\Admin\BookingSettingsController as AdminBookingSettingsController;
 use App\Http\Controllers\Admin\CalendarController as AdminCalendarController;
 use App\Http\Controllers\Admin\PrinterSettingsController as AdminPrinterSettingsController;
 use App\Http\Controllers\AppointmentController;
@@ -30,6 +31,8 @@ Route::prefix('yonetim')->name('admin.')->group(function () {
         Route::get('/randevular/{publicId}/dosyalar/{file}', [AdminAppointmentController::class, 'download'])->name('appointments.files.download');
 
         Route::prefix('ayarlar')->name('settings.')->middleware('admin.only')->group(function () {
+            Route::get('/randevu-kurallari', [AdminBookingSettingsController::class, 'edit'])->name('booking.edit');
+            Route::put('/randevu-kurallari', [AdminBookingSettingsController::class, 'update'])->name('booking.update');
             Route::get('/yazicilar', [AdminPrinterSettingsController::class, 'index'])->name('printers.index');
             Route::post('/yazicilar', [AdminPrinterSettingsController::class, 'store'])->name('printers.store');
             Route::patch('/yazicilar/{printer}', [AdminPrinterSettingsController::class, 'update'])->name('printers.update');

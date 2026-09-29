@@ -18,7 +18,7 @@ export default function AdminLayout({ children }: PropsWithChildren) {
                     <img src="/logo.jpg" alt="Sparkoff logosu" />
                     <span><strong>Sparkoff</strong><small>Yönetim Paneli</small></span>
                 </Link>
-                <nav><Link className={path.startsWith('/yonetim/randevular') ? 'active' : ''} href="/yonetim/randevular">Randevular</Link><Link className={path.startsWith('/yonetim/takvim') ? 'active' : ''} href="/yonetim/takvim">Takvim</Link>{auth.user.role === 'admin' && <Link className={path.startsWith('/yonetim/ayarlar') ? 'active' : ''} href="/yonetim/ayarlar/yazicilar">Ayarlar</Link>}</nav>
+                <nav><Link className={path.startsWith('/yonetim/randevular') ? 'active' : ''} href="/yonetim/randevular">Randevular</Link><Link className={path.startsWith('/yonetim/takvim') ? 'active' : ''} href="/yonetim/takvim">Takvim</Link>{auth.user.role === 'admin' && <Link className={path.startsWith('/yonetim/ayarlar') ? 'active' : ''} href="/yonetim/ayarlar/randevu-kurallari">Ayarlar</Link>}</nav>
                 <div className="admin-user"><strong>{auth.user.name}</strong><small>{auth.user.email}</small><button type="button" onClick={() => router.post('/yonetim/cikis')}>Çıkış yap</button></div>
             </aside>
             <main className="admin-content">

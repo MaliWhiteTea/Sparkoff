@@ -35,6 +35,8 @@ class AppointmentController extends Controller
             'settings' => [
                 'maximumDurationHours' => (int) Setting::valueOf('booking.maximum_duration_hours', 24),
                 'slotMinutes' => (int) Setting::valueOf('booking.slot_minutes', 30),
+                'maximumFileSizeMb' => (int) Setting::valueOf('uploads.maximum_file_size_mb', 100),
+                'allowedFileExtensions' => Setting::valueOf('uploads.allowed_extensions', ['gcode', '3mf', 'stl', 'step', 'stp']),
             ],
         ]);
     }
@@ -42,9 +44,10 @@ class AppointmentController extends Controller
     public function availability(Request $request, AppointmentAvailabilityService $availability): JsonResponse
     {
         $maximumDuration = (int) Setting::valueOf('booking.maximum_duration_hours', 24) * 60;
+        $slotMinutes = (int) Setting::valueOf('booking.slot_minutes', 30);
         $validated = $request->validate([
             'date' => ['required', 'date_format:Y-m-d', 'after_or_equal:today'],
-            'duration_minutes' => ['required', 'integer', 'min:30', "max:{$maximumDuration}"],
+            'duration_minutes' => ['required', 'integer', "min:{$slotMinutes}", "max:{$maximumDuration}"],
         ]);
 
         $printer = Printer::query()

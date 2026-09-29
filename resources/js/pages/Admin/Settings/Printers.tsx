@@ -1,4 +1,5 @@
 import AdminLayout from '@/components/AdminLayout';
+import SettingsTabs from '@/components/SettingsTabs';
 import { Head, router } from '@inertiajs/react';
 import { FormEvent, useState } from 'react';
 
@@ -57,6 +58,7 @@ export default function PrinterSettings({ printers, blackouts, statusOptions }: 
     return <AdminLayout>
         <Head title="Yazıcı ve Bakım Ayarları" />
         <header className="admin-title"><div><span className="booking-kicker">SİSTEM AYARLARI</span><h1>Yazıcılar ve bakım</h1><p>Rezervasyona açık cihazları ve kapalı zamanları yönetin.</p></div></header>
+        <SettingsTabs />
         {error && <div className="form-error" role="alert">{error}</div>}
         <section className="settings-section"><div className="settings-heading"><div><h2>Yazıcılar</h2><p>Bakımda veya pasif yazıcılar yeni randevu kabul etmez.</p></div></div><div className="printer-settings-grid">{printers.map((printer) => <PrinterCard printer={printer} statusOptions={statusOptions} key={printer.id} />)}</div></section>
         <section className="settings-grid-two">
