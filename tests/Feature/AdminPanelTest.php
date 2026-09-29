@@ -4,8 +4,10 @@ namespace Tests\Feature;
 
 use App\Enums\AppointmentStatus;
 use App\Enums\FilamentSource;
+use App\Enums\PrinterStatus;
 use App\Mail\AppointmentStatusMail;
 use App\Models\Appointment;
+use App\Models\BlackoutPeriod;
 use App\Models\Printer;
 use App\Models\User;
 use Carbon\CarbonImmutable;
@@ -183,6 +185,59 @@ class AdminPanelTest extends TestCase
         $this->actingAs($this->admin())
             ->get(route('admin.calendar.index', ['view' => 'year']))
             ->assertSessionHasErrors('view');
+    }
+
+    public function test_only_admin_role_can_manage_printer_settings(): void
+    {
+        $operator = $this->admin(['role' => 'operator']);
+
+        $this->actingAs($operator)
+            ->get(route('admin.settings.printers.index'))
+            ->assertForbidden();
+    }
+
+    public function test_admin_can_update_a_printer_and_add_a_blackout_period(): void
+    {
+        $admin = $this->admin();
+        $printer = Printer::query()->where('code', 'P-02')->firstOrFail();
+
+        $this->actingAs($admin)->patch(route('admin.settings.printers.update', $printer), [
+            'name' => 'Yedek Yazıcı',
+            'status' => PrinterStatus::Active->value,
+            'description' => 'Onarımı tamamlandı.',
+        ])->assertSessionHas('success');
+
+        $this->assertSame(PrinterStatus::Active, $printer->fresh()->status);
+
+        $start = CarbonImmutable::now('Europe/Istanbul')->addDay()->setTime(12, 0);
+        $this->actingAs($admin)->post(route('admin.settings.blackouts.store'), [
+            'printer_id' => $printer->id,
+            'starts_at' => $start->format('Y-m-d\TH:i'),
+            'ends_at' => $start->addHours(2)->format('Y-m-d\TH:i'),
+            'reason' => 'Planlı bakım',
+        ])->assertSessionHas('success');
+
+        $this->assertDatabaseHas('blackout_periods', [
+            'printer_id' => $printer->id,
+            'reason' => 'Planlı bakım',
+        ]);
+    }
+
+    public function test_admin_can_remove_a_blackout_period(): void
+    {
+        $admin = $this->admin();
+        $blackout = BlackoutPeriod::query()->create([
+            'printer_id' => null,
+            'starts_at' => now()->addDay(),
+            'ends_at' => now()->addDays(2),
+            'reason' => 'Tatil',
+        ]);
+
+        $this->actingAs($admin)
+            ->delete(route('admin.settings.blackouts.destroy', $blackout))
+            ->assertSessionHas('success');
+
+        $this->assertModelMissing($blackout);
     }
 
     private function admin(array $overrides = []): User

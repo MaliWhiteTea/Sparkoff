@@ -3,11 +3,12 @@
 use App\Http\Controllers\Admin\AppointmentController as AdminAppointmentController;
 use App\Http\Controllers\Admin\AuthController as AdminAuthController;
 use App\Http\Controllers\Admin\CalendarController as AdminCalendarController;
+use App\Http\Controllers\Admin\PrinterSettingsController as AdminPrinterSettingsController;
 use App\Http\Controllers\AppointmentController;
+use App\Http\Controllers\HomeController;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
-Route::get('/', fn () => Inertia::render('Home'))->name('home');
+Route::get('/', HomeController::class)->name('home');
 Route::get('/randevu', [AppointmentController::class, 'create'])->name('booking.create');
 Route::get('/randevu/musaitlik', [AppointmentController::class, 'availability'])->middleware('throttle:60,1')->name('booking.availability');
 Route::post('/randevu', [AppointmentController::class, 'store'])->middleware('throttle:5,1')->name('booking.store');
@@ -27,5 +28,13 @@ Route::prefix('yonetim')->name('admin.')->group(function () {
         Route::get('/randevular/{publicId}', [AdminAppointmentController::class, 'show'])->name('appointments.show');
         Route::patch('/randevular/{publicId}/durum', [AdminAppointmentController::class, 'updateStatus'])->name('appointments.status');
         Route::get('/randevular/{publicId}/dosyalar/{file}', [AdminAppointmentController::class, 'download'])->name('appointments.files.download');
+
+        Route::prefix('ayarlar')->name('settings.')->middleware('admin.only')->group(function () {
+            Route::get('/yazicilar', [AdminPrinterSettingsController::class, 'index'])->name('printers.index');
+            Route::post('/yazicilar', [AdminPrinterSettingsController::class, 'store'])->name('printers.store');
+            Route::patch('/yazicilar/{printer}', [AdminPrinterSettingsController::class, 'update'])->name('printers.update');
+            Route::post('/kapali-zamanlar', [AdminPrinterSettingsController::class, 'storeBlackout'])->name('blackouts.store');
+            Route::delete('/kapali-zamanlar/{blackout}', [AdminPrinterSettingsController::class, 'destroyBlackout'])->name('blackouts.destroy');
+        });
     });
 });

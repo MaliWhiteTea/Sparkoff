@@ -42,7 +42,13 @@ const steps = [
   { icon: <MailIcon />, title: "E-postadan takip edin", text: "Başvurunuzu doğrulayın ve tüm durum değişikliklerini takip edin." },
 ];
 
-export default function Home() {
+type HomeProps = {
+  workshop: { isOpen: boolean; statusLabel: string; hours: string; daysLabel: string };
+  nextSlot: { label: string; printer: string } | null;
+  printers: { code: string; name: string; description: string | null; status: "active" | "maintenance" | "inactive"; statusLabel: string }[];
+};
+
+export default function Home({ workshop, nextSlot, printers }: HomeProps) {
   return (
     <main id="ust">
       <Head title="3D Yazıcı Randevu Sistemi" />
@@ -82,18 +88,18 @@ export default function Home() {
         <aside className="availability-card" aria-label="Atölye ve yazıcı durumu">
           <div className="card-heading">
             <div className="calendar-mark"><CalendarIcon /></div>
-            <div><span>ATÖLYE DURUMU</span><strong>Bugün açık</strong></div>
-            <span className="open-badge"><i /> Açık</span>
+            <div><span>ATÖLYE DURUMU</span><strong>{workshop.statusLabel}</strong></div>
+            <span className={`open-badge ${workshop.isOpen ? "" : "closed"}`}><i /> {workshop.isOpen ? "Açık" : "Kapalı"}</span>
           </div>
           <div className="hours-row">
             <ClockIcon />
-            <div><span>Çalışma saatleri</span><strong>09.00–17.00</strong></div>
-            <small>Hafta içi</small>
+            <div><span>Randevu başlangıç aralığı</span><strong>{workshop.hours}</strong></div>
+            <small>{workshop.daysLabel}</small>
           </div>
           <div className="next-slot">
             <span>EN YAKIN UYGUN ZAMAN</span>
-            <strong>Pazartesi, 09.00</strong>
-            <p>Atölye Yazıcısı 01</p>
+            <strong>{nextSlot?.label ?? "Uygun zaman bulunamadı"}</strong>
+            <p>{nextSlot?.printer ?? "Aktif yazıcı veya uygun saat bulunmuyor"}</p>
             <Link href="/randevu">Uygun saatleri görüntüle <ArrowIcon /></Link>
           </div>
           <p className="card-note">Saatler yönetici tarafından güncellenebilir. Randevunuz onaylandıktan sonra e-posta ile bilgilendirilirsiniz.</p>
@@ -125,16 +131,13 @@ export default function Home() {
           <p>Rezervasyon sırasında yalnızca kullanıma açık yazıcılar seçilebilir.</p>
         </div>
         <div className="printer-list">
-          <article className="printer-row">
-            <span className="printer-code">P-01</span>
-            <div><strong>Atölye Yazıcısı 01</strong><span>Randevu alınabilir</span></div>
-            <span className="status active"><i /> Kullanıma açık</span>
-          </article>
-          <article className="printer-row muted-row">
-            <span className="printer-code">P-02</span>
-            <div><strong>Atölye Yazıcısı 02</strong><span>Geçici olarak kullanılamıyor</span></div>
-            <span className="status maintenance">Bakımda</span>
-          </article>
+          {printers.map((printer) => (
+            <article className={`printer-row ${printer.status !== "active" ? "muted-row" : ""}`} key={printer.code}>
+              <span className="printer-code">{printer.code}</span>
+              <div><strong>{printer.name}</strong><span>{printer.description ?? (printer.status === "active" ? "Randevu alınabilir" : "Geçici olarak kullanılamıyor")}</span></div>
+              <span className={`status ${printer.status}`}>{printer.status === "active" && <i />} {printer.statusLabel}</span>
+            </article>
+          ))}
         </div>
       </section>
 
