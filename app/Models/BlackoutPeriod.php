@@ -7,11 +7,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class BlackoutPeriod extends Model
 {
-    protected $fillable = ['printer_id', 'kind', 'starts_at', 'ends_at', 'reason'];
+    protected $fillable = ['printer_id', 'kind', 'is_all_day', 'starts_at', 'ends_at', 'reason'];
 
     protected function casts(): array
     {
-        return ['starts_at' => 'datetime', 'ends_at' => 'datetime'];
+        return ['is_all_day' => 'boolean', 'starts_at' => 'datetime', 'ends_at' => 'datetime'];
     }
 
     public function printer(): BelongsTo

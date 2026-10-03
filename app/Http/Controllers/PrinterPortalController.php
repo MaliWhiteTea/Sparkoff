@@ -68,6 +68,7 @@ class PrinterPortalController extends Controller
                     'printerCode' => $block->printer?->code,
                     'kind' => $block->kind,
                     'kindLabel' => $this->kindLabel($block->kind),
+                    'isAllDay' => $block->is_all_day,
                     'startsAt' => $block->starts_at->toIso8601String(),
                     'endsAt' => $block->ends_at->toIso8601String(),
                     'note' => $block->reason,

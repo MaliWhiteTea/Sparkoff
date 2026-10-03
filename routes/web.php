@@ -55,6 +55,7 @@ Route::prefix('yonetim')->name('admin.')->group(function () {
             Route::post('/yazicilar', [AdminPrinterSettingsController::class, 'store'])->name('printers.store');
             Route::patch('/yazicilar/{printer}', [AdminPrinterSettingsController::class, 'update'])->name('printers.update');
             Route::post('/kapali-zamanlar', [AdminPrinterSettingsController::class, 'storeBlackout'])->name('blackouts.store');
+            Route::patch('/kapali-zamanlar/{blackout}', [AdminPrinterSettingsController::class, 'updateBlackout'])->name('blackouts.update');
             Route::delete('/kapali-zamanlar/{blackout}', [AdminPrinterSettingsController::class, 'destroyBlackout'])->name('blackouts.destroy');
             Route::get('/filamentler', [AdminFilamentSettingsController::class, 'index'])->name('filaments.index');
             Route::post('/filamentler', [AdminFilamentSettingsController::class, 'store'])->name('filaments.store');

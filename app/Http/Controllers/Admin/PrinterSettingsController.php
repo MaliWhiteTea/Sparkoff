@@ -33,11 +33,15 @@ class PrinterSettingsController extends Controller
                 ->get()
                 ->map(fn (BlackoutPeriod $blackout) => [
                     'id' => $blackout->id,
+                    'printerId' => $blackout->printer_id,
                     'printer' => $blackout->printer?->name ?? 'Tüm atölye',
                     'kind' => $blackout->kind,
                     'kindLabel' => $this->kindLabel($blackout->kind),
+                    'isAllDay' => $blackout->is_all_day,
                     'startsAt' => $blackout->starts_at->translatedFormat('d F Y, H:i'),
                     'endsAt' => $blackout->ends_at->translatedFormat('d F Y, H:i'),
+                    'startsAtInput' => $blackout->is_all_day ? $blackout->starts_at->format('Y-m-d') : $blackout->starts_at->format('Y-m-d\TH:i'),
+                    'endsAtInput' => $blackout->is_all_day ? $blackout->ends_at->copy()->subDay()->format('Y-m-d') : $blackout->ends_at->format('Y-m-d\TH:i'),
                     'reason' => $blackout->reason,
                 ]),
             'statusOptions' => [
@@ -87,38 +91,85 @@ class PrinterSettingsController extends Controller
 
     public function storeBlackout(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'printer_id' => ['nullable', 'integer', 'exists:printers,id'],
-            'kind' => ['required', Rule::in(['busy', 'maintenance', 'closed'])],
-            'starts_at' => ['required', 'date_format:Y-m-d\TH:i'],
-            'ends_at' => ['required', 'date_format:Y-m-d\TH:i', 'after:starts_at'],
-            'reason' => ['required', 'string', 'max:255'],
-        ]);
+        $validated = $this->validateSchedule($request);
+        [$startsAt, $endsAt] = $this->scheduleDates($validated);
 
-        $printerId = $validated['printer_id'] ?? null;
-        $startsAt = CarbonImmutable::createFromFormat('Y-m-d\TH:i', $validated['starts_at'], config('app.timezone'));
-        $endsAt = CarbonImmutable::createFromFormat('Y-m-d\TH:i', $validated['ends_at'], config('app.timezone'));
-        $hasConflict = BlackoutPeriod::query()
-            ->when($printerId !== null, fn ($query) => $query->where(
-                fn ($scope) => $scope->whereNull('printer_id')->orWhere('printer_id', $printerId)
-            ))
-            ->where('starts_at', '<', $endsAt)
-            ->where('ends_at', '>', $startsAt)
-            ->exists();
-
-        if ($hasConflict) {
+        if ($this->hasScheduleConflict($validated['printer_id'] ?? null, $startsAt, $endsAt)) {
             return back()->withErrors(['starts_at' => 'Bu yazıcı için seçilen zaman aralığı mevcut bir kayıtla çakışıyor.'])->withInput();
         }
 
         BlackoutPeriod::query()->create([
             'printer_id' => $validated['printer_id'] ?? null,
             'kind' => $validated['kind'],
+            'is_all_day' => $validated['is_all_day'],
             'starts_at' => $startsAt,
             'ends_at' => $endsAt,
             'reason' => $validated['reason'],
         ]);
 
         return back()->with('success', 'Takvim kaydı eklendi.');
+    }
+
+    public function updateBlackout(Request $request, BlackoutPeriod $blackout): RedirectResponse
+    {
+        $validated = $this->validateSchedule($request);
+        [$startsAt, $endsAt] = $this->scheduleDates($validated);
+
+        if ($this->hasScheduleConflict($validated['printer_id'] ?? null, $startsAt, $endsAt, $blackout)) {
+            return back()->withErrors(['starts_at' => 'Bu yazıcı için seçilen zaman aralığı mevcut bir kayıtla çakışıyor.'])->withInput();
+        }
+
+        $blackout->update([
+            'printer_id' => $validated['printer_id'] ?? null,
+            'kind' => $validated['kind'],
+            'is_all_day' => $validated['is_all_day'],
+            'starts_at' => $startsAt,
+            'ends_at' => $endsAt,
+            'reason' => $validated['reason'],
+        ]);
+
+        return back()->with('success', 'Takvim kaydı güncellendi.');
+    }
+
+    private function validateSchedule(Request $request): array
+    {
+        $request->merge(['is_all_day' => $request->boolean('is_all_day')]);
+
+        return $request->validate([
+            'printer_id' => ['nullable', 'integer', 'exists:printers,id'],
+            'kind' => ['required', Rule::in(['busy', 'maintenance', 'closed'])],
+            'is_all_day' => ['required', 'boolean'],
+            'starts_at' => ['required', $request->boolean('is_all_day') ? 'date_format:Y-m-d' : 'date_format:Y-m-d\TH:i'],
+            'ends_at' => ['required', $request->boolean('is_all_day') ? 'date_format:Y-m-d' : 'date_format:Y-m-d\TH:i', 'after_or_equal:starts_at'],
+            'reason' => ['required', 'string', 'max:255'],
+        ]);
+    }
+
+    private function scheduleDates(array $validated): array
+    {
+        if ($validated['is_all_day']) {
+            return [
+                CarbonImmutable::createFromFormat('Y-m-d', $validated['starts_at'], config('app.timezone'))->startOfDay(),
+                CarbonImmutable::createFromFormat('Y-m-d', $validated['ends_at'], config('app.timezone'))->addDay()->startOfDay(),
+            ];
+        }
+
+        return [
+            CarbonImmutable::createFromFormat('Y-m-d\TH:i', $validated['starts_at'], config('app.timezone')),
+            CarbonImmutable::createFromFormat('Y-m-d\TH:i', $validated['ends_at'], config('app.timezone')),
+        ];
+    }
+
+    private function hasScheduleConflict(?int $printerId, CarbonImmutable $startsAt, CarbonImmutable $endsAt, ?BlackoutPeriod $except = null): bool
+    {
+        return BlackoutPeriod::query()
+            ->when($except, fn ($query) => $query->whereKeyNot($except->id))
+            ->when($printerId !== null, fn ($query) => $query->where(
+                fn ($scope) => $scope->whereNull('printer_id')->orWhere('printer_id', $printerId)
+            ))
+            ->where('starts_at', '<', $endsAt)
+            ->where('ends_at', '>', $startsAt)
+            ->exists();
     }
 
     public function destroyBlackout(BlackoutPeriod $blackout): RedirectResponse

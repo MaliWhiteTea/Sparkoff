@@ -295,6 +295,37 @@ class AdminPanelTest extends TestCase
         $this->assertModelMissing($blackout);
     }
 
+    public function test_admin_can_create_and_update_an_all_day_schedule_block(): void
+    {
+        $admin = $this->admin();
+        $printer = Printer::query()->firstOrFail();
+        $date = now()->addDays(3)->format('Y-m-d');
+
+        $this->actingAs($admin)->post(route('admin.settings.blackouts.store'), [
+            'printer_id' => $printer->id,
+            'kind' => 'maintenance',
+            'is_all_day' => true,
+            'starts_at' => $date,
+            'ends_at' => $date,
+            'reason' => 'Tüm gün bakım',
+        ])->assertSessionHas('success');
+
+        $block = BlackoutPeriod::query()->sole();
+        $this->assertTrue($block->is_all_day);
+        $this->assertSame(24.0, $block->starts_at->diffInHours($block->ends_at));
+
+        $this->actingAs($admin)->patch(route('admin.settings.blackouts.update', $block), [
+            'printer_id' => $printer->id,
+            'kind' => 'closed',
+            'is_all_day' => true,
+            'starts_at' => $date,
+            'ends_at' => now()->addDays(4)->format('Y-m-d'),
+            'reason' => 'İki gün kapalı',
+        ])->assertSessionHas('success');
+
+        $this->assertDatabaseHas('blackout_periods', ['id' => $block->id, 'kind' => 'closed', 'reason' => 'İki gün kapalı']);
+    }
+
     private function admin(array $overrides = []): User
     {
         return User::query()->create([

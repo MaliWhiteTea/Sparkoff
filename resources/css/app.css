@@ -199,6 +199,13 @@ footer p, footer > span { margin: 0; color: #8e9ba9; font-size: .68rem; }
   .form-actions { position: sticky; bottom: 0; margin: 28px -18px -23px; padding: 14px 18px; background: white; z-index: 3; }.form-actions > * { flex: 1; padding-inline: 12px; }.success-page { padding: 30px 16px; }.success-card { padding: 35px 22px; }.success-summary { flex-direction: column; gap: 7px; }
 }
 
+.schedule-admin-actions, .schedule-edit-actions { display: flex; gap: 7px; }
+.schedule-admin-actions button:first-child, .schedule-edit-actions button:last-child { border-color: var(--navy); background: var(--navy); color: white; }
+.schedule-edit-form { padding: 18px; }
+.schedule-edit-form .field-grid { flex: 1; }
+.schedule-edit-actions { margin-top: 14px; justify-content: flex-end; }
+.schedule-edit-actions button { padding: 9px 13px; border: 1px solid var(--border); border-radius: 6px; background: white; font-size: .62rem; font-weight: 800; cursor: pointer; }
+
 /* Workshop portal */
 .portal-home, .printer-portal { min-height: 100vh; background: var(--background); }
 .public-schedule { border-top: 1px solid var(--border); }
