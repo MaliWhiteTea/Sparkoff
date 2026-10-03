@@ -9,6 +9,7 @@ use App\Mail\AppointmentStatusMail;
 use App\Models\Appointment;
 use App\Models\BlackoutPeriod;
 use App\Models\Printer;
+use App\Models\Setting;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -194,6 +195,33 @@ class AdminPanelTest extends TestCase
         $this->actingAs($operator)
             ->get(route('admin.settings.printers.index'))
             ->assertForbidden();
+    }
+
+    public function test_admin_can_update_public_contact_and_operating_hours(): void
+    {
+        $admin = $this->admin();
+        $hours = collect(range(1, 7))->map(fn (int $weekday) => [
+            'weekday' => $weekday,
+            'is_open' => $weekday <= 5,
+            'opens_at' => '10:00',
+            'latest_start_at' => '18:00',
+        ])->all();
+
+        $this->actingAs($admin)->put(route('admin.settings.workshop.update'), [
+            'phone' => '+90 532 000 00 00',
+            'whatsapp' => '+90 532 000 00 00',
+            'email' => 'iletisim@sparkoff.tr',
+            'contact_hours' => 'Hafta içi 10.00–18.00',
+            'hours' => $hours,
+        ])->assertSessionHas('success');
+
+        $this->assertSame('+90 532 000 00 00', Setting::valueOf('workshop.contact_phone'));
+        $this->assertSame('iletisim@sparkoff.tr', Setting::valueOf('workshop.contact_email'));
+        $this->assertDatabaseHas('operating_hours', ['weekday' => 6, 'is_open' => false]);
+
+        $this->get(route('home'))->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->where('contact.phone', '+90 532 000 00 00')
+            ->where('contact.email', 'iletisim@sparkoff.tr'));
     }
 
     public function test_admin_can_update_a_printer_and_add_a_blackout_period(): void

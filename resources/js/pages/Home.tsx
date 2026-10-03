@@ -6,10 +6,11 @@ const PartsIcon = () => <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 
 const ClockIcon = () => <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>;
 
 type Printer = { code: string; name: string; description: string | null; status: 'active' | 'maintenance' | 'inactive'; availability: string; availabilityLabel: string };
-type Props = { workshop: { isOpen: boolean; statusLabel: string; hours: string; daysLabel: string }; printers: Printer[] };
+type Props = { workshop: { isOpen: boolean; statusLabel: string; hours: string; daysLabel: string }; printers: Printer[]; contact: { phone: string | null; whatsapp: string | null; email: string | null; hours: string | null } };
 
-export default function Home({ workshop, printers }: Props) {
+export default function Home({ workshop, printers, contact }: Props) {
     const availableCount = printers.filter((printer) => printer.availability === 'available').length;
+    const whatsappHref = contact.whatsapp ? `https://wa.me/${contact.whatsapp.replace(/\D/g, '')}` : null;
 
     return <main id="ust" className="portal-home">
         <Head title="Sparkoff Proje Atölyesi" />
@@ -31,7 +32,7 @@ export default function Home({ workshop, printers }: Props) {
 
         <section className="portal-printers section"><div className="section-title compact"><h2>Yazıcı durumu</h2></div><div className="printer-list">{printers.map((printer) => <article className={`printer-row ${printer.availability !== 'available' ? 'muted-row' : ''}`} key={printer.code}><span className="printer-code">{printer.code}</span><div><strong>{printer.name}</strong><span>{printer.description ?? 'Açıklama bulunmuyor'}</span></div><span className={`status ${printer.availability}`}>{printer.availability === 'available' && <i />} {printer.availabilityLabel}</span></article>)}</div></section>
 
-        <section className="help portal-contact" id="iletisim"><div><h2>İletişim</h2></div><p>Yazıcı kullanımı için atölye sorumlusuyla yüz yüze iletişime geçin.</p><Link className="button secondary" href="/3d-yazicilar">Yazıcı bilgileri</Link></section>
+        {(contact.phone || contact.whatsapp || contact.email) && <section className="help portal-contact" id="iletisim"><div><h2>İletişim</h2>{contact.hours && <p>{contact.hours}</p>}</div><div className="contact-actions">{contact.phone && <a className="button primary" href={`tel:${contact.phone}`}>{contact.phone}</a>}{whatsappHref && <a className="button secondary" href={whatsappHref} target="_blank" rel="noreferrer">WhatsApp</a>}{contact.email && <a className="button secondary" href={`mailto:${contact.email}`}>{contact.email}</a>}</div></section>}
 
         <footer><div className="footer-brand"><img src="/logo.jpg" alt="" width={44} height={44} /><div><strong>Sparkoff</strong><span>Proje Atölyesi</span></div></div><span>© 2026 Sparkoff Proje Atölyesi</span></footer>
         <Link className="mobile-booking" href="/3d-yazicilar">3D yazıcıları incele <ArrowIcon /></Link>

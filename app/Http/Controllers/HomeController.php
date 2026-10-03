@@ -6,6 +6,7 @@ use App\Enums\PrinterStatus;
 use App\Models\BlackoutPeriod;
 use App\Models\OperatingHour;
 use App\Models\Printer;
+use App\Models\Setting;
 use Carbon\CarbonImmutable;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -41,6 +42,12 @@ class HomeController extends Controller
                     ? $this->formatTime($todayHours->opens_at).'–'.$this->formatTime($todayHours->latest_start_at)
                     : 'Bugün kapalı',
                 'daysLabel' => $this->daysLabel(),
+            ],
+            'contact' => [
+                'phone' => Setting::valueOf('workshop.contact_phone'),
+                'whatsapp' => Setting::valueOf('workshop.whatsapp_number'),
+                'email' => Setting::valueOf('workshop.contact_email'),
+                'hours' => Setting::valueOf('workshop.contact_hours'),
             ],
             'printers' => $printers->map(function (Printer $printer) use ($currentBlocks, $globalBlock) {
                 $block = $globalBlock ?? $currentBlocks->firstWhere('printer_id', $printer->id);

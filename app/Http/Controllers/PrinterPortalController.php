@@ -52,7 +52,8 @@ class PrinterPortalController extends Controller
             'contact' => [
                 'phone' => Setting::valueOf('workshop.contact_phone'),
                 'whatsapp' => Setting::valueOf('workshop.whatsapp_number'),
-                'hours' => Setting::valueOf('workshop.contact_hours', 'Atölye çalışma saatleri içinde'),
+                'email' => Setting::valueOf('workshop.contact_email'),
+                'hours' => Setting::valueOf('workshop.contact_hours'),
             ],
             'supportedFormats' => Setting::valueOf('uploads.allowed_extensions', ['gcode', '3mf', 'stl', 'step', 'stp', 'obj']),
             'schedule' => BlackoutPeriod::query()

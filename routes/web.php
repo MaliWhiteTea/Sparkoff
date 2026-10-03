@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\CalendarController as AdminCalendarController;
 use App\Http\Controllers\Admin\FilamentSettingsController as AdminFilamentSettingsController;
 use App\Http\Controllers\Admin\PrinterSettingsController as AdminPrinterSettingsController;
 use App\Http\Controllers\Admin\PrivacySettingsController as AdminPrivacySettingsController;
+use App\Http\Controllers\Admin\WorkshopSettingsController as AdminWorkshopSettingsController;
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\FilamentController;
 use App\Http\Controllers\HomeController;
@@ -59,6 +60,8 @@ Route::prefix('yonetim')->name('admin.')->group(function () {
             Route::post('/filamentler', [AdminFilamentSettingsController::class, 'store'])->name('filaments.store');
             Route::patch('/filamentler/{filament}', [AdminFilamentSettingsController::class, 'update'])->name('filaments.update');
             Route::patch('/filament-turleri/{material}/kullanilabilirlik', [AdminFilamentSettingsController::class, 'updateMaterialAvailability'])->name('filaments.material-availability');
+            Route::get('/atolye', [AdminWorkshopSettingsController::class, 'edit'])->name('workshop.edit');
+            Route::put('/atolye', [AdminWorkshopSettingsController::class, 'update'])->name('workshop.update');
         });
     });
 });
