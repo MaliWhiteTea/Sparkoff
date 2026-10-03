@@ -1,402 +1,359 @@
-# 3D Yazıcı Randevu Sistemi — Ürün ve Geliştirme Roadmap'i
+# Sparkoff Proje Atölyesi — Ürün ve Geliştirme Roadmap'i
 
-> Okul atölyesi için ücretsiz, hesapsız ve yönetici onaylı 3D yazıcı randevu sistemi.
+> Sparkoff Proje Atölyesi'nin hizmetlerini tek merkezde sunan, mobil uyumlu ve modüler atölye portalı.
 
 ## İçindekiler
 
-- [Proje özeti](#proje-özeti)
+- [Proje vizyonu](#proje-vizyonu)
 - [Temel kararlar](#temel-kararlar)
-- [Kullanıcı akışı](#kullanıcı-akışı)
-- [Yönetici yetenekleri](#yönetici-yetenekleri)
+- [Bilgi mimarisi](#bilgi-mimarisi)
+- [3D yazıcı sistemi](#3d-yazıcı-sistemi)
+- [Malzeme ve ekipman sistemi](#malzeme-ve-ekipman-sistemi)
+- [Yönetici paneli](#yönetici-paneli)
 - [Geliştirme fazları](#geliştirme-fazları)
-- [KVKK ve mahremiyet](#kvkk-ve-mahremiyet)
+- [Mahremiyet yaklaşımı](#mahremiyet-yaklaşımı)
 - [MVP kabul kriterleri](#mvp-kabul-kriterleri)
-- [Gelecek sürümler](#gelecek-sürümler)
+- [Ertelenen özellikler](#ertelenen-özellikler)
 
-## Proje özeti
+## Proje vizyonu
 
-Sistem, okul atölyesindeki 3D yazıcılar için randevu oluşturmayı ve baskı sürecini takip etmeyi sağlar. Kullanıcı hesabı bulunmaz. Kullanıcılar e-posta doğrulaması yaptıktan sonra kendilerine gönderilen güvenli bağlantı üzerinden randevularını takip eder ve iptal edebilir.
+Sparkoff yalnızca bir 3D yazıcı randevu sitesi olmayacaktır. Ana sayfa, atölyeyi ve sunduğu hizmetleri tanıtan bir portal görevi görecek; her hizmet zamanla kendi modülü olarak portala eklenecektir.
 
-Başlangıçta iki yazıcı sisteme tanımlanır:
+İlk tamamlanacak modül **3D Yazıcılar** modülüdür. Ziyaretçiler yazıcıların durumunu, boş ve dolu zamanlarını, bakım aralıklarını ve mevcut filamentleri görebilecek; ancak siteden randevu oluşturmayacaktır. Randevu görüşmeleri yüz yüze, telefon veya WhatsApp üzerinden yürütülecektir.
 
-- Bir yazıcı rezervasyona açıktır.
-- Arızalı olan ikinci yazıcı **Bakımda** durumunda tutulur ve rezervasyona kapalıdır.
+İkinci ana modül, 3D yazıcı sistemi tamamlandıktan sonra geliştirilecek **Malzeme ve Ekipman** sistemidir. Bu modül Arduino, sensör, motor, elektronik bileşen ve benzeri atölye stoklarının yönetilmesini sağlayacaktır.
 
 ## Temel kararlar
 
 | Konu | Karar |
 |---|---|
-| Kullanım alanı | Okul atölyesi |
-| Ücretlendirme | Ücretsiz |
+| Ürün tipi | Modüler atölye portalı |
+| İlk modül | 3D yazıcı durumu ve müsaitlik takvimi |
+| İkinci modül | Malzeme ve ekipman stok yönetimi |
 | Arayüz dili | Türkçe |
 | Kullanıcı hesabı | Yok |
-| Kimlik doğrulama | E-posta doğrulaması ve güvenli takip bağlantısı |
-| Toplanan iletişim bilgileri | Ad, soyad, e-posta ve telefon numarası |
-| Telefonun kullanım amacı | Acil ve operasyonel durumlarda kullanıcıya hızlıca ulaşmak |
-| Bildirim kanalı | E-posta; SMS kullanılmayacak |
-| Başlangıçtaki onay modeli | Her randevu yönetici onayından geçer |
-| İptal | Kullanıcı istediği zaman iptal edebilir |
-| Dosya yükleme | Zorunlu |
-| Desteklenen dosyalar | G-code, 3MF, STL ve STEP/STP |
-| Filament | Atölye filamenti veya kullanıcının kendi filamenti |
-| Varsayılan randevu başlangıç aralığı | Her gün 09.00–21.00, 30 dakikalık adımlar; baskı bitiş saati sınırlandırılmaz |
-| Yönetilebilirlik | Çalışma düzeni dahil operasyonel kurallar yönetici panelinden değiştirilebilir |
+| Çevrimiçi randevu | İlk sürümde yok |
+| Ziyaretçiden kişisel veri | Toplanmayacak |
+| Ziyaretçi dosya yükleme | Olmayacak |
+| Randevu iletişimi | Yüz yüze, telefon veya WhatsApp |
+| Kamuya açık takvim | Müsait, dolu, bakımda, arızalı ve kapalı durumları |
+| Takvimde kişisel bilgi | Kullanıcı adı, telefon, proje ve dosya gösterilmeyecek |
+| Yazıcı sayısı | Başlangıçta iki; durumları yönetici tarafından değiştirilebilir |
+| Filamentler | Tür, renk, marka, teknik özellik ve kullanılabilirlik gösterilecek |
+| Yönetilebilirlik | Operasyonel içerik ve kurallar yönetici panelinden değiştirilebilir |
 | Barındırma | Mevcut cPanel sunucusu |
+| Teknoloji | Laravel, Inertia.js, React ve TypeScript |
 
-## Kullanıcı akışı
-
-1. Kullanıcı rezervasyona açık yazıcıyı görür.
-2. Takvimden uygun tarihi, başlangıç saatini ve süreyi seçer.
-3. Sistem seçimin çalışma saatlerine, kapalı zamanlara ve mevcut randevulara uygunluğunu kontrol eder.
-4. Kullanıcı ad, soyad, e-posta ve telefon numarasını girer.
-5. G-code, 3MF, STL veya STEP/STP dosyası yükler.
-6. Atölye filamentini veya kendi filamentini kullanmayı seçer.
-7. Gerekli baskı ayrıntılarını doldurur ve aydınlatma metnine erişir.
-8. Sistem doğrulama e-postası gönderir.
-9. E-posta doğrulanınca randevu **Onay bekliyor** durumuna geçer.
-10. Yönetici randevuyu inceler ve işlem yapar.
-11. Kullanıcı, e-postayla gönderilen güvenli bağlantıdan süreci takip eder veya randevuyu iptal eder.
-
-### Randevu durumları
+## Bilgi mimarisi
 
 ```text
-Onay bekliyor
-    ├── Değişiklik istendi
-    ├── Reddedildi
-    ├── İptal edildi
-    └── Onaylandı
-          └── Baskıya hazır
-                └── Basılıyor
-                      ├── Tamamlandı
-                      └── Baskı başarısız
+Sparkoff Proje Atölyesi
+│
+├── Ana Sayfa
+│   ├── Atölye tanıtımı
+│   ├── Hizmetler
+│   ├── Atölye durumu
+│   ├── Duyurular
+│   └── İletişim
+│
+├── 3D Yazıcılar
+│   ├── Yazıcı durumları
+│   ├── Haftalık müsaitlik takvimi
+│   ├── Mevcut filamentler
+│   ├── Baskı kuralları
+│   └── Randevu için iletişim
+│
+└── Malzeme ve Ekipman
+    ├── Genel stok görünümü
+    ├── Malzeme kategorileri
+    ├── Stok hareketleri
+    └── Ödünç/sarf ayrımı
 ```
 
-## Yönetici yetenekleri
+### Ana sayfa
 
-Yönetici paneli aşağıdaki işlemleri desteklemelidir:
+Ana sayfa belirli bir sisteme ait form değil, atölyenin kurumsal giriş noktası olacaktır:
 
-- Günlük, haftalık ve liste şeklinde randevu görünümü
-- Bekleyen randevuları inceleme
-- Randevuyu onaylama veya reddetme
-- Kullanıcıdan değişiklik ya da yeni dosya isteme
-- Randevu süresini veya yazıcıyı değiştirme
-- Randevu durumunu güncelleme
-- Yüklenen dosyaya güvenli biçimde erişme
-- Kullanıcıya işlem e-postası gönderme
-- Yönetici notu ekleme
-- Randevu ve yönetici işlem geçmişini görüntüleme
-- Yazıcı ekleme ve durumunu değiştirme
-- Çalışma günlerini ve saatlerini yönetme
-- Bakım, tatil ve özel kapalı zamanlar tanımlama
-- Zaman dilimi büyüklüğünü değiştirme
-- Minimum ve maksimum randevu süresini belirleme
-- En erken ve en geç rezervasyon tarihini belirleme
-- Randevular arasında hazırlık/temizlik süresi tanımlama
-- İzin verilen dosya türlerini ve dosya boyutu sınırını değiştirme
-- Atölye filament türlerini, renklerini ve stok durumunu yönetme
-- E-posta şablonlarını ve temel sistem ayarlarını yönetme
+- Sparkoff Proje Atölyesi'nin kısa tanıtımı
+- Atölyenin açık/kapalı durumu
+- Güncel duyurular
+- Hizmet kartları
+- 3D yazıcıların özet durumu
+- İletişim bilgileri
+- Gelecekteki modüller için genişleyebilir alan
 
-> Yönetici bir randevunun tarihini veya saatini değiştirirse kullanıcıya açık bir bildirim gönderilmelidir. Değişiklik sessizce uygulanmamalıdır.
+İlk yayında **3D Yazıcılar** kartı aktif, **Malzeme ve Ekipman** kartı ise “Yakında” etiketiyle gösterilecektir.
+
+## 3D yazıcı sistemi
+
+### Ziyaretçi deneyimi
+
+Ziyaretçi `/3d-yazicilar` bölümünde:
+
+- Her yazıcının adını, kodunu ve mevcut durumunu görür.
+- Günlük veya haftalık takvimden boş ve dolu zamanları inceler.
+- Bakım, arıza ve atölyenin kapalı olduğu zamanları ayırt eder.
+- Atölyedeki mevcut filamentleri ve teknik özelliklerini inceler.
+- Desteklenen dosya biçimlerini ve temel baskı kurallarını okur.
+- Randevu için telefon veya WhatsApp bağlantısını kullanır.
+
+Ziyaretçi form doldurmaz, hesap oluşturmaz, dosya yüklemez ve siteye ad, soyad, e-posta veya telefon bilgisi girmez.
+
+### Kamuya açık durumlar
+
+| Durum | Anlamı |
+|---|---|
+| Müsait | İletişime geçilerek kullanım talep edilebilir |
+| Dolu | Yazıcı belirtilen zaman aralığında kullanımdadır |
+| Bakımda | Planlı bakım nedeniyle kullanılamaz |
+| Arızalı | Teknik arıza nedeniyle kullanılamaz |
+| Kapalı | Atölye veya yazıcı ilgili zaman aralığında kullanıma kapalıdır |
+
+### Takvim kuralları
+
+- Kamuya açık takvimde yalnızca durum ve zaman aralığı gösterilir.
+- Doluluk kaydında kullanıcıya ilişkin hiçbir alan bulunmaz.
+- Doluluklar belirli bir yazıcıya bağlanır.
+- Başlangıç ve bitiş zamanı yönetici tarafından belirlenir.
+- Çakışan kayıtlar sunucu tarafında engellenir.
+- Tüm günü veya birden fazla günü kapsayan bakım/kapalı zaman oluşturulabilir.
+- Mobil görünümde gün bazlı liste, geniş ekranda haftalık takvim kullanılabilir.
+
+### Filament kataloğu
+
+Her filament için şu bilgiler desteklenecektir:
+
+- Malzeme türü, renk ve marka
+- Çap ve makara ağırlığı
+- Nozzle ve tabla sıcaklık aralıkları
+- Teknik kullanım notu
+- Kullanılabilirlik durumu
+- Geçici kullanılamama gerekçesi
+
+### İletişim alanı
+
+- Telefon numarası ve WhatsApp bağlantısı yönetici panelinden değiştirilebilir olmalıdır.
+- Numaranın herkese açık olduğu yönetici ekranında belirtilmelidir.
+- Mümkünse kişisel numara yerine ayrı bir atölye hattı kullanılmalıdır.
+- WhatsApp bağlantısının üçüncü taraf hizmete yönlendirdiği belirtilmelidir.
+- İletişim saatleri ayrıca tanımlanabilmelidir.
+
+## Malzeme ve ekipman sistemi
+
+Bu modül 3D yazıcı sistemi tamamlandıktan sonra geliştirilecektir.
+
+### Amaç
+
+Atölyedeki Arduino, sensör, motor, geliştirme kartı, kablo, el aleti ve sarf malzemelerinin güncel durumunu yönetmek.
+
+### Temel stok durumları
+
+- Toplam adet
+- Kullanılabilir adet
+- Kullanımda/ödünç verilen adet
+- Rezerve edilen adet
+- Arızalı veya kayıp adet
+- Minimum stok seviyesi
+
+### Malzeme türleri
+
+| Tür | Örnek | Davranış |
+|---|---|---|
+| Sarf malzemesi | Lehim teli, jumper kablo | Verildiğinde kullanılabilir stok azalır |
+| Ödünç ekipman | Arduino Uno, multimetre | Verildiğinde kullanımda sayısı artar; iade beklenir |
+| Demirbaş | Osiloskop, güç kaynağı | Konumu ve kullanım durumu takip edilir |
+
+İlk stok sürümü yalnızca miktarları ve stok hareketlerini yönetecek; malzemeyi teslim alan kişinin adı veya iletişim bilgisi siteye kaydedilmeyecektir. Kişi bazlı ödünç takip istenirse ayrı bir veri koruma değerlendirmesi yapılacaktır.
+
+## Yönetici paneli
+
+```text
+Genel Bakış
+├── Atölye özeti
+├── Bugünkü yazıcı durumu
+└── Kritik stok/bakım uyarıları
+
+3D Yazıcılar
+├── Uygunluk takvimi
+├── Yazıcılar
+├── Filamentler
+├── Çalışma saatleri
+└── Baskı ve iletişim ayarları
+
+Malzeme ve Ekipman
+└── Yakında
+
+Site Yönetimi
+├── Atölye bilgileri
+├── İletişim
+└── Duyurular
+```
+
+Yönetici:
+
+- Takvime dolu zaman ekleyebilir, düzenleyebilir ve silebilir.
+- Yazıcıyı aktif, bakımda, arızalı veya pasif duruma alabilir.
+- Planlı bakım ve özel kapalı zaman tanımlayabilir.
+- Çalışma günleri ile saatlerini değiştirebilir.
+- Filamentleri ve teknik özelliklerini yönetebilir.
+- Filament türünü gerekçe belirterek geçici olarak kapatabilir.
+- Kamuya açık telefon, WhatsApp ve iletişim saatlerini düzenleyebilir.
+- Takvim kayıtlarında kişisel bilgi tutulmaması konusunda uyarılır.
 
 ## Geliştirme fazları
 
-### Faz 0 — Teknik keşif ve cPanel kontrolü
+### Faz 0 — Yön değişikliği ve veri minimizasyonu
 
-Öncelikle mevcut sunucunun yetenekleri doğrulanacaktır:
+- Çevrimiçi randevuyu ürün kapsamından çıkar.
+- `/randevu`, doğrulama ve takip rotalarını kamu erişimine kapat.
+- Ana sayfadaki “Randevu oluştur” çağrılarını kaldır.
+- Mevcut randevu kodunu geri dönüş ihtimali için silmeden izole et.
+- Yeni takvimde kişisel veri alanlarını kullanma.
 
-- Node.js uygulama desteği
-- PHP ve MySQL/MariaDB sürümleri
-- Cron job desteği
-- SMTP/e-posta gönderme imkânı
-- Dosya ve disk kullanım sınırları
-- SSL ve domain/subdomain durumu
-- Yedekleme olanakları
+**Çıktı:** Ziyaretçiden kişisel veri veya dosya toplamayan güvenli başlangıç noktası.
 
-Node.js desteği yeterliyse Next.js tabanlı mimari değerlendirilebilir. Klasik cPanel ortamında daha güvenilir dağıtım için önerilen alternatif:
+### Faz 1 — Atölye portalı ana sayfası
 
-- Laravel
-- Inertia.js
-- React ve TypeScript
-- Tailwind CSS
-- Framer Motion
-- MySQL/MariaDB
+- Ana sayfayı atölye portalına dönüştür.
+- Atölye tanıtımı ve hizmet kartlarını ekle.
+- 3D Yazıcılar modülüne belirgin geçiş oluştur.
+- Malzeme ve Ekipman kartını “Yakında” olarak ekle.
+- Yönetilebilir iletişim ve atölye durumu alanlarını oluştur.
+- Mobil menü ve erişilebilir gezinmeyi tamamla.
 
-**Çıktı:** Kesin teknoloji seçimi, yerel geliştirme düzeni ve yayınlama planı.
+**Çıktı:** Sparkoff'un tüm modüllerini taşıyabilecek yeni ana sayfa.
 
-### Faz 1 — İş kuralları ve veri modeli
+### Faz 2 — Kamuya açık 3D yazıcı sayfası
 
-Planlanan temel veri yapıları:
+- `/3d-yazicilar` sayfasını oluştur.
+- Yazıcı durum kartlarını ekle.
+- Haftalık/günlük uygunluk takvimini oluştur.
+- Durumlar için açık ve erişilebilir görsel dil tanımla.
+- Filament kataloğunu modüle bağla.
+- Baskı kuralları ve desteklenen formatları göster.
+- Telefon ve WhatsApp çağrılarını ekle.
 
-- Yöneticiler
-- Yazıcılar
-- Randevular
-- Randevu durum geçmişi
-- Yüklenen dosyalar
-- Filament seçenekleri
-- Çalışma saatleri
-- Kapalı ve bakım zamanları
-- Sistem ayarları
-- E-posta doğrulama anahtarları
-- Randevu takip anahtarları
-- Yönetici işlem kayıtları
-- Aydınlatma metni sürümleri
+**Çıktı:** Ziyaretçilerin kişisel veri vermeden yazıcı durumunu anlayabildiği modül.
 
-Randevu çakışmaları yalnızca arayüzde değil, sunucu ve veritabanı seviyesinde de engellenmelidir. Aynı zaman aralığına eş zamanlı başvuru yapıldığında yalnızca bir randevu kabul edilmelidir.
+### Faz 3 — Yönetici doluluk takvimi
 
-**Çıktı:** Veritabanı şeması, durum geçişleri ve doğrulama kuralları.
+- Kişisel veri içermeyen `schedule_blocks` veri modelini oluştur.
+- Yazıcı, başlangıç, bitiş, durum ve kamuya açık kısa açıklama alanlarını ekle.
+- Çakışma kontrolünü sunucu tarafında uygula.
+- Takvimden kayıt ekleme, düzenleme ve silme akışlarını oluştur.
+- Tüm gün ve çok günlük bakım/kapalı zamanlarını destekle.
+- Temel yönetici işlem kaydı tut.
 
-### Faz 2 — Tasarım sistemi ve prototip
+**Çıktı:** Yüz yüze alınan randevuların anonim doluluk olarak işlendiği takvim.
 
-Arayüz, hazır bir yönetim paneli veya basit takvim görünümünden ayrışan özgün bir tasarıma sahip olacaktır.
+### Faz 4 — Yazıcı, filament ve çalışma ayarları
 
-#### Görsel yaklaşım
+- Mevcut yazıcı yönetimini yeni kamu sayfasına bağla.
+- Yazıcı bakım ve arıza durumlarını takvime yansıt.
+- Filament kullanılabilirlik sistemini tamamla.
+- Çalışma saatlerini kamu takviminde uygula.
+- İletişim bilgilerini yönetilebilir yap.
+- Baskı kuralları ve dosya biçimlerini salt bilgi olarak göster.
 
-- Dijital üretim laboratuvarı estetiği
-- Koyu grafit ve sıcak açık yüzeyler
-- Filament turuncusu veya elektrik yeşili vurgu rengi
-- Katman çizgileri ve teknik çizim detayları
-- Canlı yazıcı durum kartları
-- Doluluk oranını görselleştiren modern takvim
-- Kontrollü mikro animasyonlar
-- Mobil öncelikli, erişilebilir arayüz
+**Çıktı:** Operasyonel bilgilerin yönetici panelinden güncellenebildiği sistem.
 
-#### Tasarlanacak ekranlar
+### Faz 5 — Site yönetimi ve duyurular
 
-1. Ana sayfa
-2. Uygun zaman seçimi
-3. Randevu ve iletişim formu
-4. Dosya yükleme ve filament seçimi
-5. E-posta doğrulama sonucu
-6. Randevu takip sayfası
-7. Yönetici girişi
-8. Yönetici genel görünümü
-9. Takvim ve randevu yönetimi
-10. Yazıcı, filament ve sistem ayarları
+- Atölye başlığı, açıklaması ve iletişim bilgilerini yönetilebilir yap.
+- Duyuru oluşturma, yayınlama ve yayından kaldırma özelliklerini ekle.
+- Planlı bakım ve önemli uyarıları ana sayfada göster.
+- Hizmet kartlarını yeni modüllere uygun tasarla.
 
-**Çıktı:** Mobil ve masaüstü tasarım sistemi ile tıklanabilir akış/prototip.
+**Çıktı:** İçeriği kod değişikliği olmadan güncellenebilen portal.
 
-### Faz 3 — Temel kullanıcı randevu akışı
+### Faz 6 — Test, güvenlik ve erişilebilirlik
 
-- Müsaitlik takvimi
-- Tarih, başlangıç saati ve süre seçimi
-- Sunucu tarafında çakışma kontrolü
-- İletişim bilgilerinin alınması
-- Zorunlu dosya yükleme
-- Filament tercihi
-- Katmanlı KVKK bilgilendirmesi
-- E-posta doğrulaması
-- Güvenli takip ve iptal bağlantısı
-- Randevu durum geçmişi
+- Takvim çakışma ve sınır testleri
+- Yetkisiz yönetici erişimi testleri
+- Mobil ve masaüstü görünüm testleri
+- Klavye ile gezinme ve ekran okuyucu etiketleri
+- Renklerin yalnız başına durum belirtmemesi
+- XSS, CSRF, oturum ve hız sınırlama kontrolleri
+- Kişisel bilgi içeren yönetici notlarını önleyici uyarılar
+- Yedekleme ve geri yükleme testi
 
-Kullanıcı hesabı ve parola olmayacaktır. Takip bağlantıları uzun, tahmin edilemeyen ve gerektiğinde geçersizleştirilebilir anahtarlar kullanacaktır.
+**Çıktı:** Canlı kullanıma uygun, test edilmiş ilk sürüm.
 
-**Çıktı:** Uçtan uca çalışan kullanıcı randevu deneyimi.
+### Faz 7 — cPanel yayını
 
-### Faz 4 — Yönetici paneli
+- Production veritabanı, domain ve SSL yapılandırması
+- Ortam değişkenleri ve Laravel `public` belge kökü
+- Migration'lar ve üretim varlıkları
+- Dosya/dizin izinleri
+- İlk yönetici hesabı
+- Yedekleme ve hata kayıtları
+- Mobil ve masaüstü canlı kabul testi
 
-- Güvenli yönetici girişi
-- Takvim ve liste görünümleri
-- Filtreleme ve arama
-- Onaylama, reddetme ve değişiklik isteme
-- Randevu süresi ve yazıcı düzenleme
-- Durum güncelleme
-- Dosya erişimi
-- Yönetici notları
-- Yazıcı ve bakım yönetimi
-- Çalışma takvimi ayarları
-- Filament yönetimi
-- E-posta şablonları
-- İşlem kayıtları
+**Çıktı:** cPanel üzerinde çalışan Sparkoff Proje Atölyesi portalı.
 
-**Çıktı:** Atölyenin günlük operasyonunu karşılayan yönetici paneli.
+### Faz 8 — Malzeme ve ekipman modülü
 
-### Faz 5 — Dosya yönetimi ve güvenlik
+- Kategori ve ürün veri modelleri
+- Stok giriş/çıkış hareketleri
+- Sarf ve ödünç ekipman ayrımı
+- Arızalı/kayıp durumları
+- Kritik stok uyarıları
+- Kamuya açık stok görünümü
+- Kişi bilgisi toplamayan ilk teslim modeli
+- Raporlama ve hareket geçmişi
 
-İzin verilen başlangıç formatları:
+**Çıktı:** Atölye malzemelerinin adet ve durum bazında yönetildiği ikinci ana modül.
 
-- `.gcode`
-- `.3mf`
-- `.stl`
-- `.step`
-- `.stp`
+## Mahremiyet yaklaşımı
 
-Uygulanacak başlıca önlemler:
+İlk sürüm ziyaretçiden form yoluyla kişisel veri toplamayacaktır:
 
-- Uzantı ve gerçek dosya türü kontrolü
-- Dosya boyutu sınırı
-- Güvenli ve rastgele depolama adı
-- Dosyaları herkese açık web klasörünün dışında saklama
-- Yalnızca yetkili yöneticilere erişim verme
-- Dosya adlarını arayüzde güvenli biçimde gösterme
-- G-code dosyalarını sunucuda hiçbir şekilde çalıştırmama
-- Saklama süresi biten dosyaları otomatik silme
-- Yetkisiz indirme ve dizin geçişi girişimlerini engelleme
+- Ad, soyad, e-posta ve telefon alanı bulunmayacak.
+- Kullanıcı hesabı ve üyelik sistemi bulunmayacak.
+- Ziyaretçi dosya yükleyemeyecek.
+- Takvim kayıtlarında randevu sahibinin bilgisi tutulmayacak.
+- Analiz, reklam veya zorunlu olmayan takip çerezi eklenmeyecek.
+- Yönetici notlarında kişisel bilgi tutulmayacak.
 
-STL/3MF için üç boyutlu önizleme ilk sürüme yetişirse eklenebilir. STEP önizleme daha karmaşık olduğundan ilk sürümde güvenli indirme ve manuel inceleme yeterlidir.
+Tamamen “veri yoktur” iddiasında bulunulmayacaktır. Hosting sağlayıcısının güvenlik amacıyla IP ve erişim logları tutabileceği, WhatsApp/telefon iletişiminin siteden ayrı bir kanal olduğu dikkate alınacaktır.
 
-**Çıktı:** Kontrollü dosya yükleme, saklama, indirme ve silme sistemi.
+Kamuya açık kısa gizlilik bilgilendirmesi; sitede üyelik veya iletişim formu olmadığını, doğrudan kişisel bilgi istenmediğini, zorunlu olmayan çerez kullanılmadığını, sunucu güvenlik loglarının tutulabileceğini ve WhatsApp'ın üçüncü taraf hizmet olduğunu açıklamalıdır.
 
-### Faz 6 — E-posta sistemi
-
-Planlanan e-postalar:
-
-- E-posta adresi doğrulama
-- Randevu talebi alındı
-- Randevu onaylandı
-- Değişiklik istendi
-- Randevu reddedildi
-- Randevu hatırlatması
-- Baskı başladı
-- Baskı tamamlandı
-- Baskı başarısız
-- Randevu iptal edildi
-
-Cron job desteği kullanılarak yaklaşan randevular için otomatik hatırlatma gönderilebilir. SMTP bilgileri kaynak kodda tutulmamalı; sunucu ortam değişkenlerinde saklanmalıdır.
-
-**Çıktı:** Markaya uygun, izlenebilir ve güvenilir e-posta bildirim sistemi.
-
-### Faz 7 — KVKK ve mahremiyet
-
-Hazırlanması ve doğrulanması gerekenler:
-
-- Kişisel veri işleme envanteri
-- Aydınlatma metni
-- Saklama ve imha politikası
-- İlgili kişi başvuru kanalı
-- Yönetici yetki matrisi
-- Dosya saklama kuralları
-- Olay/veri ihlali müdahale prosedürü
-- Kullanılan servisler için veri aktarım değerlendirmesi
-- Zorunlu olmayan çerezler kullanılırsa çerez politikası ve izin mekanizması
-
-Telefon numarası yalnızca randevu sırasında oluşabilecek gecikme, cihaz arızası, güvenlik veya benzeri operasyonel durumlarda kullanıcıya ulaşmak için kullanılmalıdır. Pazarlama amacıyla kullanılmamalıdır.
-
-#### Saklama yaklaşımı
-
-- Reddedilmiş ve iptal edilmiş randevular, belirlenen kısa operasyonel sürenin ardından silinmeli veya anonimleştirilmelidir.
-- Tamamlanmış randevulardaki kişisel veriler, belirlenen makul sürenin ardından anonimleştirilmelidir.
-- Üretim dosyaları, baskı tamamlandıktan sonra belirlenen kısa süre içinde otomatik silinmelidir.
-- Güvenlik ve yönetici işlem kayıtları, amaçlarıyla sınırlı ayrı bir süre boyunca saklanmalıdır.
-- Kesin saklama süreleri okulun idari ihtiyaçları ve hukuki değerlendirmesiyle belirlenmelidir.
-
-> Aydınlatma metni ile açık rıza aynı işlem değildir. Gerekmesi halinde açık rıza, aydınlatmadan ayrı ve belirli bir amaç için alınmalıdır.
-
-**Çıktı:** Ürüne yansıtılmış mahremiyet kuralları ve yayına hazır hukuki metin taslakları.
-
-### Faz 8 — Test ve kalite kontrolü
-
-#### Kritik senaryolar
-
-- İki kullanıcının aynı saati eş zamanlı seçmesi
-- Doğrulanmamış e-posta ile oluşturulan talep
-- Geçersiz veya süresi dolmuş takip bağlantısı
-- Kapalı ya da bakımdaki yazıcının seçilmesi
-- Çalışma saatleri dışında seçim yapılması
-- Başka randevuyla kısmen çakışan süre seçilmesi
-- Çok büyük veya sahte uzantılı dosya yüklenmesi
-- Yönetici süre değiştirirken çakışma oluşması
-- İptal edilen zamanın tekrar müsait hâle gelmesi
-- E-posta gönderiminin başarısız olması
-- Yetkisiz dosya erişimi
-- Mobil cihazlarda takvim kullanımı
-
-#### Kalite kontrolleri
-
-- Mobil ve masaüstü görünüm
-- Klavye kullanımı ve erişilebilirlik
-- Performans
-- Tarayıcı uyumluluğu
-- Form doğrulamaları
-- Güvenlik testleri
-- Yedekten geri dönüş testi
-
-**Çıktı:** Kritik hataları giderilmiş, yayınlanabilir sürüm.
-
-### Faz 9 — cPanel'e yayınlama
-
-- Production veritabanını oluşturma
-- Domain veya subdomain bağlantısı
-- SSL yapılandırması
-- SMTP kurulumu
-- Dosya depolama izinleri
-- Cron job kurulumu
-- Ortam değişkenlerinin tanımlanması
-- Veritabanı yedekleme planı
-- Hata kayıtlarının yapılandırılması
-- İlk yönetici hesabının oluşturulması
-- İki yazıcının sisteme eklenmesi
-- Çalışan yazıcının rezervasyona açılması
-- Arızalı yazıcının **Bakımda** durumuna alınması
-- Gerçek e-posta ve randevu akışının test edilmesi
-
-**Çıktı:** Canlı ortamda çalışan ve izlenebilen sistem.
-
-## KVKK ve mahremiyet
-
-Sistem yalnızca hizmet için gerekli kişisel verileri toplamalıdır:
-
-| Veri | Amaç | Görünürlük |
-|---|---|---|
-| Ad ve soyad | Randevu sahibini tanımlamak | Yetkili yöneticiler ve kullanıcının takip sayfası |
-| E-posta | Doğrulama, takip bağlantısı ve bildirim göndermek | Yetkili yöneticiler |
-| Telefon | Acil ve operasyonel durumlarda hızlı iletişim kurmak | Yalnızca yetkili yöneticiler |
-| Yüklenen dosya | Baskıyı değerlendirmek ve gerçekleştirmek | Yalnızca yetkili yöneticiler |
-
-Uygulama içinde:
-
-- Telefon numarasının neden istendiği form alanının yanında açıklanmalıdır.
-- Kullanıcılar başka kullanıcıların bilgilerini görememelidir.
-- Yönetici erişimleri rol ve yetki kontrollerine tabi olmalıdır.
-- Hassas işlem ve görüntülemeler kayıt altına alınmalıdır.
-- Takip bağlantılarında kişisel bilgiler gereksiz yere gösterilmemelidir.
-- Aydınlatma metninin sürümü ve kullanıcıya gösterildiği zaman kaydedilmelidir.
-- Kişisel veriler pazarlama amacıyla kullanılmamalıdır.
+Gelecekte çevrimiçi talep, kişi bazlı ödünç verme, üyelik, e-posta bildirimi veya dosya yükleme eklenirse veri koruma değerlendirmesi yeniden yapılmalıdır.
 
 ## MVP kabul kriterleri
 
-İlk sürüm aşağıdaki koşullar sağlandığında tamamlanmış kabul edilir:
+- [ ] Ana sayfa Sparkoff Proje Atölyesi'ni ve hizmetlerini tanıtır.
+- [ ] 3D Yazıcılar modülüne ana sayfadan ulaşılabilir.
+- [ ] Malzeme ve Ekipman modülü “Yakında” olarak gösterilir.
+- [ ] Ziyaretçi aktif, bakımda, arızalı ve pasif yazıcıları ayırt edebilir.
+- [ ] Ziyaretçi günlük veya haftalık müsaitlik takvimini görebilir.
+- [ ] Takvimde hiçbir kullanıcı veya proje bilgisi gösterilmez.
+- [ ] Sistem ziyaretçiden kişisel veri ve dosya istemez.
+- [ ] Yönetici anonim doluluk kaydı ekleyebilir, düzenleyebilir ve silebilir.
+- [ ] Aynı yazıcıdaki çakışan doluluk kayıtları engellenir.
+- [ ] Bakım, kapalı zaman ve çalışma saatleri yönetilebilir.
+- [ ] Yazıcı durum değişiklikleri kamu sayfasına yansır.
+- [ ] Filamentler ve teknik özellikleri görüntülenebilir.
+- [ ] Filament türleri gerekçeyle geçici olarak kapatılabilir.
+- [ ] Telefon, WhatsApp ve iletişim saatleri yönetici panelinden değiştirilebilir.
+- [ ] Site mobil ve masaüstünde kullanılabilir.
+- [ ] Yönetici paneli yetkisiz erişime kapalıdır.
+- [ ] cPanel üretim kurulumu belgelenmiş ve test edilmiştir.
 
-- [ ] Kullanıcı yalnızca rezervasyona açık yazıcı için zaman seçebilir.
-- [ ] Sistem çalışma saatleri dışındaki seçimleri engeller.
-- [ ] Sistem dolu veya çakışan zaman aralıklarını engeller.
-- [ ] Kullanıcı ad, soyad, e-posta ve telefon bilgilerini girer.
-- [ ] Desteklenen formatlardan bir dosya yüklemek zorunludur.
-- [ ] Kullanıcı filament kaynağını seçebilir.
-- [ ] E-posta doğrulanmadan randevu yönetici onayına düşmez.
-- [ ] Doğrulanan randevu **Onay bekliyor** durumuna geçer.
-- [ ] Yönetici randevuyu onaylayabilir, reddedebilir veya değişiklik isteyebilir.
-- [ ] Kullanıcı güvenli bağlantıdan randevusunu takip edebilir.
-- [ ] Kullanıcı güvenli bağlantıdan randevusunu iptal edebilir.
-- [ ] Durum değişikliklerinde kullanıcıya e-posta gönderilir.
-- [ ] Yazıcılar ve çalışma saatleri yönetici panelinden düzenlenebilir.
-- [ ] Bakım ve kapalı zamanlar yönetilebilir.
-- [ ] Dosyalar herkese açık URL üzerinden erişilebilir değildir.
-- [ ] Yönetici işlemleri kayıt altına alınır.
-- [ ] Mobil ve masaüstü arayüzleri kullanılabilirdir.
-- [ ] Aydınlatma ve saklama kuralları uygulamaya yansıtılmıştır.
+## Ertelenen özellikler
 
-## Gelecek sürümler
+Aşağıdaki özellikler ilk sürümden çıkarılmıştır ve ancak gerekli kurumsal/veri koruma şartları netleşirse tekrar değerlendirilecektir:
 
-MVP sonrasında değerlendirilebilecek geliştirmeler:
-
-- Güvenilir kullanıcılar için otomatik onay
-- STL/3MF üç boyutlu önizleme
-- Baskı süresi tahmini
-- Filament stok takibi
-- QR kodlu randevu kontrolü
-- Yazıcıdan canlı durum alma
-- Kullanım ve yoğunluk raporları
-- Nozul, tabla ve malzeme uyumluluk kuralları
-- Bekleme listesi
-- Gelişmiş bakım takvimi
-- Kullanıcı geri bildirimi
-
-## Önerilen teslim sırası
-
-1. **Temel MVP:** Randevu formu, dosya yükleme, e-posta doğrulama, güvenli takip bağlantısı ve yönetici onayı.
-2. **Operasyon sürümü:** Gelişmiş takvim, filament/yazıcı yönetimi, e-posta otomasyonları ve sistem ayarları.
-3. **Olgunlaştırma:** Özgün animasyonlar, üç boyutlu önizleme, raporlar, güvenlik iyileştirmeleri ve kapsamlı kullanım testleri.
+- Çevrimiçi randevu formu
+- Ad, soyad, e-posta ve telefon toplama
+- Kullanıcı hesabı
+- E-posta doğrulama ve bildirimler
+- Baskı dosyası yükleme
+- Güvenli randevu takip bağlantısı
+- Kullanıcı tarafından çevrimiçi iptal
+- Kişi bazlı malzeme ödünç takibi
 
 ---
 
-Sonraki adım, mevcut cPanel özelliklerini doğrulayıp teknik mimariyi kesinleştirmek; ardından veri modelini ve ekran haritasını oluşturmaktır.
+Sonraki adım, **Faz 0 ve Faz 1** kapsamında mevcut randevu rotalarını kamu erişimine kapatmak ve ana sayfayı Sparkoff Proje Atölyesi portalına dönüştürmektir.
