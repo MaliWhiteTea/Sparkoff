@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Models\BlackoutPeriod;
+use App\Models\Printer;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
@@ -33,6 +35,25 @@ class WorkshopPortalTest extends TestCase
 
         $this->get(route('booking.create'))->assertRedirect(route('printers.public'));
         $this->post(route('booking.store'))->assertNotFound();
+    }
+
+    public function test_public_portal_shows_anonymous_schedule_blocks(): void
+    {
+        $printer = Printer::query()->firstOrFail();
+        $block = BlackoutPeriod::query()->create([
+            'printer_id' => $printer->id,
+            'kind' => 'busy',
+            'starts_at' => now()->addHour(),
+            'ends_at' => now()->addHours(3),
+            'reason' => 'Baskı sürüyor',
+        ]);
+
+        $this->get(route('printers.public'))->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->has('schedule', 1)
+            ->where('schedule.0.id', $block->id)
+            ->where('schedule.0.kind', 'busy')
+            ->where('schedule.0.note', 'Baskı sürüyor')
+            ->missing('schedule.0.user'));
     }
 
     public function test_privacy_page_does_not_claim_that_a_booking_form_collects_data(): void

@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class BlackoutPeriod extends Model
 {
-    protected $fillable = ['printer_id', 'starts_at', 'ends_at', 'reason'];
+    protected $fillable = ['printer_id', 'kind', 'starts_at', 'ends_at', 'reason'];
 
     protected function casts(): array
     {

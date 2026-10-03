@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\PrinterStatus;
+use App\Models\BlackoutPeriod;
 use App\Models\Filament;
 use App\Models\OperatingHour;
 use App\Models\Printer;
@@ -14,6 +15,9 @@ class PrinterPortalController extends Controller
 {
     public function __invoke(): Response
     {
+        $calendarStart = now()->startOfDay();
+        $calendarEnd = $calendarStart->copy()->addDays(7);
+
         return Inertia::render('Printers', [
             'printers' => Printer::query()->orderBy('sort_order')->get()->map(fn (Printer $printer) => [
                 'code' => $printer->code,
@@ -39,7 +43,32 @@ class PrinterPortalController extends Controller
                 'hours' => Setting::valueOf('workshop.contact_hours', 'Atölye çalışma saatleri içinde'),
             ],
             'supportedFormats' => Setting::valueOf('uploads.allowed_extensions', ['gcode', '3mf', 'stl', 'step', 'stp', 'obj']),
+            'schedule' => BlackoutPeriod::query()
+                ->with('printer:id,code,name')
+                ->where('ends_at', '>', $calendarStart)
+                ->where('starts_at', '<', $calendarEnd)
+                ->orderBy('starts_at')
+                ->get()
+                ->map(fn (BlackoutPeriod $block) => [
+                    'id' => $block->id,
+                    'printer' => $block->printer?->name ?? 'Tüm atölye',
+                    'printerCode' => $block->printer?->code,
+                    'kind' => $block->kind,
+                    'kindLabel' => $this->kindLabel($block->kind),
+                    'startsAt' => $block->starts_at->toIso8601String(),
+                    'endsAt' => $block->ends_at->toIso8601String(),
+                    'note' => $block->reason,
+                ]),
         ]);
+    }
+
+    private function kindLabel(string $kind): string
+    {
+        return match ($kind) {
+            'busy' => 'Dolu',
+            'maintenance' => 'Bakım',
+            default => 'Kapalı',
+        };
     }
 
     private function shortTime(?string $time): ?string

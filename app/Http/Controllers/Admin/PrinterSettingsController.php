@@ -34,6 +34,8 @@ class PrinterSettingsController extends Controller
                 ->map(fn (BlackoutPeriod $blackout) => [
                     'id' => $blackout->id,
                     'printer' => $blackout->printer?->name ?? 'Tüm atölye',
+                    'kind' => $blackout->kind,
+                    'kindLabel' => $this->kindLabel($blackout->kind),
                     'startsAt' => $blackout->starts_at->translatedFormat('d F Y, H:i'),
                     'endsAt' => $blackout->ends_at->translatedFormat('d F Y, H:i'),
                     'reason' => $blackout->reason,
@@ -42,6 +44,11 @@ class PrinterSettingsController extends Controller
                 ['value' => PrinterStatus::Active->value, 'label' => 'Aktif'],
                 ['value' => PrinterStatus::Maintenance->value, 'label' => 'Bakımda'],
                 ['value' => PrinterStatus::Inactive->value, 'label' => 'Pasif'],
+            ],
+            'scheduleKinds' => [
+                ['value' => 'busy', 'label' => 'Dolu'],
+                ['value' => 'maintenance', 'label' => 'Bakım'],
+                ['value' => 'closed', 'label' => 'Kapalı'],
             ],
         ]);
     }
@@ -82,25 +89,51 @@ class PrinterSettingsController extends Controller
     {
         $validated = $request->validate([
             'printer_id' => ['nullable', 'integer', 'exists:printers,id'],
+            'kind' => ['required', Rule::in(['busy', 'maintenance', 'closed'])],
             'starts_at' => ['required', 'date_format:Y-m-d\TH:i'],
             'ends_at' => ['required', 'date_format:Y-m-d\TH:i', 'after:starts_at'],
             'reason' => ['required', 'string', 'max:255'],
         ]);
 
+        $printerId = $validated['printer_id'] ?? null;
+        $startsAt = CarbonImmutable::createFromFormat('Y-m-d\TH:i', $validated['starts_at'], config('app.timezone'));
+        $endsAt = CarbonImmutable::createFromFormat('Y-m-d\TH:i', $validated['ends_at'], config('app.timezone'));
+        $hasConflict = BlackoutPeriod::query()
+            ->when($printerId !== null, fn ($query) => $query->where(
+                fn ($scope) => $scope->whereNull('printer_id')->orWhere('printer_id', $printerId)
+            ))
+            ->where('starts_at', '<', $endsAt)
+            ->where('ends_at', '>', $startsAt)
+            ->exists();
+
+        if ($hasConflict) {
+            return back()->withErrors(['starts_at' => 'Bu yazıcı için seçilen zaman aralığı mevcut bir kayıtla çakışıyor.'])->withInput();
+        }
+
         BlackoutPeriod::query()->create([
             'printer_id' => $validated['printer_id'] ?? null,
-            'starts_at' => CarbonImmutable::createFromFormat('Y-m-d\TH:i', $validated['starts_at'], config('app.timezone')),
-            'ends_at' => CarbonImmutable::createFromFormat('Y-m-d\TH:i', $validated['ends_at'], config('app.timezone')),
+            'kind' => $validated['kind'],
+            'starts_at' => $startsAt,
+            'ends_at' => $endsAt,
             'reason' => $validated['reason'],
         ]);
 
-        return back()->with('success', 'Kapalı zaman takvime eklendi.');
+        return back()->with('success', 'Takvim kaydı eklendi.');
     }
 
     public function destroyBlackout(BlackoutPeriod $blackout): RedirectResponse
     {
         $blackout->delete();
 
-        return back()->with('success', 'Kapalı zaman kaldırıldı.');
+        return back()->with('success', 'Takvim kaydı kaldırıldı.');
+    }
+
+    private function kindLabel(string $kind): string
+    {
+        return match ($kind) {
+            'busy' => 'Dolu',
+            'maintenance' => 'Bakım',
+            default => 'Kapalı',
+        };
     }
 }

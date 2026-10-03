@@ -212,6 +212,7 @@ class AdminPanelTest extends TestCase
         $start = CarbonImmutable::now('Europe/Istanbul')->addDay()->setTime(12, 0);
         $this->actingAs($admin)->post(route('admin.settings.blackouts.store'), [
             'printer_id' => $printer->id,
+            'kind' => 'maintenance',
             'starts_at' => $start->format('Y-m-d\TH:i'),
             'ends_at' => $start->addHours(2)->format('Y-m-d\TH:i'),
             'reason' => 'Planlı bakım',
@@ -219,8 +220,34 @@ class AdminPanelTest extends TestCase
 
         $this->assertDatabaseHas('blackout_periods', [
             'printer_id' => $printer->id,
+            'kind' => 'maintenance',
             'reason' => 'Planlı bakım',
         ]);
+    }
+
+    public function test_admin_cannot_add_an_overlapping_schedule_block(): void
+    {
+        $admin = $this->admin();
+        $printer = Printer::query()->firstOrFail();
+        $start = CarbonImmutable::now('Europe/Istanbul')->addDay()->setTime(12, 0);
+
+        BlackoutPeriod::query()->create([
+            'printer_id' => $printer->id,
+            'kind' => 'busy',
+            'starts_at' => $start,
+            'ends_at' => $start->addHours(2),
+            'reason' => 'Baskı sürüyor',
+        ]);
+
+        $this->actingAs($admin)->post(route('admin.settings.blackouts.store'), [
+            'printer_id' => $printer->id,
+            'kind' => 'maintenance',
+            'starts_at' => $start->addHour()->format('Y-m-d\TH:i'),
+            'ends_at' => $start->addHours(3)->format('Y-m-d\TH:i'),
+            'reason' => 'Bakım',
+        ])->assertSessionHasErrors('starts_at');
+
+        $this->assertDatabaseCount('blackout_periods', 1);
     }
 
     public function test_admin_can_remove_a_blackout_period(): void
