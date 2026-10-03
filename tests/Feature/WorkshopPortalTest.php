@@ -35,6 +35,16 @@ class WorkshopPortalTest extends TestCase
 
         $this->get(route('booking.create'))->assertRedirect(route('printers.public'));
         $this->post(route('booking.store'))->assertNotFound();
+        $this->get('/randevu/takip/gecersiz/gecersiz')->assertNotFound();
+    }
+
+    public function test_public_responses_include_security_headers(): void
+    {
+        $this->get(route('home'))
+            ->assertHeader('X-Content-Type-Options', 'nosniff')
+            ->assertHeader('X-Frame-Options', 'SAMEORIGIN')
+            ->assertHeader('Referrer-Policy', 'strict-origin-when-cross-origin')
+            ->assertHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
     }
 
     public function test_public_portal_shows_anonymous_schedule_blocks(): void

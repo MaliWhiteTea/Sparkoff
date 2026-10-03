@@ -13,15 +13,15 @@ export default function Home({ workshop, printers, contact, announcements }: Pro
     const availableCount = printers.filter((printer) => printer.availability === 'available').length;
     const whatsappHref = contact.whatsapp ? `https://wa.me/${contact.whatsapp.replace(/\D/g, '')}` : null;
 
-    return <main id="ust" className="portal-home">
+    return <main id="ust" className="portal-home"><a className="skip-link" href="#icerik">İçeriğe geç</a>
         <Head title="Sparkoff Proje Atölyesi" />
         <header className="site-header"><div className="header-inner">
             <a className="brand" href="#ust" aria-label="Sparkoff Proje Atölyesi ana sayfa"><img src="/logo.jpg" alt="Sparkoff logosu" width={56} height={56} /><span><strong>Sparkoff</strong><small>Proje Atölyesi</small></span></a>
-            <nav className="desktop-nav" aria-label="Ana menü"><a href="#atolye">Atölye</a><a href="#hizmetler">Hizmetler</a><Link href="/3d-yazicilar">3D Yazıcılar</Link><a href="#iletisim">İletişim</a></nav>
+            <nav className="desktop-nav" aria-label="Ana menü"><a href="#icerik">Atölye</a><a href="#hizmetler">Hizmetler</a><Link href="/3d-yazicilar">3D Yazıcılar</Link>{(contact.phone || contact.whatsapp || contact.email) && <a href="#iletisim">İletişim</a>}</nav>
             <Link className="header-button" href="/3d-yazicilar">Yazıcı durumları <ArrowIcon /></Link>
         </div></header>
 
-        <section className="portal-hero" id="atolye">
+        <section className="portal-hero" id="icerik">
             <div className="portal-hero-copy"><h1>Sparkoff Proje Atölyesi</h1><div className="hero-actions"><Link className="button primary" href="/3d-yazicilar">3D yazıcılar <ArrowIcon /></Link><a className="button secondary" href="#hizmetler">Atölye sistemleri</a></div></div>
             <aside className="portal-status-card" aria-label="Atölye durumu"><div className="portal-status-top"><span className={`open-badge ${workshop.isOpen ? '' : 'closed'}`}><i /> {workshop.isOpen ? 'Açık' : 'Kapalı'}</span><small>CANLI ATÖLYE DURUMU</small></div><h2>{workshop.statusLabel}</h2><div className="portal-status-row"><ClockIcon /><div><span>Bugünkü kullanım başlangıç aralığı</span><strong>{workshop.hours}</strong></div></div><div className="portal-printer-summary"><strong>{availableCount}/{printers.length}</strong><span>yazıcı şu anda boş</span></div><Link href="/3d-yazicilar">Ayrıntılı durumu görüntüle <ArrowIcon /></Link></aside>
         </section>

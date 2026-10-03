@@ -206,6 +206,8 @@ footer p, footer > span { margin: 0; color: #8e9ba9; font-size: .68rem; }
 .activity-log-list strong { font-size: .72rem; }
 .activity-log-list span, .activity-log-list small { color: var(--muted); font-size: .62rem; }
 @media (max-width: 600px) { .activity-log-list article { grid-template-columns: 1fr; gap: 7px; } }
+.skip-link { position: fixed; z-index: 1000; top: 8px; left: 8px; padding: 10px 14px; border-radius: 6px; background: var(--navy); color: white; transform: translateY(-150%); }.skip-link:focus { transform: translateY(0); }
+:where(a, button, input, select, textarea):focus-visible { outline: 3px solid #2b7db5; outline-offset: 3px; }
 
 .schedule-admin-actions, .schedule-edit-actions { display: flex; gap: 7px; }
 .schedule-admin-actions button:first-child, .schedule-edit-actions button:last-child { border-color: var(--navy); background: var(--navy); color: white; }
