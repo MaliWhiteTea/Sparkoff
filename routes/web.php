@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\ActivityLogController as AdminActivityLogController;
 use App\Http\Controllers\Admin\AnnouncementController as AdminAnnouncementController;
 use App\Http\Controllers\Admin\AppointmentController as AdminAppointmentController;
 use App\Http\Controllers\Admin\AuthController as AdminAuthController;
@@ -38,6 +39,7 @@ Route::prefix('yonetim')->name('admin.')->group(function () {
     Route::middleware(['auth', 'admin.active'])->group(function () {
         Route::post('/cikis', [AdminAuthController::class, 'destroy'])->name('logout');
         Route::middleware('admin.only')->group(function () {
+            Route::get('/islem-gecmisi', AdminActivityLogController::class)->name('activity-logs');
             Route::get('/duyurular', [AdminAnnouncementController::class, 'index'])->name('announcements.index');
             Route::post('/duyurular', [AdminAnnouncementController::class, 'store'])->name('announcements.store');
             Route::patch('/duyurular/{announcement}', [AdminAnnouncementController::class, 'update'])->name('announcements.update');

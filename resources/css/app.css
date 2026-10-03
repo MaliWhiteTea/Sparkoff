@@ -199,6 +199,14 @@ footer p, footer > span { margin: 0; color: #8e9ba9; font-size: .68rem; }
   .form-actions { position: sticky; bottom: 0; margin: 28px -18px -23px; padding: 14px 18px; background: white; z-index: 3; }.form-actions > * { flex: 1; padding-inline: 12px; }.success-page { padding: 30px 16px; }.success-card { padding: 35px 22px; }.success-summary { flex-direction: column; gap: 7px; }
 }
 
+.activity-log-list { display: grid; gap: 8px; }
+.activity-log-list article { padding: 16px 19px; display: grid; grid-template-columns: 150px 1fr; gap: 18px; }
+.activity-log-list time { color: var(--muted); font-size: .61rem; }
+.activity-log-list article > div { display: grid; gap: 4px; }
+.activity-log-list strong { font-size: .72rem; }
+.activity-log-list span, .activity-log-list small { color: var(--muted); font-size: .62rem; }
+@media (max-width: 600px) { .activity-log-list article { grid-template-columns: 1fr; gap: 7px; } }
+
 .schedule-admin-actions, .schedule-edit-actions { display: flex; gap: 7px; }
 .schedule-admin-actions button:first-child, .schedule-edit-actions button:last-child { border-color: var(--navy); background: var(--navy); color: white; }
 .schedule-edit-form { padding: 18px; }

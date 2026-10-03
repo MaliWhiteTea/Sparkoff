@@ -6,6 +6,7 @@ use App\Enums\AppointmentStatus;
 use App\Enums\FilamentSource;
 use App\Enums\PrinterStatus;
 use App\Mail\AppointmentStatusMail;
+use App\Models\ActivityLog;
 use App\Models\Announcement;
 use App\Models\Appointment;
 use App\Models\BlackoutPeriod;
@@ -356,6 +357,28 @@ class AdminPanelTest extends TestCase
         ])->assertSessionHas('success');
 
         $this->assertFalse($announcement->fresh()->is_published);
+    }
+
+    public function test_admin_changes_are_recorded_without_field_values(): void
+    {
+        $admin = $this->admin();
+        $printer = Printer::query()->firstOrFail();
+
+        $this->actingAs($admin)->patch(route('admin.settings.printers.update', $printer), [
+            'name' => 'Güncel Yazıcı',
+            'status' => PrinterStatus::Active->value,
+            'description' => 'Yeni açıklama',
+        ])->assertSessionHas('success');
+
+        $log = ActivityLog::query()->latest('id')->firstOrFail();
+        $this->assertSame($admin->id, $log->user_id);
+        $this->assertSame('updated', $log->action);
+        $this->assertContains('name', $log->changed_fields);
+        $this->assertStringNotContainsString('Güncel Yazıcı', json_encode($log->changed_fields));
+
+        $this->actingAs($admin)->get(route('admin.activity-logs'))->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->component('Admin/ActivityLogs')
+            ->has('logs', 1));
     }
 
     private function admin(array $overrides = []): User
