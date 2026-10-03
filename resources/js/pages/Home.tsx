@@ -22,7 +22,7 @@ export default function Home({ workshop, printers, contact, announcements }: Pro
         </div></header>
 
         <section className="portal-hero" id="icerik">
-            <div className="portal-hero-copy"><h1>Sparkoff Proje Atölyesi</h1><div className="hero-actions"><Link className="button primary" href="/3d-yazicilar">3D yazıcılar <ArrowIcon /></Link><Link className="button secondary" href="/filamentler">Malzemeler <ArrowIcon /></Link></div></div>
+            <div className="portal-hero-copy"><h1>Sparkoff Proje Atölyesi</h1><div className="hero-actions"><Link className="button primary" href="/3d-yazicilar">3D yazıcılar <ArrowIcon /></Link><a className="button secondary" href="#malzemeler">Malzemeler <ArrowIcon /></a></div></div>
             <aside className="portal-status-card" aria-label="Atölye durumu"><div className="portal-status-top"><span className={`open-badge ${workshop.isOpen ? '' : 'closed'}`}><i /> {workshop.isOpen ? 'Açık' : 'Kapalı'}</span><small>CANLI ATÖLYE DURUMU</small></div><h2>{workshop.statusLabel}</h2><div className="portal-status-row"><ClockIcon /><div><span>Bugünkü kullanım başlangıç aralığı</span><strong>{workshop.hours}</strong></div></div><div className="portal-printer-summary"><strong>{availableCount}/{printers.length}</strong><span>yazıcı şu anda boş</span></div><Link href="/3d-yazicilar">Ayrıntılı durumu görüntüle <ArrowIcon /></Link></aside>
         </section>
 
@@ -32,7 +32,7 @@ export default function Home({ workshop, printers, contact, announcements }: Pro
 
         <section className="portal-services section" id="hizmetler"><div className="section-title compact"><h2>Atölye olanakları</h2></div><div className="service-card-grid">
             <Link className="service-card active" href="/3d-yazicilar"><div className="service-icon"><CubeIcon /></div><span className="service-state">KULLANIMA AÇIK</span><h3>3D Yazıcılar</h3><p>Yazıcıların durumunu, müsaitlik bilgisini, filamentleri ve baskı kurallarını görüntüleyin.</p><strong>Modüle git <ArrowIcon /></strong></Link>
-            <Link className="service-card active" href="/filamentler"><div className="service-icon"><MaterialIcon /></div><span className="service-state">KULLANIMA AÇIK</span><h3>Malzemeler</h3><p>Atölyedeki filament türlerini, renklerini, kullanılabilirlik durumlarını ve baskı ayarlarını görüntüleyin.</p><strong>Malzemeleri görüntüle <ArrowIcon /></strong></Link>
+            <article className="service-card coming" id="malzemeler"><div className="service-icon"><MaterialIcon /></div><span className="service-state">YAKINDA</span><h3>Malzemeler</h3><p>Arduino, sensör, motor ve diğer atölye malzemelerinin güncel stok durumu burada yer alacak.</p><strong>Hazırlanıyor</strong></article>
         </div></section>
 
         <section className="portal-printers section"><div className="section-title compact"><h2>Yazıcı durumu</h2></div><div className="printer-list">{printers.map((printer) => <article className={`printer-row ${printer.availability !== 'available' ? 'muted-row' : ''}`} key={printer.code}><span className="printer-code">{printer.code}</span><div><strong>{printer.name}</strong><span>{printer.description ?? 'Açıklama bulunmuyor'}</span></div><span className={`status ${printer.availability}`}>{printer.availability === 'available' && <i />} {printer.availabilityLabel}</span></article>)}</div></section>
