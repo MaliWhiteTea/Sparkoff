@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\PrinterStatus;
+use App\Models\BlackoutPeriod;
 use App\Models\Printer;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -47,5 +48,21 @@ class HomePageTest extends TestCase
         $this->get(route('home'))->assertOk()->assertInertia(fn (Assert $page) => $page
             ->component('Home')
             ->where('workshop.isOpen', false));
+    }
+
+    public function test_home_page_reflects_a_current_busy_block(): void
+    {
+        $printer = Printer::query()->where('code', 'P-01')->firstOrFail();
+        BlackoutPeriod::query()->create([
+            'printer_id' => $printer->id,
+            'kind' => 'busy',
+            'starts_at' => now()->subHour(),
+            'ends_at' => now()->addHour(),
+            'reason' => 'Baskı sürüyor',
+        ]);
+
+        $this->get(route('home'))->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->where('printers.0.availability', 'busy')
+            ->where('printers.0.availabilityLabel', 'Şu anda dolu'));
     }
 }

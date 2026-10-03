@@ -43,7 +43,7 @@ class WorkshopPortalTest extends TestCase
         $block = BlackoutPeriod::query()->create([
             'printer_id' => $printer->id,
             'kind' => 'busy',
-            'starts_at' => now()->addHour(),
+            'starts_at' => now()->subHour(),
             'ends_at' => now()->addHours(3),
             'reason' => 'Baskı sürüyor',
         ]);
@@ -53,6 +53,8 @@ class WorkshopPortalTest extends TestCase
             ->where('schedule.0.id', $block->id)
             ->where('schedule.0.kind', 'busy')
             ->where('schedule.0.note', 'Baskı sürüyor')
+            ->where('printers.0.availability', 'busy')
+            ->where('printers.0.availabilityLabel', 'Şu anda dolu')
             ->missing('schedule.0.user'));
     }
 

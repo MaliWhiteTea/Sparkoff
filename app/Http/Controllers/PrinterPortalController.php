@@ -17,15 +17,27 @@ class PrinterPortalController extends Controller
     {
         $calendarStart = now()->startOfDay();
         $calendarEnd = $calendarStart->copy()->addDays(7);
+        $now = now();
+        $currentBlocks = BlackoutPeriod::query()
+            ->where('starts_at', '<=', $now)
+            ->where('ends_at', '>', $now)
+            ->get();
+        $globalBlock = $currentBlocks->firstWhere('printer_id', null);
 
         return Inertia::render('Printers', [
-            'printers' => Printer::query()->orderBy('sort_order')->get()->map(fn (Printer $printer) => [
-                'code' => $printer->code,
-                'name' => $printer->name,
-                'description' => $printer->description,
-                'status' => $printer->status->value,
-                'statusLabel' => $this->statusLabel($printer->status),
-            ]),
+            'printers' => Printer::query()->orderBy('sort_order')->get()->map(function (Printer $printer) use ($currentBlocks, $globalBlock) {
+                $block = $globalBlock ?? $currentBlocks->firstWhere('printer_id', $printer->id);
+
+                return [
+                    'code' => $printer->code,
+                    'name' => $printer->name,
+                    'description' => $printer->description,
+                    'status' => $printer->status->value,
+                    'statusLabel' => $this->statusLabel($printer->status),
+                    'availability' => $this->availability($printer->status, $block?->kind),
+                    'availabilityLabel' => $this->availabilityLabel($printer->status, $block?->kind),
+                ];
+            }),
             'hours' => OperatingHour::query()->orderBy('weekday')->get()->map(fn (OperatingHour $hours) => [
                 'weekday' => $hours->weekday,
                 'day' => ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'][$hours->weekday - 1],
@@ -60,6 +72,29 @@ class PrinterPortalController extends Controller
                     'note' => $block->reason,
                 ]),
         ]);
+    }
+
+    private function availability(PrinterStatus $status, ?string $blockKind): string
+    {
+        if ($status !== PrinterStatus::Active) {
+            return $status->value;
+        }
+
+        return $blockKind ?? 'available';
+    }
+
+    private function availabilityLabel(PrinterStatus $status, ?string $blockKind): string
+    {
+        if ($status !== PrinterStatus::Active) {
+            return $this->statusLabel($status);
+        }
+
+        return match ($blockKind) {
+            'busy' => 'Şu anda dolu',
+            'maintenance' => 'Bakımda',
+            'closed' => 'Şu anda kapalı',
+            default => 'Şu anda boş',
+        };
     }
 
     private function kindLabel(string $kind): string

@@ -5,11 +5,11 @@ const CubeIcon = () => <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 
 const PartsIcon = () => <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3v5M17 3v5M5 8h14v10H5zM8 18v3M12 18v3M16 18v3" /><path d="M9 12h6M12 10v4" /></svg>;
 const ClockIcon = () => <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>;
 
-type Printer = { code: string; name: string; description: string | null; status: 'active' | 'maintenance' | 'inactive'; statusLabel: string };
+type Printer = { code: string; name: string; description: string | null; status: 'active' | 'maintenance' | 'inactive'; availability: string; availabilityLabel: string };
 type Props = { workshop: { isOpen: boolean; statusLabel: string; hours: string; daysLabel: string }; printers: Printer[] };
 
 export default function Home({ workshop, printers }: Props) {
-    const activeCount = printers.filter((printer) => printer.status === 'active').length;
+    const availableCount = printers.filter((printer) => printer.availability === 'available').length;
 
     return <main id="ust" className="portal-home">
         <Head title="Sparkoff Proje Atölyesi" />
@@ -21,7 +21,7 @@ export default function Home({ workshop, printers }: Props) {
 
         <section className="portal-hero" id="atolye">
             <div className="portal-hero-copy"><span className="eyebrow">SPARKOFF PROJE ATÖLYESİ</span><h1>Fikirlerin üretime dönüştüğü atölye.</h1><p>3D üretimden elektronik prototiplemeye kadar atölye kaynaklarını keşfedin, güncel durumları görün ve üretmeye başlayın.</p><div className="hero-actions"><Link className="button primary" href="/3d-yazicilar">3D yazıcıları incele <ArrowIcon /></Link><a className="button secondary" href="#hizmetler">Tüm hizmetler</a></div></div>
-            <aside className="portal-status-card" aria-label="Atölye durumu"><div className="portal-status-top"><span className={`open-badge ${workshop.isOpen ? '' : 'closed'}`}><i /> {workshop.isOpen ? 'Açık' : 'Kapalı'}</span><small>CANLI ATÖLYE DURUMU</small></div><h2>{workshop.statusLabel}</h2><div className="portal-status-row"><ClockIcon /><div><span>Bugünkü kullanım başlangıç aralığı</span><strong>{workshop.hours}</strong></div></div><div className="portal-printer-summary"><strong>{activeCount}/{printers.length}</strong><span>yazıcı şu anda aktif</span></div><Link href="/3d-yazicilar">Ayrıntılı durumu görüntüle <ArrowIcon /></Link></aside>
+            <aside className="portal-status-card" aria-label="Atölye durumu"><div className="portal-status-top"><span className={`open-badge ${workshop.isOpen ? '' : 'closed'}`}><i /> {workshop.isOpen ? 'Açık' : 'Kapalı'}</span><small>CANLI ATÖLYE DURUMU</small></div><h2>{workshop.statusLabel}</h2><div className="portal-status-row"><ClockIcon /><div><span>Bugünkü kullanım başlangıç aralığı</span><strong>{workshop.hours}</strong></div></div><div className="portal-printer-summary"><strong>{availableCount}/{printers.length}</strong><span>yazıcı şu anda boş</span></div><Link href="/3d-yazicilar">Ayrıntılı durumu görüntüle <ArrowIcon /></Link></aside>
         </section>
 
         <section className="portal-services section" id="hizmetler"><div className="section-title compact"><span className="eyebrow">ATÖLYE HİZMETLERİ</span><h2>İhtiyacınız olan alana geçin</h2><p>Her modül, atölyedeki kaynakların güncel ve anlaşılır biçimde görüntülenmesi için tasarlanır.</p></div><div className="service-card-grid">
@@ -29,7 +29,7 @@ export default function Home({ workshop, printers }: Props) {
             <article className="service-card coming"><div className="service-icon"><PartsIcon /></div><span className="service-state">YAKINDA</span><h3>Malzeme ve Ekipman</h3><p>Arduino, sensör, motor ve diğer atölye ekipmanlarının güncel stok durumunu inceleyin.</p><strong>Hazırlanıyor</strong></article>
         </div></section>
 
-        <section className="portal-printers section"><div className="section-title compact"><span className="eyebrow">HIZLI DURUM</span><h2>Atölyedeki yazıcılar</h2><p>Ayrıntılı müsaitlik için 3D Yazıcılar modülünü açın.</p></div><div className="printer-list">{printers.map((printer) => <article className={`printer-row ${printer.status !== 'active' ? 'muted-row' : ''}`} key={printer.code}><span className="printer-code">{printer.code}</span><div><strong>{printer.name}</strong><span>{printer.description ?? 'Açıklama bulunmuyor'}</span></div><span className={`status ${printer.status}`}>{printer.status === 'active' && <i />} {printer.statusLabel}</span></article>)}</div></section>
+        <section className="portal-printers section"><div className="section-title compact"><span className="eyebrow">HIZLI DURUM</span><h2>Atölyedeki yazıcılar</h2><p>Ayrıntılı müsaitlik için 3D Yazıcılar modülünü açın.</p></div><div className="printer-list">{printers.map((printer) => <article className={`printer-row ${printer.availability !== 'available' ? 'muted-row' : ''}`} key={printer.code}><span className="printer-code">{printer.code}</span><div><strong>{printer.name}</strong><span>{printer.description ?? 'Açıklama bulunmuyor'}</span></div><span className={`status ${printer.availability}`}>{printer.availability === 'available' && <i />} {printer.availabilityLabel}</span></article>)}</div></section>
 
         <section className="help portal-contact" id="iletisim"><div><span className="eyebrow">İLETİŞİM</span><h2>Atölye hakkında konuşalım</h2></div><p>3D yazıcı kullanımı ve diğer atölye imkânları için atölye sorumlusuyla yüz yüze iletişime geçebilirsiniz. Telefon ve WhatsApp bilgileri yakında eklenecektir.</p><Link className="button secondary" href="/3d-yazicilar">Yazıcı bilgileri</Link></section>
 
