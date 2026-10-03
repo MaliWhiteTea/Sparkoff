@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\EnsureActiveAdmin;
 use App\Http\Middleware\EnsureAdministratorRole;
+use App\Http\Middleware\EnsureOnlineBookingEnabled;
 use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -19,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin.active' => EnsureActiveAdmin::class,
             'admin.only' => EnsureAdministratorRole::class,
+            'booking.enabled' => EnsureOnlineBookingEnabled::class,
         ]);
         $middleware->web(append: [
             HandleInertiaRequests::class,

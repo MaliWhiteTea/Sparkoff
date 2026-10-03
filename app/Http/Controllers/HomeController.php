@@ -6,14 +6,13 @@ use App\Enums\PrinterStatus;
 use App\Models\BlackoutPeriod;
 use App\Models\OperatingHour;
 use App\Models\Printer;
-use App\Services\AppointmentAvailabilityService;
 use Carbon\CarbonImmutable;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class HomeController extends Controller
 {
-    public function __invoke(AppointmentAvailabilityService $availability): Response
+    public function __invoke(): Response
     {
         $timezone = config('app.timezone');
         $now = CarbonImmutable::now($timezone);
@@ -25,48 +24,30 @@ class HomeController extends Controller
             ->where('starts_at', '<=', $now)
             ->where('ends_at', '>', $now)
             ->exists();
-
-        $nextSlot = null;
-        foreach (range(0, 14) as $dayOffset) {
-            $date = $now->addDays($dayOffset)->startOfDay();
-
-            foreach ($activePrinters as $printer) {
-                $slots = $availability->availableStartTimes($printer, $date, 60);
-                if ($slots === []) {
-                    continue;
-                }
-
-                $candidate = CarbonImmutable::createFromFormat('Y-m-d H:i', "{$date->format('Y-m-d')} {$slots[0]}", $timezone);
-                if (! $nextSlot || $candidate->lessThan($nextSlot['dateTime'])) {
-                    $nextSlot = ['dateTime' => $candidate, 'printer' => $printer];
-                }
-            }
-
-            if ($nextSlot) {
-                break;
-            }
-        }
+        $isWithinHours = (bool) $todayHours?->is_open
+            && $todayHours->opens_at
+            && $todayHours->latest_start_at
+            && $now->format('H:i:s') >= $todayHours->opens_at
+            && $now->format('H:i:s') <= $todayHours->latest_start_at;
 
         return Inertia::render('Home', [
             'workshop' => [
-                'isOpen' => (bool) $todayHours?->is_open && $activePrinters->isNotEmpty() && ! $globallyClosedNow,
-                'statusLabel' => $globallyClosedNow ? 'Geçici olarak kapalı' : ((bool) $todayHours?->is_open ? 'Bugün açık' : 'Bugün kapalı'),
+                'isOpen' => $isWithinHours && $activePrinters->isNotEmpty() && ! $globallyClosedNow,
+                'statusLabel' => $globallyClosedNow
+                    ? 'Geçici olarak kapalı'
+                    : ($isWithinHours ? 'Şu anda açık' : ((bool) $todayHours?->is_open ? 'Şu anda kapalı' : 'Bugün kapalı')),
                 'hours' => $todayHours?->is_open
                     ? $this->formatTime($todayHours->opens_at).'–'.$this->formatTime($todayHours->latest_start_at)
-                    : 'Randevu başlangıcı kapalı',
+                    : 'Bugün kapalı',
                 'daysLabel' => $this->daysLabel(),
             ],
-            'nextSlot' => $nextSlot ? [
-                'label' => $nextSlot['dateTime']->translatedFormat('l, H.i'),
-                'printer' => $nextSlot['printer']->name,
-            ] : null,
             'printers' => $printers->map(fn (Printer $printer) => [
                 'code' => $printer->code,
                 'name' => $printer->name,
                 'description' => $printer->description,
                 'status' => $printer->status->value,
                 'statusLabel' => match ($printer->status) {
-                    PrinterStatus::Active => 'Kullanıma açık',
+                    PrinterStatus::Active => 'Aktif',
                     PrinterStatus::Maintenance => 'Bakımda',
                     PrinterStatus::Inactive => 'Pasif',
                 },

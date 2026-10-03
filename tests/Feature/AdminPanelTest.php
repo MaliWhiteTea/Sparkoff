@@ -42,7 +42,7 @@ class AdminPanelTest extends TestCase
         $this->post(route('admin.login.store'), [
             'email' => $admin->email,
             'password' => 'guvenli-test-parolasi',
-        ])->assertRedirect(route('admin.appointments.index'));
+        ])->assertRedirect(route('admin.settings.printers.index'));
 
         $this->get(route('admin.appointments.index'))
             ->assertOk()

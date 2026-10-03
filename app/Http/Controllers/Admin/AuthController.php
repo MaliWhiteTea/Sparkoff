@@ -15,7 +15,7 @@ class AuthController extends Controller
     public function create(): Response|RedirectResponse
     {
         if (Auth::check()) {
-            return to_route('admin.appointments.index');
+            return to_route('admin.settings.printers.index');
         }
 
         return Inertia::render('Admin/Login');
@@ -44,7 +44,7 @@ class AuthController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('admin.appointments.index'));
+        return redirect()->intended(route('admin.settings.printers.index'));
     }
 
     public function destroy(Request $request): RedirectResponse

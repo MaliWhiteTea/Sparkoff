@@ -37,8 +37,7 @@ class HomePageTest extends TestCase
             ->where('printers.1.name', 'Creality CR-6 MAX')
             ->where('printers.1.status', PrinterStatus::Maintenance->value)
             ->where('workshop.hours', '09.00–21.00')
-            ->where('workshop.daysLabel', 'Her gün')
-            ->where('nextSlot.printer', 'Creality K1 MAX'));
+            ->where('workshop.daysLabel', 'Her gün'));
     }
 
     public function test_home_page_handles_the_absence_of_an_active_printer(): void
@@ -47,7 +46,6 @@ class HomePageTest extends TestCase
 
         $this->get(route('home'))->assertOk()->assertInertia(fn (Assert $page) => $page
             ->component('Home')
-            ->where('workshop.isOpen', false)
-            ->where('nextSlot', null));
+            ->where('workshop.isOpen', false));
     }
 }

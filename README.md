@@ -1,19 +1,18 @@
 # Sparkoff Proje Atölyesi
 
-Okul atölyesindeki 3D yazıcılar için modern, mobil uyumlu randevu ve baskı takip sistemi.
+Sparkoff Proje Atölyesi'nin hizmetlerini tek merkezde sunan modern ve mobil uyumlu atölye portalı.
 
-Kullanıcılar hesap oluşturmadan uygun zamanı seçebilir, baskı dosyasını yükleyebilir ve e-posta üzerinden randevularını takip edebilir. Başlangıçta bütün randevular yönetici onayından geçer.
+İlk modül, ziyaretçilerin kişisel bilgi paylaşmadan 3D yazıcıların güncel durumunu, çalışma saatlerini ve mevcut filamentleri görüntülemesini sağlar. Randevu görüşmeleri yüz yüze, telefon veya WhatsApp üzerinden yürütülür. Malzeme ve ekipman stok modülü sonraki aşamada eklenecektir.
 
 ## Özellikler
 
-- Hesapsız randevu akışı
-- E-posta doğrulaması ve güvenli takip bağlantısı
-- G-code, 3MF, STL ve STEP/STP dosya desteği
-- Atölye filamenti veya kişisel filament seçimi
-- Yazıcı ve zaman uygunluğu kontrolü
-- Yönetici onaylı randevu sistemi
-- Yazıcı, bakım ve çalışma saatleri yönetimi
-- KVKK odaklı veri ve dosya saklama yaklaşımı
+- Modüler atölye ana sayfası
+- Kamuya açık 3D yazıcı durum ekranı
+- Çalışma saatleri ve yazıcı uygunluk bilgisi
+- Ayrıntılı filament kataloğu
+- Yazıcı, bakım ve filament yönetimi
+- Ziyaretçiden kişisel veri veya dosya istemeyen kamu akışı
+- Gelecekte eklenecek malzeme ve ekipman stok modülü
 - Mobil öncelikli Türkçe arayüz
 
 ## Teknoloji
@@ -58,24 +57,15 @@ npm run build
 php artisan test
 ```
 
-## E-posta yapılandırması
+## Özellik bayrağı
 
-Yerel ortamda `MAIL_MAILER=log` kullanılır; gönderilen e-postalar `storage/logs/laravel.log` dosyasına yazılır.
-
-cPanel'de `randevu@sparkoff.tr` gibi bir posta hesabı oluşturduktan sonra production `.env` dosyasında SMTP bilgileri tanımlanmalıdır:
+Eski çevrimiçi randevu kodu geri dönüş ihtimali için korunur ancak varsayılan olarak kapalıdır:
 
 ```dotenv
-MAIL_MAILER=smtp
-MAIL_SCHEME=tls
-MAIL_HOST=mail.sparkoff.tr
-MAIL_PORT=587
-MAIL_USERNAME=randevu@sparkoff.tr
-MAIL_PASSWORD="güçlü-posta-parolası"
-MAIL_FROM_ADDRESS=randevu@sparkoff.tr
-MAIL_FROM_NAME="Sparkoff Proje Atölyesi"
+ONLINE_BOOKING_ENABLED=false
 ```
 
-Gerçek sunucu değerleri hosting sağlayıcısının **Connect Devices / Cihazları Bağla** ekranındaki bilgilere göre girilmelidir. Parolalar repoya eklenmemelidir.
+Canlı ortamda bu değer `false` olarak kalmalıdır. Kapalıyken `/randevu` adresi 3D Yazıcılar modülüne yönlendirilir; veri kabul eden diğer randevu uçları erişilemez.
 
 ## Dokümantasyon
 
@@ -83,7 +73,7 @@ Ayrıntılı ürün ve geliştirme planı için [ROADMAP.md](./ROADMAP.md) dosya
 
 ## Proje durumu
 
-Ana sayfa, çok adımlı randevu formu, veritabanı kaydı, güvenli dosya yükleme, çakışma kontrolü, e-posta doğrulaması ve hesapsız takip/iptal akışı hazırdır. Yönetici girişi ve yönetim paneli sıradaki geliştirme aşamasıdır.
+Atölye portalı ana sayfası, 3D Yazıcılar giriş modülü, yazıcı/filament yönetimi ve yönetici girişi hazırdır. Sıradaki aşama kişisel veri içermeyen kamuya açık müsaitlik takvimi ile anonim yönetici doluluk kayıtlarıdır.
 
 ## Lisans
 

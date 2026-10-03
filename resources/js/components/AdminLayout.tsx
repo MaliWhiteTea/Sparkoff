@@ -14,11 +14,11 @@ export default function AdminLayout({ children }: PropsWithChildren) {
     return (
         <div className="admin-page">
             <aside className="admin-sidebar">
-                <Link className="admin-brand" href="/yonetim/randevular">
+                <Link className="admin-brand" href="/yonetim/ayarlar/yazicilar">
                     <img src="/logo.jpg" alt="Sparkoff logosu" />
                     <span><strong>Sparkoff</strong><small>Yönetim Paneli</small></span>
                 </Link>
-                <nav><Link className={path.startsWith('/yonetim/randevular') ? 'active' : ''} href="/yonetim/randevular">Randevular</Link><Link className={path.startsWith('/yonetim/takvim') ? 'active' : ''} href="/yonetim/takvim">Takvim</Link>{auth.user.role === 'admin' && <Link className={path.startsWith('/yonetim/ayarlar') ? 'active' : ''} href="/yonetim/ayarlar/randevu-kurallari">Ayarlar</Link>}</nav>
+                <nav>{auth.user.role === 'admin' && <><Link className={path.includes('/ayarlar/yazicilar') ? 'active' : ''} href="/yonetim/ayarlar/yazicilar">Yazıcılar</Link><Link className={path.includes('/ayarlar/filamentler') ? 'active' : ''} href="/yonetim/ayarlar/filamentler">Filamentler</Link></>}</nav>
                 <div className="admin-user"><strong>{auth.user.name}</strong><small>{auth.user.email}</small><button type="button" onClick={() => router.post('/yonetim/cikis')}>Çıkış yap</button></div>
             </aside>
             <main className="admin-content">
