@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\PrinterStatus;
+use App\Models\Announcement;
 use App\Models\BlackoutPeriod;
 use App\Models\OperatingHour;
 use App\Models\Printer;
@@ -49,6 +50,12 @@ class HomeController extends Controller
                 'email' => Setting::valueOf('workshop.contact_email'),
                 'hours' => Setting::valueOf('workshop.contact_hours'),
             ],
+            'announcements' => Announcement::query()->visibleAt('home')->latest('starts_at')->get()->map(fn (Announcement $announcement) => [
+                'id' => $announcement->id,
+                'title' => $announcement->title,
+                'body' => $announcement->body,
+                'type' => $announcement->type,
+            ]),
             'printers' => $printers->map(function (Printer $printer) use ($currentBlocks, $globalBlock) {
                 $block = $globalBlock ?? $currentBlocks->firstWhere('printer_id', $printer->id);
                 $availability = $this->availability($printer, $block?->kind);

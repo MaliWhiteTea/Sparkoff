@@ -7,9 +7,10 @@ const PhoneIcon = () => <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 
 type Printer = { code: string; name: string; description: string | null; status: 'active' | 'maintenance' | 'inactive'; statusLabel: string; availability: string; availabilityLabel: string };
 type Hours = { weekday: number; day: string; isOpen: boolean; opensAt: string | null; closesAt: string | null };
 type ScheduleBlock = { id: number; printer: string; printerCode: string | null; kind: 'busy' | 'maintenance' | 'closed'; kindLabel: string; isAllDay: boolean; startsAt: string; endsAt: string; note: string | null };
-type Props = { printers: Printer[]; hours: Hours[]; filamentSummary: { availableOptions: number; materials: string[] }; contact: { phone: string | null; whatsapp: string | null; email: string | null; hours: string | null }; supportedFormats: string[]; schedule: ScheduleBlock[] };
+type Announcement = { id: number; title: string; body: string; type: string };
+type Props = { printers: Printer[]; hours: Hours[]; filamentSummary: { availableOptions: number; materials: string[] }; contact: { phone: string | null; whatsapp: string | null; email: string | null; hours: string | null }; supportedFormats: string[]; schedule: ScheduleBlock[]; announcements: Announcement[] };
 
-export default function Printers({ printers, hours, filamentSummary, contact, supportedFormats, schedule }: Props) {
+export default function Printers({ printers, hours, filamentSummary, contact, supportedFormats, schedule, announcements }: Props) {
     const [selectedPrinter, setSelectedPrinter] = useState(printers[0]?.code ?? '');
     const whatsappHref = contact.whatsapp ? `https://wa.me/${contact.whatsapp.replace(/\D/g, '')}` : null;
     const days = Array.from({ length: 7 }, (_, index) => {
@@ -25,6 +26,7 @@ export default function Printers({ printers, hours, filamentSummary, contact, su
 
     return <main className="printer-portal"><Head title="3D Yazıcılar" /><header className="filaments-header"><Link className="booking-brand" href="/"><img src="/logo.jpg" alt="Sparkoff logosu" /><span><strong>Sparkoff</strong><small>Proje Atölyesi</small></span></Link><Link className="module-home-link" href="/">← Atölye ana sayfası</Link></header>
         <section className="printer-module-hero"><div><h1>3D Yazıcılar</h1><p>Yazıcı durumları, kullanım takvimi ve atölye filamentleri.</p></div></section>
+        {announcements.length > 0 && <section className="public-announcements printer-announcements" aria-label="Duyurular">{announcements.map((announcement) => <article className={`announcement-${announcement.type}`} key={announcement.id}><strong>{announcement.title}</strong><p>{announcement.body}</p></article>)}</section>}
 
         <section className="printer-module-section"><div className="module-section-heading"><div><h2>Anlık durum</h2></div></div><div className="public-printer-grid">{printers.map((printer) => <article key={printer.code} className={`public-printer-card state-${printer.status}`}><header><span>{printer.code}</span><strong className={`status ${printer.availability}`}>{printer.availability === 'available' && <i />}{printer.availabilityLabel}</strong></header><h3>{printer.name}</h3>{printer.description && <p>{printer.description}</p>}</article>)}</div></section>
 

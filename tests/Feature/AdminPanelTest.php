@@ -6,6 +6,7 @@ use App\Enums\AppointmentStatus;
 use App\Enums\FilamentSource;
 use App\Enums\PrinterStatus;
 use App\Mail\AppointmentStatusMail;
+use App\Models\Announcement;
 use App\Models\Appointment;
 use App\Models\BlackoutPeriod;
 use App\Models\Printer;
@@ -324,6 +325,37 @@ class AdminPanelTest extends TestCase
         ])->assertSessionHas('success');
 
         $this->assertDatabaseHas('blackout_periods', ['id' => $block->id, 'kind' => 'closed', 'reason' => 'İki gün kapalı']);
+    }
+
+    public function test_admin_can_manage_a_public_announcement(): void
+    {
+        $admin = $this->admin();
+
+        $this->actingAs($admin)->post(route('admin.announcements.store'), [
+            'title' => 'Planlı bakım',
+            'body' => 'P-01 bugün bakımdadır.',
+            'type' => 'maintenance',
+            'placement' => 'printers',
+            'is_published' => true,
+            'starts_at' => now()->subHour()->format('Y-m-d\TH:i'),
+            'ends_at' => now()->addDay()->format('Y-m-d\TH:i'),
+        ])->assertSessionHas('success');
+
+        $announcement = Announcement::query()->sole();
+        $this->get(route('printers.public'))->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->has('announcements', 1)
+            ->where('announcements.0.title', 'Planlı bakım'));
+        $this->get(route('home'))->assertOk()->assertInertia(fn (Assert $page) => $page->has('announcements', 0));
+
+        $this->actingAs($admin)->patch(route('admin.announcements.update', $announcement), [
+            'title' => 'Bakım tamamlandı',
+            'body' => 'Yazıcı yeniden kullanıma açıldı.',
+            'type' => 'info',
+            'placement' => 'all',
+            'is_published' => false,
+        ])->assertSessionHas('success');
+
+        $this->assertFalse($announcement->fresh()->is_published);
     }
 
     private function admin(array $overrides = []): User

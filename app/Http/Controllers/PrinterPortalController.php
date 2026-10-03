@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\PrinterStatus;
+use App\Models\Announcement;
 use App\Models\BlackoutPeriod;
 use App\Models\Filament;
 use App\Models\OperatingHour;
@@ -56,6 +57,12 @@ class PrinterPortalController extends Controller
                 'hours' => Setting::valueOf('workshop.contact_hours'),
             ],
             'supportedFormats' => Setting::valueOf('uploads.allowed_extensions', ['gcode', '3mf', 'stl', 'step', 'stp', 'obj']),
+            'announcements' => Announcement::query()->visibleAt('printers')->latest('starts_at')->get()->map(fn (Announcement $announcement) => [
+                'id' => $announcement->id,
+                'title' => $announcement->title,
+                'body' => $announcement->body,
+                'type' => $announcement->type,
+            ]),
             'schedule' => BlackoutPeriod::query()
                 ->with('printer:id,code,name')
                 ->where('ends_at', '>', $calendarStart)
