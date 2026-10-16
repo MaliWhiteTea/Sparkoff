@@ -56,8 +56,6 @@ class StoreAppointmentRequest extends FormRequest
             'first_name' => ['required', 'string', 'max:100'],
             'last_name' => ['required', 'string', 'max:100'],
             'email' => ['required', 'email:rfc', 'max:255'],
-            'phone' => ['required', 'string', 'max:30', 'regex:/^[0-9+()\s-]{10,30}$/'],
-            'note' => ['nullable', 'string', 'max:2000'],
             'rules_accepted' => ['accepted'],
             'privacy_notice_seen' => ['accepted'],
         ];
@@ -72,7 +70,6 @@ class StoreAppointmentRequest extends FormRequest
             'date_format' => ':attribute biçimi geçersizdir.',
             'after_or_equal' => 'Geçmiş bir tarih için randevu oluşturamazsınız.',
             'email' => 'Geçerli bir e-posta adresi girin.',
-            'phone.regex' => 'Geçerli bir telefon numarası girin.',
             'rules_accepted.accepted' => 'Randevu kurallarını onaylamalısınız.',
             'privacy_notice_seen.accepted' => 'Aydınlatma metnine eriştiğinizi belirtmelisiniz.',
         ];
@@ -91,7 +88,6 @@ class StoreAppointmentRequest extends FormRequest
             'first_name' => 'Ad',
             'last_name' => 'Soyad',
             'email' => 'E-posta',
-            'phone' => 'Telefon',
         ];
     }
 

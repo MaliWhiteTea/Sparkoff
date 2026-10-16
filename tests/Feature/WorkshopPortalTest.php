@@ -68,10 +68,11 @@ class WorkshopPortalTest extends TestCase
             ->missing('schedule.0.user'));
     }
 
-    public function test_privacy_page_does_not_claim_that_a_booking_form_collects_data(): void
+    public function test_privacy_page_exposes_the_configured_booking_notice(): void
     {
         $this->get(route('privacy.notice'))->assertOk()->assertInertia(fn (Assert $page) => $page
             ->component('PrivacyNotice')
-            ->missing('privacy'));
+            ->has('privacy')
+            ->where('privacy.noticeVersion', '2026-10-16'));
     }
 }

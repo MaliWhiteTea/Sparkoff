@@ -7,9 +7,9 @@ const ClockIcon = () => <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="
 
 type Printer = { code: string; name: string; description: string | null; status: 'active' | 'maintenance' | 'inactive'; availability: string; availabilityLabel: string };
 type Announcement = { id: number; title: string; body: string; type: string };
-type Props = { workshop: { isOpen: boolean; statusLabel: string; hours: string; daysLabel: string }; printers: Printer[]; contact: { phone: string | null; whatsapp: string | null; email: string | null; hours: string | null }; announcements: Announcement[] };
+type Props = { workshop: { isOpen: boolean; statusLabel: string; hours: string; daysLabel: string }; printers: Printer[]; contact: { phone: string | null; whatsapp: string | null; email: string | null; hours: string | null }; announcements: Announcement[]; features: { onlineBooking: boolean } };
 
-export default function Home({ workshop, printers, contact, announcements }: Props) {
+export default function Home({ workshop, printers, contact, announcements, features }: Props) {
     const availableCount = printers.filter((printer) => printer.availability === 'available').length;
     const whatsappHref = contact.whatsapp ? `https://wa.me/${contact.whatsapp.replace(/\D/g, '')}` : null;
 
@@ -28,7 +28,7 @@ export default function Home({ workshop, printers, contact, announcements }: Pro
 
         {announcements.length > 0 && <section className="public-announcements" aria-label="Duyurular">{announcements.map((announcement) => <article className={`announcement-${announcement.type}`} key={announcement.id}><strong>{announcement.title}</strong><p>{announcement.body}</p></article>)}</section>}
 
-        <section className="booking-whatsapp-callout" aria-label="3D yazıcı randevusu"><div><span>3D YAZICI RANDEVUSU</span><h2>Randevular WhatsApp üzerinden alınır.</h2><p>Takvimden uygun zamanı kontrol ettikten sonra atölye sorumlusuna ulaşın.</p></div>{whatsappHref && <a className="button primary" href={whatsappHref} target="_blank" rel="noreferrer">WhatsApp’tan yaz <ArrowIcon /></a>}</section>
+        <section className="booking-whatsapp-callout" aria-label="3D yazıcı randevusu"><div><span>3D YAZICI RANDEVUSU</span><h2>{features.onlineBooking ? 'Uygun zamanı seçerek çevrimiçi talep oluşturun.' : 'Randevular WhatsApp üzerinden alınır.'}</h2><p>{features.onlineBooking ? 'Talebiniz e-posta doğrulamasının ardından yönetici onayına gönderilir.' : 'Takvimden uygun zamanı kontrol ettikten sonra atölye sorumlusuna ulaşın.'}</p></div>{features.onlineBooking ? <Link className="button primary" href="/randevu">Randevu oluştur <ArrowIcon /></Link> : whatsappHref && <a className="button primary" href={whatsappHref} target="_blank" rel="noreferrer">WhatsApp’tan yaz <ArrowIcon /></a>}</section>
 
         <section className="portal-services section" id="hizmetler"><div className="section-title compact"><h2>Atölye olanakları</h2></div><div className="service-card-grid">
             <Link className="service-card active" href="/3d-yazicilar"><div className="service-icon"><CubeIcon /></div><span className="service-state">KULLANIMA AÇIK</span><h3>3D Yazıcılar</h3><p>Yazıcıların durumunu, müsaitlik bilgisini, filamentleri ve baskı kurallarını görüntüleyin.</p><strong>Modüle git <ArrowIcon /></strong></Link>

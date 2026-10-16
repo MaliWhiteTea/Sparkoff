@@ -76,7 +76,6 @@ class AppointmentController extends Controller
                 'publicId' => $appointment->public_id,
                 'name' => "{$appointment->first_name} {$appointment->last_name}",
                 'email' => $appointment->email,
-                'phone' => $appointment->phone,
                 'status' => $appointment->status->value,
                 'statusLabel' => $this->statusLabel($appointment->status),
                 'printer' => $appointment->printer->name,
@@ -84,7 +83,6 @@ class AppointmentController extends Controller
                 'endsAt' => $appointment->ends_at->translatedFormat('d F Y, H:i'),
                 'durationMinutes' => $appointment->duration_minutes,
                 'filament' => "{$appointment->filament_source->value} · {$appointment->filament_material} · {$appointment->filament_color}",
-                'note' => $appointment->user_note,
                 'files' => $appointment->files->map(fn (AppointmentFile $file) => [
                     'id' => $file->id,
                     'name' => $file->original_name,

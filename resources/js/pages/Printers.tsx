@@ -8,9 +8,9 @@ type Printer = { code: string; name: string; description: string | null; status:
 type Hours = { weekday: number; day: string; isOpen: boolean; opensAt: string | null; closesAt: string | null };
 type ScheduleBlock = { id: number; printer: string; printerCode: string | null; kind: 'busy' | 'maintenance' | 'closed'; kindLabel: string; isAllDay: boolean; startsAt: string; endsAt: string; note: string | null };
 type Announcement = { id: number; title: string; body: string; type: string };
-type Props = { printers: Printer[]; hours: Hours[]; filamentSummary: { availableOptions: number; materials: string[] }; contact: { phone: string | null; whatsapp: string | null; email: string | null; hours: string | null }; supportedFormats: string[]; schedule: ScheduleBlock[]; announcements: Announcement[] };
+type Props = { printers: Printer[]; hours: Hours[]; filamentSummary: { availableOptions: number; materials: string[] }; contact: { phone: string | null; whatsapp: string | null; email: string | null; hours: string | null }; supportedFormats: string[]; schedule: ScheduleBlock[]; announcements: Announcement[]; features: { onlineBooking: boolean } };
 
-export default function Printers({ printers, hours, filamentSummary, contact, supportedFormats, schedule, announcements }: Props) {
+export default function Printers({ printers, hours, filamentSummary, contact, supportedFormats, schedule, announcements, features }: Props) {
     const [selectedPrinter, setSelectedPrinter] = useState(printers[0]?.code ?? '');
     const whatsappHref = contact.whatsapp ? `https://wa.me/${contact.whatsapp.replace(/\D/g, '')}` : null;
     const days = Array.from({ length: 7 }, (_, index) => {
@@ -36,7 +36,7 @@ export default function Printers({ printers, hours, filamentSummary, contact, su
 
         <section className="filament-module-callout"><div><span className="eyebrow">ATÖLYE FİLAMENTLERİ</span><h2>{filamentSummary.availableOptions} kullanılabilir seçenek</h2><p>{filamentSummary.materials.length ? `${filamentSummary.materials.join(', ')} türlerindeki renk ve teknik özellikleri inceleyin.` : 'Şu anda kullanılabilir atölye filamenti bulunmuyor.'}</p></div><Link className="button secondary" href="/filamentler">Filament kataloğu <ArrowIcon /></Link></section>
 
-        {(contact.phone || contact.whatsapp || contact.email) && <section className="printer-contact-card"><div className="contact-icon"><PhoneIcon /></div><div><span className="eyebrow">İLETİŞİM</span><h2>Yazıcı kullanımı</h2>{contact.hours && <p>{contact.hours}</p>}</div><div className="contact-actions">{contact.phone && <a className="button primary" href={`tel:${contact.phone}`}>{contact.phone}</a>}{whatsappHref && <a className="button secondary" href={whatsappHref} target="_blank" rel="noreferrer">WhatsApp</a>}{contact.email && <a className="button secondary" href={`mailto:${contact.email}`}>{contact.email}</a>}</div></section>}
+        {(features.onlineBooking || contact.phone || contact.whatsapp || contact.email) && <section className="printer-contact-card"><div className="contact-icon"><PhoneIcon /></div><div><span className="eyebrow">{features.onlineBooking ? 'RANDEVU' : 'İLETİŞİM'}</span><h2>Yazıcı kullanımı</h2>{contact.hours && <p>{contact.hours}</p>}</div><div className="contact-actions">{features.onlineBooking && <Link className="button primary" href="/randevu">Randevu oluştur</Link>}{!features.onlineBooking && contact.phone && <a className="button primary" href={`tel:${contact.phone}`}>{contact.phone}</a>}{!features.onlineBooking && whatsappHref && <a className="button secondary" href={whatsappHref} target="_blank" rel="noreferrer">WhatsApp</a>}{contact.email && <a className="button secondary" href={`mailto:${contact.email}`}>{contact.email}</a>}</div></section>}
 
         <footer><div className="footer-brand"><img src="/logo.jpg" alt="" width={44} height={44} /><div><strong>Sparkoff</strong><span>Proje Atölyesi</span></div></div><span>© 2026 Sparkoff</span></footer>
     </main>;

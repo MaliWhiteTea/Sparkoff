@@ -14,6 +14,9 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'appName' => config('app.name'),
+            'features' => [
+                'onlineBooking' => (bool) config('features.online_booking'),
+            ],
             'auth' => [
                 'user' => fn () => $request->user() ? [
                     'name' => $request->user()->name,

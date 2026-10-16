@@ -22,7 +22,9 @@ class PrivacyNoticeTest extends TestCase
     {
         $this->get(route('privacy.notice'))->assertOk()->assertInertia(fn (Assert $page) => $page
             ->component('PrivacyNotice')
-            ->missing('privacy'));
+            ->where('privacy.controllerName', 'Sparkoff Proje Atölyesi')
+            ->where('privacy.contactEmail', 'atolye@sparkoff.tr')
+            ->where('privacy.fileRetentionDays', 30));
     }
 
     public function test_only_an_admin_can_open_privacy_settings(): void

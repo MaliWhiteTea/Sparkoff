@@ -29,7 +29,11 @@ class CreateAppointmentTest extends TestCase
         Storage::fake('local');
         Mail::fake();
 
-        $response = $this->post(route('booking.store'), $this->validPayload());
+        $payload = $this->validPayload();
+        $payload['phone'] = '0555 000 00 00';
+        $payload['note'] = 'Bu iki alan sunucu tarafından kaydedilmemeli.';
+
+        $response = $this->post(route('booking.store'), $payload);
 
         $response->assertRedirect(route('booking.create'));
         $response->assertSessionHas('booking_submitted');
@@ -38,6 +42,8 @@ class CreateAppointmentTest extends TestCase
 
         $this->assertSame(AppointmentStatus::PendingVerification, $appointment->status);
         $this->assertSame('test@example.com', $appointment->email);
+        $this->assertNull($appointment->phone);
+        $this->assertNull($appointment->user_note);
         $this->assertCount(1, $appointment->files);
         $this->assertCount(1, $appointment->statusHistory);
         Storage::disk('local')->assertExists($appointment->files->first()->path);
@@ -134,8 +140,6 @@ class CreateAppointmentTest extends TestCase
             'first_name' => 'Test',
             'last_name' => 'Kullanıcı',
             'email' => 'TEST@example.com',
-            'phone' => '0555 000 00 00',
-            'note' => 'Test baskısı',
             'rules_accepted' => true,
             'privacy_notice_seen' => true,
         ];

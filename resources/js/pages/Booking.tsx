@@ -28,8 +28,6 @@ type FormData = {
   firstName: string;
   lastName: string;
   email: string;
-  phone: string;
-  note: string;
   rulesAccepted: boolean;
 };
 
@@ -45,8 +43,6 @@ const initialData: FormData = {
   firstName: "",
   lastName: "",
   email: "",
-  phone: "",
-  note: "",
   rulesAccepted: false,
 };
 
@@ -137,7 +133,7 @@ export default function BookingForm({ settings, filaments }: BookingProps) {
     if (currentStep === 1 && !data.file) return "Desteklenen formatlardan bir dosya yüklemelisiniz.";
     if (currentStep === 2 && data.filamentSource === "workshop" && !data.filamentId) return "Şu anda kullanılabilir atölye filamenti bulunmuyor.";
     if (currentStep === 2 && data.filamentSource === "own" && (!data.material || !data.color)) return "Filament bilgilerini tamamlayın.";
-    if (currentStep === 3 && (!data.firstName || !data.lastName || !data.email || !data.phone)) return "İletişim alanlarının tamamını doldurun.";
+    if (currentStep === 3 && (!data.firstName || !data.lastName || !data.email)) return "Ad, soyad ve e-posta alanlarını doldurun.";
     if (currentStep === 4 && !data.rulesAccepted) return "Randevu kurallarını onaylamalısınız.";
     return "";
   }
@@ -189,8 +185,6 @@ export default function BookingForm({ settings, filaments }: BookingProps) {
       first_name: data.firstName,
       last_name: data.lastName,
       email: data.email,
-      phone: data.phone,
-      note: data.note,
       rules_accepted: data.rulesAccepted,
       privacy_notice_seen: true,
     }, {
@@ -290,13 +284,11 @@ export default function BookingForm({ settings, filaments }: BookingProps) {
 
           {currentStep === 3 && (
             <section className="form-step">
-              <div className="form-heading"><span>04</span><div><h2>İletişim bilgileri</h2><p>Doğrulama ve randevu bildirimleri için bilgilerinizi girin.</p></div></div>
+              <div className="form-heading"><span>04</span><div><h2>Başvuru bilgileri</h2><p>E-posta doğrulaması ve randevu bildirimleri için bilgilerinizi girin.</p></div></div>
               <div className="field-grid">
                 <label className="field"><span>Ad</span><input autoComplete="given-name" value={data.firstName} onChange={(e) => update("firstName", e.target.value)} placeholder="Adınız" /></label>
                 <label className="field"><span>Soyad</span><input autoComplete="family-name" value={data.lastName} onChange={(e) => update("lastName", e.target.value)} placeholder="Soyadınız" /></label>
                 <label className="field"><span>E-posta</span><input type="email" autoComplete="email" value={data.email} onChange={(e) => update("email", e.target.value)} placeholder="ornek@eposta.com" /></label>
-                <label className="field"><span>Telefon numarası</span><input type="tel" autoComplete="tel" value={data.phone} onChange={(e) => update("phone", e.target.value)} placeholder="05xx xxx xx xx" /><small>Yalnızca randevunuzla ilgili acil ve operasyonel durumlarda kullanılır.</small></label>
-                <label className="field full"><span>Yöneticiye not <em>İsteğe bağlı</em></span><textarea value={data.note} onChange={(e) => update("note", e.target.value)} placeholder="Baskınızla ilgili bilinmesi gereken ayrıntıları yazabilirsiniz." rows={4} /></label>
               </div>
               <p className="privacy-copy">Kişisel verilerinizin nasıl işlendiğini <a href="/kvkk-aydinlatma" target="_blank" rel="noreferrer">KVKK Aydınlatma Metni</a> üzerinden inceleyebilirsiniz. Bu bilgilendirme açık rıza talebi değildir.</p>
             </section>
@@ -310,7 +302,7 @@ export default function BookingForm({ settings, filaments }: BookingProps) {
                 <div><span>Süre ve bitiş</span><strong>{formatDuration(data.duration)}</strong><small>{endTime}</small></div>
                 <div><span>Baskı dosyası</span><strong>{data.file?.name}</strong><button type="button" onClick={() => setCurrentStep(1)}>Düzenle</button></div>
                 <div><span>Filament</span><strong>{data.filamentSource === "workshop" ? `Atölye filamenti · ${selectedFilament?.material ?? "—"} · ${selectedFilament?.color ?? "—"}` : `Kendi filamentim · ${data.material} · ${data.color}`}</strong><button type="button" onClick={() => setCurrentStep(2)}>Düzenle</button></div>
-                <div><span>İletişim</span><strong>{data.firstName} {data.lastName}</strong><small>{data.email} · {data.phone}</small><button type="button" onClick={() => setCurrentStep(3)}>Düzenle</button></div>
+                <div><span>Başvuru sahibi</span><strong>{data.firstName} {data.lastName}</strong><small>{data.email}</small><button type="button" onClick={() => setCurrentStep(3)}>Düzenle</button></div>
               </div>
               <label className="rules-check"><input type="checkbox" checked={data.rulesAccepted} onChange={(e) => update("rulesAccepted", e.target.checked)} /><span><strong>Randevu kurallarını okudum.</strong> Başvurunun yönetici onayından sonra kesinleşeceğini biliyorum.</span></label>
             </section>

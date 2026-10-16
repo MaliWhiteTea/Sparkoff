@@ -27,6 +27,7 @@ class AppointmentAvailabilityTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-10-01 12:00:00', 'Europe/Istanbul'));
 
         $this->printer = Printer::query()->create([
             'code' => 'P-01',
@@ -42,6 +43,12 @@ class AppointmentAvailabilityTest extends TestCase
         ]);
 
         $this->service = app(AppointmentAvailabilityService::class);
+    }
+
+    protected function tearDown(): void
+    {
+        CarbonImmutable::setTestNow();
+        parent::tearDown();
     }
 
     public function test_a_24_hour_print_can_start_at_21_and_finish_next_day(): void
