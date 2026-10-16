@@ -3,6 +3,7 @@ config.php
 down
 events.scanned.php
 lsp-*.php
+local-test/
 maintenance.php
 routes.php
 routes.scanned.php
