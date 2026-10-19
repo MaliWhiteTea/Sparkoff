@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AccessController as AdminAccessController;
 use App\Http\Controllers\Admin\ActivityLogController as AdminActivityLogController;
 use App\Http\Controllers\Admin\AnnouncementController as AdminAnnouncementController;
 use App\Http\Controllers\Admin\AppointmentController as AdminAppointmentController;
@@ -39,6 +40,12 @@ Route::prefix('yonetim')->name('admin.')->group(function () {
     Route::middleware(['auth', 'admin.active'])->group(function () {
         Route::post('/cikis', [AdminAuthController::class, 'destroy'])->name('logout');
         Route::get('/islem-gecmisi', AdminActivityLogController::class)->middleware('permission:audit_logs.view')->name('activity-logs');
+        Route::get('/yetkiler', [AdminAccessController::class, 'index'])->middleware(['permission:roles.view', 'permission:users.view'])->name('access.index');
+        Route::post('/roller', [AdminAccessController::class, 'storeRole'])->middleware('permission:roles.create')->name('roles.store');
+        Route::put('/roller/{role}', [AdminAccessController::class, 'updateRole'])->middleware('permission:roles.update')->name('roles.update');
+        Route::delete('/roller/{role}', [AdminAccessController::class, 'destroyRole'])->middleware('permission:roles.delete')->name('roles.destroy');
+        Route::post('/kullanicilar', [AdminAccessController::class, 'storeUser'])->middleware(['permission:users.create', 'permission:roles.assign'])->name('users.store');
+        Route::put('/kullanicilar/{user}', [AdminAccessController::class, 'updateUser'])->middleware(['permission:users.update', 'permission:roles.assign'])->name('users.update');
         Route::get('/duyurular', [AdminAnnouncementController::class, 'index'])->middleware('permission:announcements.view')->name('announcements.index');
         Route::post('/duyurular', [AdminAnnouncementController::class, 'store'])->middleware('permission:announcements.create')->name('announcements.store');
         Route::patch('/duyurular/{announcement}', [AdminAnnouncementController::class, 'update'])->middleware('permission:announcements.update')->name('announcements.update');

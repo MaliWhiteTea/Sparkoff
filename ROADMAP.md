@@ -93,13 +93,13 @@ Sparkoff Proje Atölyesi
 
 ### B. Kullanıcı, rol ve yetki yönetimi
 
-- [ ] Kullanıcı listeleme, oluşturma, düzenleme ve pasifleştirme
-- [ ] Geçici parola ve parola sıfırlama akışı
-- [ ] Rol oluşturma, düzenleme ve arşivleme
-- [ ] Modül bazlı yetki seçim ekranı
-- [ ] Bir kullanıcıya birden fazla rol atama
-- [ ] Son Sistem Yöneticisi için kilitlenme koruması
-- [ ] Hassas yetkileri arayüzde işaretleme
+- [x] Kullanıcı listeleme, oluşturma, düzenleme ve pasifleştirme
+- [x] Geçici parola ve yönetici tarafından parola sıfırlama
+- [x] Rol oluşturma, düzenleme ve kullanılmayan rolü kaldırma
+- [x] Modül bazlı yetki seçim ekranı
+- [x] Bir kullanıcıya birden fazla rol atama
+- [x] Son Sistem Yöneticisi için kilitlenme koruması
+- [x] Hassas yetkileri arayüzde işaretleme
 - [ ] Rol ve kullanıcı değişikliklerini işlem geçmişine yazma
 
 ### C. Envanter veri temeli
