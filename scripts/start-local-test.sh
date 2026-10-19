@@ -14,6 +14,7 @@ cd "$PROJECT_DIR" || exit 1
 
 php artisan config:clear >>"$LOG_FILE" 2>&1
 php artisan migrate --force >>"$LOG_FILE" 2>&1
+php artisan db:seed --class=RolePermissionSeeder --force >>"$LOG_FILE" 2>&1
 
 if ! curl --silent --fail --max-time 1 http://127.0.0.1:8000/up >/dev/null 2>&1; then
     setsid env ONLINE_BOOKING_ENABLED=true php artisan serve --host=127.0.0.1 --port=8000 >>"$LOG_FILE" 2>&1 &
