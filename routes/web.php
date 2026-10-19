@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\CalendarController as AdminCalendarController;
 use App\Http\Controllers\Admin\FilamentSettingsController as AdminFilamentSettingsController;
 use App\Http\Controllers\Admin\PrinterSettingsController as AdminPrinterSettingsController;
 use App\Http\Controllers\Admin\PrivacySettingsController as AdminPrivacySettingsController;
+use App\Http\Controllers\Admin\SettingsController as AdminSettingsController;
 use App\Http\Controllers\Admin\WorkshopSettingsController as AdminWorkshopSettingsController;
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\FilamentController;
@@ -59,6 +60,7 @@ Route::prefix('yonetim')->name('admin.')->group(function () {
         });
 
         Route::prefix('ayarlar')->name('settings.')->group(function () {
+            Route::get('/', AdminSettingsController::class)->name('index');
             Route::middleware('booking.enabled')->group(function () {
                 Route::get('/randevu-kurallari', [AdminBookingSettingsController::class, 'edit'])->middleware('permission:system_settings.update')->name('booking.edit');
                 Route::put('/randevu-kurallari', [AdminBookingSettingsController::class, 'update'])->middleware('permission:system_settings.update')->name('booking.update');
