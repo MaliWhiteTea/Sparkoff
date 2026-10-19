@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\ActivityLog;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
@@ -33,6 +34,7 @@ class AccessManagementTest extends TestCase
             ['inventory.view', 'loans.create', 'loans.receive_return'],
             $role->permissions()->pluck('key')->all(),
         );
+        $this->assertTrue(ActivityLog::query()->where('subject_type', Role::class)->where('subject_id', $role->id)->whereJsonContains('changed_fields', 'permissions')->exists());
     }
 
     public function test_authorized_manager_can_create_a_user_with_multiple_roles(): void
@@ -53,6 +55,7 @@ class AccessManagementTest extends TestCase
 
         $user = User::query()->where('email', 'gorevli@example.com')->firstOrFail();
         $this->assertCount(2, $user->roles);
+        $this->assertTrue(ActivityLog::query()->where('subject_type', User::class)->where('subject_id', $user->id)->whereJsonContains('changed_fields', 'roles')->exists());
     }
 
     public function test_the_last_active_system_administrator_cannot_lose_system_access(): void

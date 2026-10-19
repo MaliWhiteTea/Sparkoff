@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
@@ -54,6 +55,7 @@ class AccessController extends Controller
             'description' => $validated['description'] ?? null,
         ]);
         $role->permissions()->sync($this->permissionIds($validated['permissions'] ?? []));
+        $this->recordRelationChange($role, 'permissions');
 
         return back()->with('success', 'Rol oluşturuldu.');
     }
@@ -64,6 +66,7 @@ class AccessController extends Controller
         $validated = $this->validateRole($request);
         $role->update(['name' => $validated['name'], 'description' => $validated['description'] ?? null]);
         $role->permissions()->sync($this->permissionIds($validated['permissions'] ?? []));
+        $this->recordRelationChange($role, 'permissions');
 
         return back()->with('success', 'Rol ve yetkileri güncellendi.');
     }
@@ -100,6 +103,7 @@ class AccessController extends Controller
                 'is_active' => true,
             ]);
             $user->roles()->sync($validated['role_ids']);
+            $this->recordRelationChange($user, 'roles');
         });
 
         return back()->with('success', 'Yetkili kullanıcı oluşturuldu.');
@@ -137,6 +141,7 @@ class AccessController extends Controller
             }
             $user->update($attributes);
             $user->roles()->sync($validated['role_ids']);
+            $this->recordRelationChange($user, 'roles');
         });
 
         return back()->with('success', 'Kullanıcı ve rol atamaları güncellendi.');
@@ -180,5 +185,17 @@ class AccessController extends Controller
             403,
             'Sistem Yöneticisi rolünü yalnızca başka bir Sistem Yöneticisi atayabilir.',
         );
+    }
+
+    private function recordRelationChange(Role|User $subject, string $relation): void
+    {
+        ActivityLog::query()->create([
+            'user_id' => auth()->id(),
+            'action' => 'updated',
+            'subject_type' => $subject->getMorphClass(),
+            'subject_id' => $subject->getKey(),
+            'changed_fields' => [$relation],
+            'created_at' => now(),
+        ]);
     }
 }

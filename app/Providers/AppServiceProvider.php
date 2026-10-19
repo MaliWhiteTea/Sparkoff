@@ -7,7 +7,9 @@ use App\Models\Announcement;
 use App\Models\BlackoutPeriod;
 use App\Models\Filament;
 use App\Models\Printer;
+use App\Models\Role;
 use App\Models\Setting;
+use App\Models\User;
 use App\Observers\AuditableObserver;
 use Illuminate\Console\Events\CommandStarting;
 use Illuminate\Support\Facades\Event;
@@ -30,7 +32,7 @@ class AppServiceProvider extends ServiceProvider
     {
         Event::listen(CommandStarting::class, PreventDestructiveDatabaseCommands::class);
 
-        foreach ([Announcement::class, BlackoutPeriod::class, Filament::class, Printer::class, Setting::class] as $model) {
+        foreach ([Announcement::class, BlackoutPeriod::class, Filament::class, Printer::class, Role::class, Setting::class, User::class] as $model) {
             $model::observe(AuditableObserver::class);
         }
     }

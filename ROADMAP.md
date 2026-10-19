@@ -100,7 +100,7 @@ Sparkoff Proje Atölyesi
 - [x] Bir kullanıcıya birden fazla rol atama
 - [x] Son Sistem Yöneticisi için kilitlenme koruması
 - [x] Hassas yetkileri arayüzde işaretleme
-- [ ] Rol ve kullanıcı değişikliklerini işlem geçmişine yazma
+- [x] Rol ve kullanıcı değişikliklerini işlem geçmişine yazma
 
 ### C. Envanter veri temeli
 
