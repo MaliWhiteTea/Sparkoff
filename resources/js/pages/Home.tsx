@@ -17,7 +17,7 @@ export default function Home({ workshop, printers, contact, announcements, featu
         <Head title="Sparkoff Proje Atölyesi" />
         <header className="site-header"><div className="header-inner">
             <a className="brand" href="#ust" aria-label="Sparkoff Proje Atölyesi ana sayfa"><img src="/logo.jpg" alt="Sparkoff logosu" width={56} height={56} /><span><strong>Sparkoff</strong><small>Proje Atölyesi</small></span></a>
-            <nav className="desktop-nav" aria-label="Ana menü"><a href="#icerik">Atölye</a><a href="#hizmetler">Hizmetler</a><Link href="/3d-yazicilar">3D Yazıcılar</Link>{(contact.phone || contact.whatsapp || contact.email) && <a href="#iletisim">İletişim</a>}</nav>
+            <nav className="desktop-nav" aria-label="Ana menü"><a href="#icerik">Atölye</a><a href="#hizmetler">Hizmetler</a><Link href="/3d-yazicilar">3D Yazıcılar</Link><Link href="/geri-bildirim">Geri bildirim</Link>{(contact.phone || contact.whatsapp || contact.email) && <a href="#iletisim">İletişim</a>}</nav>
             <Link className="header-button" href="/3d-yazicilar">Yazıcı durumları <ArrowIcon /></Link>
         </div></header>
 
@@ -39,7 +39,7 @@ export default function Home({ workshop, printers, contact, announcements, featu
 
         {(contact.phone || contact.whatsapp || contact.email) && <section className="help portal-contact" id="iletisim"><div><h2>İletişim</h2>{contact.hours && <p>{contact.hours}</p>}</div><div className="contact-actions">{contact.phone && <a className="button primary" href={`tel:${contact.phone}`}>{contact.phone}</a>}{whatsappHref && <a className="button secondary" href={whatsappHref} target="_blank" rel="noreferrer">WhatsApp</a>}{contact.email && <a className="button secondary" href={`mailto:${contact.email}`}>{contact.email}</a>}</div></section>}
 
-        <footer><div className="footer-brand"><img src="/logo.jpg" alt="" width={44} height={44} /><div><strong>Sparkoff</strong><span>Proje Atölyesi</span></div></div><span>© 2026 Sparkoff Proje Atölyesi</span></footer>
+        <footer><div className="footer-brand"><img src="/logo.jpg" alt="" width={44} height={44} /><div><strong>Sparkoff</strong><span>Proje Atölyesi</span></div></div><Link className="footer-feedback" href="/geri-bildirim">Öneri, şikâyet veya hata bildir</Link><span>© 2026 Sparkoff Proje Atölyesi</span></footer>
         <Link className="mobile-booking" href="/3d-yazicilar">3D yazıcıları incele <ArrowIcon /></Link>
     </main>;
 }

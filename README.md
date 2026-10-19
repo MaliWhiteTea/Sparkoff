@@ -24,6 +24,7 @@ Sparkoff; atölye hizmetlerini, 3D yazıcı randevularını ve malzeme envanteri
 - Kişisel teslim bilgilerinin süre sonunda otomatik anonimleştirilmesi
 - Yönetim paneline özel iç duyurular
 - Google Sheets/CSV envanter aktarımı
+- Kişisel bilgi istemeyen öneri, şikâyet ve hata bildirim sistemi
 
 ## Veri yaklaşımı
 

@@ -38,6 +38,6 @@ export default function Printers({ printers, hours, filamentSummary, contact, su
 
         {(features.onlineBooking || contact.phone || contact.whatsapp || contact.email) && <section className="printer-contact-card"><div className="contact-icon"><PhoneIcon /></div><div><span className="eyebrow">{features.onlineBooking ? 'RANDEVU' : 'İLETİŞİM'}</span><h2>Yazıcı kullanımı</h2>{contact.hours && <p>{contact.hours}</p>}</div><div className="contact-actions">{features.onlineBooking && <Link className="button primary" href="/randevu">Randevu oluştur</Link>}{!features.onlineBooking && contact.phone && <a className="button primary" href={`tel:${contact.phone}`}>{contact.phone}</a>}{!features.onlineBooking && whatsappHref && <a className="button secondary" href={whatsappHref} target="_blank" rel="noreferrer">WhatsApp</a>}{contact.email && <a className="button secondary" href={`mailto:${contact.email}`}>{contact.email}</a>}</div></section>}
 
-        <footer><div className="footer-brand"><img src="/logo.jpg" alt="" width={44} height={44} /><div><strong>Sparkoff</strong><span>Proje Atölyesi</span></div></div><span>© 2026 Sparkoff</span></footer>
+        <footer><div className="footer-brand"><img src="/logo.jpg" alt="" width={44} height={44} /><div><strong>Sparkoff</strong><span>Proje Atölyesi</span></div></div><Link className="footer-feedback" href="/geri-bildirim">Öneri, şikâyet veya hata bildir</Link><span>© 2026 Sparkoff</span></footer>
     </main>;
 }

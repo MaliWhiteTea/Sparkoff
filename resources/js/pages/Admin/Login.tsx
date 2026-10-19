@@ -28,7 +28,7 @@ export default function AdminLogin() {
                 </Link>
                 <span className="booking-kicker">YETKİLİ ERİŞİMİ</span>
                 <h1>Atölye yönetimi</h1>
-                <p>Randevuları incelemek ve atölye işleyişini yönetmek için giriş yapın.</p>
+                <p>Yetkiniz bulunan atölye bölümlerini yönetmek için giriş yapın.</p>
                 <form onSubmit={submit}>
                     <label className="field"><span>E-posta</span><input type="email" autoComplete="username" required value={email} onChange={(event) => setEmail(event.target.value)} /></label>
                     <label className="field"><span>Parola</span><input type="password" autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} /></label>

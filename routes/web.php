@@ -7,12 +7,14 @@ use App\Http\Controllers\Admin\AppointmentController as AdminAppointmentControll
 use App\Http\Controllers\Admin\AuthController as AdminAuthController;
 use App\Http\Controllers\Admin\BookingSettingsController as AdminBookingSettingsController;
 use App\Http\Controllers\Admin\CalendarController as AdminCalendarController;
+use App\Http\Controllers\Admin\FeedbackController as AdminFeedbackController;
 use App\Http\Controllers\Admin\FilamentSettingsController as AdminFilamentSettingsController;
 use App\Http\Controllers\Admin\PrinterSettingsController as AdminPrinterSettingsController;
 use App\Http\Controllers\Admin\PrivacySettingsController as AdminPrivacySettingsController;
 use App\Http\Controllers\Admin\SettingsController as AdminSettingsController;
 use App\Http\Controllers\Admin\WorkshopSettingsController as AdminWorkshopSettingsController;
 use App\Http\Controllers\AppointmentController;
+use App\Http\Controllers\FeedbackController;
 use App\Http\Controllers\FilamentController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PrinterPortalController;
@@ -23,6 +25,8 @@ Route::get('/', HomeController::class)->name('home');
 Route::get('/filamentler', [FilamentController::class, 'index'])->name('filaments.index');
 Route::get('/kvkk-aydinlatma', PrivacyController::class)->name('privacy.notice');
 Route::get('/3d-yazicilar', PrinterPortalController::class)->name('printers.public');
+Route::get('/geri-bildirim', [FeedbackController::class, 'create'])->name('feedback.create');
+Route::post('/geri-bildirim', [FeedbackController::class, 'store'])->middleware('throttle:5,1')->name('feedback.store');
 
 Route::middleware('booking.enabled')->group(function () {
     Route::get('/randevu', [AppointmentController::class, 'create'])->name('booking.create');
@@ -41,6 +45,8 @@ Route::prefix('yonetim')->name('admin.')->group(function () {
     Route::middleware(['auth', 'admin.active'])->group(function () {
         Route::post('/cikis', [AdminAuthController::class, 'destroy'])->name('logout');
         Route::get('/islem-gecmisi', AdminActivityLogController::class)->middleware('permission:audit_logs.view')->name('activity-logs');
+        Route::get('/talepler', [AdminFeedbackController::class, 'index'])->middleware('permission:feedback.view')->name('feedback.index');
+        Route::patch('/talepler/{feedback}', [AdminFeedbackController::class, 'update'])->middleware('permission:feedback.update')->name('feedback.update');
         Route::get('/yetkiler', [AdminAccessController::class, 'index'])->middleware(['permission:roles.view', 'permission:users.view'])->name('access.index');
         Route::post('/roller', [AdminAccessController::class, 'storeRole'])->middleware('permission:roles.create')->name('roles.store');
         Route::put('/roller/{role}', [AdminAccessController::class, 'updateRole'])->middleware('permission:roles.update')->name('roles.update');

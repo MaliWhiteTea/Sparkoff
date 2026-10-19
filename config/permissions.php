@@ -56,6 +56,10 @@ return [
         'staff_announcements.update' => ['label' => 'Yönetim duyurusunu düzenle'],
         'staff_announcements.archive' => ['label' => 'Yönetim duyurusunu arşivle'],
     ],
+    'Geri Bildirimler' => [
+        'feedback.view' => ['label' => 'Öneri, şikâyet ve hata bildirimlerini görüntüle'],
+        'feedback.update' => ['label' => 'Geri bildirim durumunu ve yönetim notunu güncelle'],
+    ],
     'Sistem' => [
         'users.view' => ['label' => 'Yetkili kullanıcıları görüntüle', 'sensitive' => true],
         'users.create' => ['label' => 'Yetkili kullanıcı oluştur', 'sensitive' => true],

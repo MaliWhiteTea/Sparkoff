@@ -168,7 +168,15 @@ Sparkoff Proje Atölyesi
 - [ ] Okundu/onaylandı bilgisi
 - [ ] Yönetim ana ekranı bildirimi ve okunmamış sayacı
 
-### I. Randevu sistemini canlıya hazırlama
+### I. Geri bildirim ve talepler
+
+- [x] Kişisel bilgi istemeyen öneri, şikâyet ve hata formu
+- [x] Bot alanı ve gönderim hızı koruması
+- [x] Yetkiye bağlı yönetim talep listesi
+- [x] İnceleme, çözüm ve arşiv durumları
+- [x] Yönetim iç notu ve işlemi yapan kullanıcı kaydı
+
+### J. Randevu sistemini canlıya hazırlama
 
 - [x] Sınırlı veriyle çevrimiçi başvuru akışı
 - [x] Model dosyası ve filament seçimi
@@ -180,7 +188,7 @@ Sparkoff Proje Atölyesi
 - [ ] Uçtan uca randevu testi
 - [ ] Canlıda `ONLINE_BOOKING_ENABLED=true`
 
-### J. Güvenlik, denetim ve yayın
+### K. Güvenlik, denetim ve yayın
 
 - [ ] Her kritik eylem için izin/verilmeme testleri
 - [ ] Kişisel veri görüntüleme ve dışa aktarma logları
@@ -200,6 +208,7 @@ Sparkoff Proje Atölyesi
 | Randevular | görüntüle, onayla, reddet, dosya indir, kişisel veri gör |
 | İçerik | kamu duyuruları ve atölye/iletişim ayarları |
 | İç duyurular | görüntüle, oluştur, düzenle, arşivle |
+| Geri bildirimler | görüntüle, incele, çöz ve arşivle |
 | Sistem | kullanıcı, rol, işlem geçmişi, KVKK ve sistem ayarları |
 
 ## Veri saklama ilkesi
