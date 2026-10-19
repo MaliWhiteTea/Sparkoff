@@ -2,12 +2,15 @@
 
 namespace App\Providers;
 
+use App\Listeners\PreventDestructiveDatabaseCommands;
 use App\Models\Announcement;
 use App\Models\BlackoutPeriod;
 use App\Models\Filament;
 use App\Models\Printer;
 use App\Models\Setting;
 use App\Observers\AuditableObserver;
+use Illuminate\Console\Events\CommandStarting;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -25,6 +28,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Event::listen(CommandStarting::class, PreventDestructiveDatabaseCommands::class);
+
         foreach ([Announcement::class, BlackoutPeriod::class, Filament::class, Printer::class, Setting::class] as $model) {
             $model::observe(AuditableObserver::class);
         }

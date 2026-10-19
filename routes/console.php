@@ -56,3 +56,23 @@ Artisan::command('admin:create {email} {--name=} {--password=}', function () {
 
     return self::SUCCESS;
 })->purpose('Yönetici hesabı oluşturur veya günceller');
+
+Artisan::command('admin:check', function () {
+    $hasActiveAdministrator = User::query()
+        ->where('is_active', true)
+        ->where(function ($query) {
+            $query->where('role', 'admin')
+                ->orWhereHas('roles', fn ($roleQuery) => $roleQuery->where('slug', 'system-administrator'));
+        })
+        ->exists();
+
+    if (! $hasActiveAdministrator) {
+        $this->error('Aktif yönetici hesabı bulunamadı.');
+
+        return self::FAILURE;
+    }
+
+    $this->info('Aktif yönetici hesabı mevcut.');
+
+    return self::SUCCESS;
+})->purpose('Aktif bir yönetici hesabının bulunduğunu doğrular');

@@ -54,6 +54,8 @@ return [
 
     'url' => env('APP_URL', 'http://localhost'),
 
+    'allow_destructive_database_commands' => (bool) env('ALLOW_DESTRUCTIVE_DATABASE_COMMANDS', false),
+
     /*
     |--------------------------------------------------------------------------
     | Application Timezone
