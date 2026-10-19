@@ -6,6 +6,9 @@ use App\Listeners\PreventDestructiveDatabaseCommands;
 use App\Models\Announcement;
 use App\Models\BlackoutPeriod;
 use App\Models\Filament;
+use App\Models\InventoryCategory;
+use App\Models\InventoryItem;
+use App\Models\InventoryLocation;
 use App\Models\Printer;
 use App\Models\Role;
 use App\Models\Setting;
@@ -32,7 +35,7 @@ class AppServiceProvider extends ServiceProvider
     {
         Event::listen(CommandStarting::class, PreventDestructiveDatabaseCommands::class);
 
-        foreach ([Announcement::class, BlackoutPeriod::class, Filament::class, Printer::class, Role::class, Setting::class, User::class] as $model) {
+        foreach ([Announcement::class, BlackoutPeriod::class, Filament::class, InventoryCategory::class, InventoryItem::class, InventoryLocation::class, Printer::class, Role::class, Setting::class, User::class] as $model) {
             $model::observe(AuditableObserver::class);
         }
     }

@@ -104,14 +104,14 @@ Sparkoff Proje Atölyesi
 
 ### C. Envanter veri temeli
 
-- [ ] Kategoriler
-- [ ] Raf/kutu konumları
-- [ ] Malzemeler ve malzeme türleri
-- [ ] Ölçü birimleri ve düşük stok sınırı
-- [ ] Kamu görünürlük modu
-- [ ] Fotoğraf ve teknik özellikler
-- [ ] Stok hareketleri ve ters işlem bağlantıları
-- [ ] Eşzamanlı stok işlemlerinde veritabanı kilidi
+- [x] Kategoriler
+- [x] Raf/kutu konumları
+- [x] Malzemeler ve malzeme türleri
+- [x] Ölçü birimleri ve düşük stok sınırı
+- [x] Kamu görünürlük modu
+- [x] Fotoğraf ve teknik özellikler
+- [x] Stok hareketleri ve ters işlem bağlantıları
+- [x] Eşzamanlı stok işlemlerinde veritabanı kilidi
 
 ### D. Yönetici envanter arayüzü
 
