@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -41,10 +42,15 @@ Artisan::command('admin:create {email} {--name=} {--password=}', function () {
         return self::SUCCESS;
     }
 
-    User::query()->updateOrCreate(
+    $user = User::query()->updateOrCreate(
         ['email' => $data['email']],
         ['name' => $data['name'], 'password' => $data['password'], 'role' => 'admin', 'is_active' => true],
     );
+
+    $systemAdministrator = Role::query()->where('slug', 'system-administrator')->first();
+    if ($systemAdministrator) {
+        $user->roles()->syncWithoutDetaching([$systemAdministrator->id]);
+    }
 
     $this->info("Yönetici hesabı hazır: {$data['email']}");
 

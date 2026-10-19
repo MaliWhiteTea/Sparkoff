@@ -1,30 +1,54 @@
 # Sparkoff Proje Atölyesi
 
-Sparkoff Proje Atölyesi'nin hizmetlerini tek merkezde sunan modern ve mobil uyumlu atölye portalı.
+Sparkoff; atölye hizmetlerini, 3D yazıcı randevularını ve malzeme envanterini tek merkezde sunan mobil uyumlu bir atölye portalıdır.
 
-İlk modül, ziyaretçilerin kişisel bilgi paylaşmadan 3D yazıcıların güncel durumunu, çalışma saatlerini ve mevcut filamentleri görüntülemesini sağlar. Randevu görüşmeleri yüz yüze, telefon veya WhatsApp üzerinden yürütülür. Malzeme ve ekipman stok modülü sonraki aşamada eklenecektir.
+## Modüller
 
-## Özellikler
+### Hazır olanlar
 
-- Modüler atölye ana sayfası
-- Kamuya açık 3D yazıcı durum ekranı
-- Çalışma saatleri ve yazıcı uygunluk bilgisi
-- Ayrıntılı filament kataloğu
-- Yazıcı, bakım ve filament yönetimi
-- Ziyaretçiden kişisel veri veya dosya istemeyen kamu akışı
-- Gelecekte eklenecek malzeme ve ekipman stok modülü
-- Mobil öncelikli Türkçe arayüz
+- Atölye ana sayfası, iletişim ve kamu duyuruları
+- Yazıcı durumları ve 7 günlük kamu takvimi
+- Filament kataloğu ve yönetimi
+- Çevrimiçi 3D yazıcı randevu akışı
+- E-posta doğrulama, yönetici onayı ve takip bağlantısı
+- Yönetici paneli ve işlem geçmişi
+- cPanel bölünmüş dizin dağıtımı
+
+Çevrimiçi randevu kodu hazırdır ancak gerçek SMTP doğrulanana kadar canlı ortamda özellik bayrağı kapalı tutulmalıdır.
+
+### Geliştirilmekte olanlar
+
+- Dinamik rol ve yetki yönetimi
+- Sarf, ödünç ve demirbaş malzeme envanteri
+- Teslim, iade, hasar ve kayıp işlemleri
+- Kişisel teslim bilgilerinin süre sonunda otomatik anonimleştirilmesi
+- Yönetim paneline özel iç duyurular
+- Google Sheets/CSV envanter aktarımı
+
+## Veri yaklaşımı
+
+3D yazıcı randevusunda ad, soyad, e-posta, randevu zamanı, model dosyası ve filament bilgileri alınır. Telefon ve serbest kullanıcı notu alınmaz.
+
+Malzeme tesliminde ad ve soyad zorunlu, e-posta isteğe bağlıdır. Aktif veya gecikmiş teslimlerde bilgiler kayıt sonuçlanana kadar korunur; saklama süresi gerçek iade ya da sonuçlandırma sonrasında başlar. Süre dolunca kişi alanları anonimleştirilir, stok hareketi korunur.
+
+## Yetkilendirme
+
+- Kullanıcılar birden fazla role sahip olabilir.
+- Yetkiler roller üzerinden verilir.
+- Korunan Sistem Yöneticisi rolü tüm yetkilere sahiptir.
+- Envanter, teslim, yazıcı, randevu, içerik ve sistem işlemleri ayrı izinlerle korunur.
+- Kişisel veri görüntüleme, dosya indirme ve dışa aktarma hassas izinlerdir.
 
 ## Teknoloji
 
-- PHP 8.3+
+- PHP 8.4+
 - Laravel 13
 - React 19 ve TypeScript
 - Inertia.js
-- Vite ve Tailwind CSS
-- MySQL/MariaDB
+- Vite
+- MySQL/MariaDB; yerel testlerde SQLite
 
-Sunucuda Node.js çalıştırmak gerekmez. Node.js yalnızca geliştirme sırasında React ve CSS dosyalarını derlemek için kullanılır; cPanel'e derlenmiş dosyalar yüklenir.
+Sunucuda Node.js çalıştırılmaz. React ve CSS dosyaları geliştirme ortamında derlenerek cPanel'e yüklenir.
 
 ## Yerel kurulum
 
@@ -33,48 +57,45 @@ composer install
 npm install
 cp .env.example .env
 php artisan key:generate
-```
-
-Yerel veritabanı ayarlarını `.env` dosyasında yapılandırdıktan sonra:
-
-```bash
-php artisan migrate
+php artisan migrate --seed
 npm run build
-php artisan serve
 ```
 
-Geliştirme sırasında Vite'ı ayrı terminalde çalıştırabilirsiniz:
+Geliştirme ortamı:
 
 ```bash
-npm run dev
+composer run dev
 ```
+
+Masaüstüne eklenen `Sparkoff Testi Başlat` ve `Sparkoff Testi Kapat` kısayolları da yerel ortamı yönetebilir.
 
 ## Kontroller
 
 ```bash
 npx tsc --noEmit
 npm run build
-php artisan test
+composer test
 ```
 
-## Özellik bayrağı
+## Ortam ayarları
 
-Eski çevrimiçi randevu kodu geri dönüş ihtimali için korunur ancak varsayılan olarak kapalıdır:
+Randevuyu yerelde veya canlıda açmak için:
 
 ```dotenv
-ONLINE_BOOKING_ENABLED=false
+ONLINE_BOOKING_ENABLED=true
 ```
 
-Canlı ortamda bu değer `false` olarak kalmalıdır. Kapalıyken `/randevu` adresi 3D Yazıcılar modülüne yönlendirilir; veri kabul eden diğer randevu uçları erişilemez.
+Canlıda açmadan önce `randevu@sparkoff.tr` için SMTP, SPF/DKIM ve gerçek teslimat testi tamamlanmalıdır. `.env` dosyası Git'e veya dağıtım ZIP'ine eklenmez.
 
 ## Dokümantasyon
 
-Ayrıntılı ürün ve geliştirme planı için [ROADMAP.md](./ROADMAP.md) dosyasına bakabilirsiniz.
+- Ayrıntılı geliştirme planı: [ROADMAP.md](./ROADMAP.md)
+- cPanel kurulumu: [CPANEL_DEPLOYMENT.md](./CPANEL_DEPLOYMENT.md)
 
 ## Proje durumu
 
-Atölye portalı ana sayfası, 3D Yazıcılar giriş modülü, yazıcı/filament yönetimi ve yönetici girişi hazırdır. Sıradaki aşama kişisel veri içermeyen kamuya açık müsaitlik takvimi ile anonim yönetici doluluk kayıtlarıdır.
+3D yazıcı ve portal temeli çalışmaktadır. Sıradaki geliştirme, dinamik rol-yetki altyapısı ve bunun üzerine kurulacak malzeme envanteri/teslim sistemidir.
 
 ## Lisans
 
-Lisans modeli henüz belirlenmemiştir. Bir lisans dosyası eklenene kadar projenin tüm hakları saklıdır.
+Lisans modeli henüz belirlenmemiştir. Bir lisans dosyası eklenene kadar tüm hakları saklıdır.

@@ -5,14 +5,19 @@ namespace Database\Seeders;
 use App\Enums\PrinterStatus;
 use App\Models\Filament;
 use App\Models\OperatingHour;
+use App\Models\Permission;
 use App\Models\Printer;
+use App\Models\Role;
 use App\Models\Setting;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        $this->seedRolesAndPermissions();
+
         Printer::query()->upsert([
             [
                 'code' => 'P-01',
@@ -75,5 +80,49 @@ class DatabaseSeeder extends Seeder
         ] as $setting) {
             Setting::query()->updateOrCreate(['key' => $setting['key']], $setting);
         }
+    }
+
+    private function seedRolesAndPermissions(): void
+    {
+        $permissionIds = [];
+
+        foreach (config('permissions') as $module => $permissions) {
+            foreach ($permissions as $key => $definition) {
+                $permission = Permission::query()->updateOrCreate(
+                    ['key' => $key],
+                    [
+                        'module' => $module,
+                        'label' => $definition['label'],
+                        'is_sensitive' => $definition['sensitive'] ?? false,
+                    ],
+                );
+                $permissionIds[] = $permission->id;
+            }
+        }
+
+        $systemAdministrator = Role::query()->updateOrCreate(
+            ['slug' => 'system-administrator'],
+            [
+                'name' => 'Sistem Yöneticisi',
+                'description' => 'Tüm modüllere ve sistem ayarlarına erişebilen korunan rol.',
+                'is_system' => true,
+                'is_protected' => true,
+            ],
+        );
+        $systemAdministrator->permissions()->sync($permissionIds);
+
+        Role::query()->updateOrCreate(
+            ['slug' => 'inventory-moderator'],
+            [
+                'name' => 'Malzeme Moderatörü',
+                'description' => 'Malzeme teslim ve iade işlemlerini yürütür.',
+                'is_system' => false,
+                'is_protected' => false,
+            ],
+        );
+
+        User::query()
+            ->where('role', 'admin')
+            ->each(fn (User $user) => $user->roles()->syncWithoutDetaching([$systemAdministrator->id]));
     }
 }
