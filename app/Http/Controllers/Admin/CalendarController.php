@@ -27,6 +27,8 @@ class CalendarController extends Controller
             : CarbonImmutable::now($timezone)->startOfDay();
         $periodStart = $view === 'day' ? $reference : $reference->startOfWeek();
         $periodEnd = $periodStart->addDays($view === 'day' ? 1 : 7);
+        $canViewPersonalData = $request->user()->role === 'admin' || $request->user()->hasPermissionTo('appointments.view_personal_data');
+        $canViewAppointments = $request->user()->role === 'admin' || $request->user()->hasPermissionTo('appointments.view');
 
         $appointments = Appointment::query()
             ->with('printer')
@@ -41,7 +43,7 @@ class CalendarController extends Controller
             ->orderBy('starts_at')
             ->get();
 
-        $days = collect(range(0, $view === 'day' ? 0 : 6))->map(function (int $offset) use ($periodStart, $appointments) {
+        $days = collect(range(0, $view === 'day' ? 0 : 6))->map(function (int $offset) use ($periodStart, $appointments, $canViewPersonalData, $canViewAppointments) {
             $dayStart = $periodStart->addDays($offset);
             $dayEnd = $dayStart->addDay();
 
@@ -52,13 +54,13 @@ class CalendarController extends Controller
                 'isToday' => $dayStart->isToday(),
                 'appointments' => $appointments
                     ->filter(fn (Appointment $appointment) => $appointment->starts_at->lt($dayEnd) && $appointment->ends_at->gt($dayStart))
-                    ->map(function (Appointment $appointment) use ($dayStart, $dayEnd) {
+                    ->map(function (Appointment $appointment) use ($dayStart, $dayEnd, $canViewPersonalData, $canViewAppointments) {
                         $continuesFromPrevious = $appointment->starts_at->lt($dayStart);
                         $continuesNext = $appointment->ends_at->gt($dayEnd);
 
                         return [
-                            'publicId' => $appointment->public_id,
-                            'name' => "{$appointment->first_name} {$appointment->last_name}",
+                            'publicId' => $canViewAppointments ? $appointment->public_id : null,
+                            'name' => $canViewPersonalData ? "{$appointment->first_name} {$appointment->last_name}" : 'Planlanmış baskı',
                             'printer' => $appointment->printer->name,
                             'status' => $appointment->status->value,
                             'statusLabel' => $this->statusLabel($appointment->status),

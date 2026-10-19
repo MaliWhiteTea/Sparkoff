@@ -3,7 +3,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 
 type Appointment = {
-    publicId: string; name: string; email: string; status: string; statusLabel: string; printer: string;
+    publicId: string; name: string; email: string | null; status: string; statusLabel: string; printer: string;
     startsAt: string; endsAt: string; durationMinutes: number; filament: string;
     actions: { status: string; label: string; requiresNote: boolean; tone: 'primary' | 'danger' }[];
     files: { id: number; name: string; size: number; downloadUrl: string }[];
@@ -31,7 +31,7 @@ export default function AppointmentShow({ appointment }: { appointment: Appointm
         <AdminLayout>
             <Head title={`Randevu · ${appointment.name}`} />
             <Link className="admin-back" href="/yonetim/randevular">← Randevulara dön</Link>
-            <header className="admin-title detail"><div><span className="booking-kicker">{appointment.publicId.slice(0, 8).toUpperCase()}</span><h1>{appointment.name}</h1><p>{appointment.email}</p></div><span className={`admin-status status-${appointment.status}`}>{appointment.statusLabel}</span></header>
+            <header className="admin-title detail"><div><span className="booking-kicker">{appointment.publicId.slice(0, 8).toUpperCase()}</span><h1>{appointment.name}</h1>{appointment.email && <p>{appointment.email}</p>}</div><span className={`admin-status status-${appointment.status}`}>{appointment.statusLabel}</span></header>
             <div className="admin-detail-grid">
                 <section className="admin-panel admin-detail-card"><h2>Baskı ayrıntıları</h2><dl>
                     <div><dt>Başlangıç</dt><dd>{appointment.startsAt}</dd></div><div><dt>Tahmini bitiş</dt><dd>{appointment.endsAt}</dd></div><div><dt>Süre</dt><dd>{appointment.durationMinutes} dakika</dd></div><div><dt>Yazıcı</dt><dd>{appointment.printer}</dd></div><div><dt>Filament</dt><dd>{appointment.filament}</dd></div>

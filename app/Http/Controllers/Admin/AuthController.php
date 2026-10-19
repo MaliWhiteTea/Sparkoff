@@ -62,6 +62,9 @@ class AuthController extends Controller
         $destinations = [
             'appointments.view' => 'admin.appointments.index',
             'printers.manage_schedule' => 'admin.calendar.index',
+            'feedback.view' => 'admin.feedback.index',
+            'users.view' => 'admin.access.index',
+            'roles.view' => 'admin.access.index',
             'printers.view' => 'admin.settings.printers.index',
             'printers.manage_filaments' => 'admin.settings.filaments.index',
             'announcements.view' => 'admin.announcements.index',
@@ -69,8 +72,9 @@ class AuthController extends Controller
         ];
 
         foreach ($destinations as $permission => $route) {
+            $requiresBooking = in_array($route, ['admin.appointments.index', 'admin.calendar.index'], true);
             if (($user->role === 'admin' || $user->hasPermissionTo($permission))
-                && (! str_starts_with($route, 'admin.appointments') || config('features.online_booking'))) {
+                && (! $requiresBooking || config('features.online_booking'))) {
                 return route($route);
             }
         }

@@ -18,10 +18,13 @@ use Inertia\Response;
 
 class AccessController extends Controller
 {
-    public function index(): Response
+    public function index(Request $request): Response
     {
+        $canViewRoles = $request->user()->role === 'admin' || $request->user()->hasPermissionTo('roles.view');
+        $canViewUsers = $request->user()->role === 'admin' || $request->user()->hasPermissionTo('users.view');
+
         return Inertia::render('Admin/Access/Index', [
-            'roles' => Role::query()->withCount('users')->with('permissions:id,key')->orderByDesc('is_system')->orderBy('name')->get()->map(fn (Role $role) => [
+            'roles' => Role::query()->withCount('users')->when($canViewRoles, fn ($query) => $query->with('permissions:id,key'))->orderByDesc('is_system')->orderBy('name')->get()->map(fn (Role $role) => [
                 'id' => $role->id,
                 'name' => $role->name,
                 'slug' => $role->slug,
@@ -29,20 +32,20 @@ class AccessController extends Controller
                 'isSystem' => $role->is_system,
                 'isProtected' => $role->is_protected,
                 'userCount' => $role->users_count,
-                'permissions' => $role->permissions->pluck('key'),
+                'permissions' => $canViewRoles ? $role->permissions->pluck('key') : [],
             ]),
-            'permissionGroups' => Permission::query()->orderBy('module')->orderBy('label')->get()->groupBy('module')->map(fn ($permissions) => $permissions->map(fn (Permission $permission) => [
+            'permissionGroups' => $canViewRoles ? Permission::query()->orderBy('module')->orderBy('label')->get()->groupBy('module')->map(fn ($permissions) => $permissions->map(fn (Permission $permission) => [
                 'key' => $permission->key,
                 'label' => $permission->label,
                 'isSensitive' => $permission->is_sensitive,
-            ])->values()),
-            'users' => User::query()->with('roles:id,name')->orderBy('name')->get()->map(fn (User $user) => [
+            ])->values()) : (object) [],
+            'users' => $canViewUsers ? User::query()->with('roles:id,name')->orderBy('name')->get()->map(fn (User $user) => [
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
                 'isActive' => $user->is_active,
                 'roles' => $user->roles->map(fn (Role $role) => ['id' => $role->id, 'name' => $role->name]),
-            ]),
+            ]) : [],
         ]);
     }
 

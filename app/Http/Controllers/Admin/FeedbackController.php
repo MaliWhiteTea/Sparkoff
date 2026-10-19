@@ -16,7 +16,10 @@ class FeedbackController extends Controller
 {
     public function index(Request $request): Response
     {
-        $status = $request->string('status')->toString();
+        $validated = $request->validate([
+            'status' => ['nullable', Rule::enum(FeedbackStatus::class)],
+        ]);
+        $status = $validated['status'] ?? '';
         $reports = FeedbackReport::query()
             ->with('handler:id,name')
             ->when($status, fn ($query) => $query->where('status', $status))

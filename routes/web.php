@@ -47,7 +47,7 @@ Route::prefix('yonetim')->name('admin.')->group(function () {
         Route::get('/islem-gecmisi', AdminActivityLogController::class)->middleware('permission:audit_logs.view')->name('activity-logs');
         Route::get('/talepler', [AdminFeedbackController::class, 'index'])->middleware('permission:feedback.view')->name('feedback.index');
         Route::patch('/talepler/{feedback}', [AdminFeedbackController::class, 'update'])->middleware('permission:feedback.update')->name('feedback.update');
-        Route::get('/yetkiler', [AdminAccessController::class, 'index'])->middleware(['permission:roles.view', 'permission:users.view'])->name('access.index');
+        Route::get('/yetkiler', [AdminAccessController::class, 'index'])->middleware('permission.any:roles.view,users.view')->name('access.index');
         Route::post('/roller', [AdminAccessController::class, 'storeRole'])->middleware('permission:roles.create')->name('roles.store');
         Route::put('/roller/{role}', [AdminAccessController::class, 'updateRole'])->middleware('permission:roles.update')->name('roles.update');
         Route::delete('/roller/{role}', [AdminAccessController::class, 'destroyRole'])->middleware('permission:roles.delete')->name('roles.destroy');

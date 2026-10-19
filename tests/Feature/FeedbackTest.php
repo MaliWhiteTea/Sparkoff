@@ -81,4 +81,22 @@ class FeedbackTest extends TestCase
 
         $this->actingAs($staff)->get(route('admin.feedback.index'))->assertForbidden();
     }
+
+    public function test_feedback_only_staff_is_sent_to_feedback_after_login(): void
+    {
+        $role = Role::query()->create(['name' => 'Talep Görüntüleyici', 'slug' => 'talep-goruntuleyici']);
+        $role->permissions()->attach(Permission::query()->where('key', 'feedback.view')->value('id'));
+        $staff = User::factory()->create([
+            'email' => 'talep@example.com',
+            'password' => 'guvenli-test-parolasi',
+            'role' => 'operator',
+            'is_active' => true,
+        ]);
+        $staff->roles()->attach($role);
+
+        $this->post(route('admin.login.store'), [
+            'email' => $staff->email,
+            'password' => 'guvenli-test-parolasi',
+        ])->assertRedirect(route('admin.feedback.index'));
+    }
 }

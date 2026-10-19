@@ -2,7 +2,7 @@ import AdminLayout from '@/components/AdminLayout';
 import { Head, Link, router } from '@inertiajs/react';
 
 type CalendarAppointment = {
-    publicId: string; name: string; printer: string; status: string; statusLabel: string;
+    publicId: string | null; name: string; printer: string; status: string; statusLabel: string;
     startTime: string; endTime: string; continuesFromPrevious: boolean; continuesNext: boolean;
 };
 type CalendarDay = { date: string; weekday: string; dayLabel: string; isToday: boolean; appointments: CalendarAppointment[] };
@@ -22,11 +22,12 @@ export default function AdminCalendar({ view, referenceDate, rangeLabel, previou
                 {days.map((day) => <article className={`calendar-day ${day.isToday ? 'today' : ''}`} key={day.date}>
                     <header><span>{day.weekday}</span><strong>{day.dayLabel}</strong>{day.isToday && <small>BUGÜN</small>}</header>
                     <div className="calendar-day-body">
-                        {day.appointments.map((appointment) => <Link className={`calendar-event status-${appointment.status}`} href={`/yonetim/randevular/${appointment.publicId}`} key={`${day.date}-${appointment.publicId}`}>
-                            <div><strong>{appointment.startTime}–{appointment.endTime}</strong><span className={`admin-status status-${appointment.status}`}>{appointment.statusLabel}</span></div>
-                            <h2>{appointment.name}</h2><p>{appointment.printer}</p>
-                            {(appointment.continuesFromPrevious || appointment.continuesNext) && <small>{appointment.continuesFromPrevious ? 'Önceki günden devam ediyor' : 'Sonraki güne devam ediyor'}</small>}
-                        </Link>)}
+                        {day.appointments.map((appointment, index) => {
+                            const content = <><div><strong>{appointment.startTime}–{appointment.endTime}</strong><span className={`admin-status status-${appointment.status}`}>{appointment.statusLabel}</span></div><h2>{appointment.name}</h2><p>{appointment.printer}</p>{(appointment.continuesFromPrevious || appointment.continuesNext) && <small>{appointment.continuesFromPrevious ? 'Önceki günden devam ediyor' : 'Sonraki güne devam ediyor'}</small>}</>;
+                            return appointment.publicId
+                                ? <Link className={`calendar-event status-${appointment.status}`} href={`/yonetim/randevular/${appointment.publicId}`} key={`${day.date}-${appointment.publicId}`}>{content}</Link>
+                                : <article className={`calendar-event status-${appointment.status}`} key={`${day.date}-${index}`}>{content}</article>;
+                        })}
                         {day.appointments.length === 0 && <div className="calendar-empty">Planlanmış baskı yok</div>}
                     </div>
                 </article>)}

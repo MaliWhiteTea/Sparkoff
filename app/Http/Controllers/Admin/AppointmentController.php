@@ -28,23 +28,26 @@ class AppointmentController extends Controller
         ]);
         $status = $validated['status'] ?? '';
         $search = trim($validated['search'] ?? '');
+        $canViewPersonalData = $this->can($request, 'appointments.view_personal_data');
 
         $appointments = Appointment::query()
             ->with('printer')
             ->when($status, fn ($query) => $query->where('status', $status))
-            ->when($search, fn ($query) => $query->where(function ($query) use ($search) {
-                $query->where('first_name', 'like', "%{$search}%")
-                    ->orWhere('last_name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%")
-                    ->orWhere('public_id', 'like', "%{$search}%");
+            ->when($search, fn ($query) => $query->where(function ($query) use ($search, $canViewPersonalData) {
+                $query->where('public_id', 'like', "%{$search}%");
+                if ($canViewPersonalData) {
+                    $query->orWhere('first_name', 'like', "%{$search}%")
+                        ->orWhere('last_name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%");
+                }
             }))
             ->latest('starts_at')
             ->paginate(15)
             ->withQueryString()
             ->through(fn (Appointment $appointment) => [
                 'publicId' => $appointment->public_id,
-                'name' => "{$appointment->first_name} {$appointment->last_name}",
-                'email' => $appointment->email,
+                'name' => $canViewPersonalData ? "{$appointment->first_name} {$appointment->last_name}" : 'Gizli başvuru sahibi',
+                'email' => $canViewPersonalData ? $appointment->email : null,
                 'status' => $appointment->status->value,
                 'statusLabel' => $this->statusLabel($appointment->status),
                 'printer' => $appointment->printer->name,
@@ -67,15 +70,18 @@ class AppointmentController extends Controller
         ]);
     }
 
-    public function show(string $publicId): Response
+    public function show(Request $request, string $publicId): Response
     {
         $appointment = $this->findAppointment($publicId);
+        $canViewPersonalData = $this->can($request, 'appointments.view_personal_data');
+        $canDownloadFiles = $this->can($request, 'appointments.download_file');
+        $canReview = $this->can($request, 'appointments.review');
 
         return Inertia::render('Admin/Appointments/Show', [
             'appointment' => [
                 'publicId' => $appointment->public_id,
-                'name' => "{$appointment->first_name} {$appointment->last_name}",
-                'email' => $appointment->email,
+                'name' => $canViewPersonalData ? "{$appointment->first_name} {$appointment->last_name}" : 'Gizli başvuru sahibi',
+                'email' => $canViewPersonalData ? $appointment->email : null,
                 'status' => $appointment->status->value,
                 'statusLabel' => $this->statusLabel($appointment->status),
                 'printer' => $appointment->printer->name,
@@ -83,26 +89,31 @@ class AppointmentController extends Controller
                 'endsAt' => $appointment->ends_at->translatedFormat('d F Y, H:i'),
                 'durationMinutes' => $appointment->duration_minutes,
                 'filament' => "{$appointment->filament_source->value} · {$appointment->filament_material} · {$appointment->filament_color}",
-                'files' => $appointment->files->map(fn (AppointmentFile $file) => [
+                'files' => $canDownloadFiles ? $appointment->files->map(fn (AppointmentFile $file) => [
                     'id' => $file->id,
                     'name' => $file->original_name,
                     'size' => $file->size_bytes,
                     'downloadUrl' => route('admin.appointments.files.download', [$appointment->public_id, $file]),
-                ]),
+                ]) : [],
                 'history' => $appointment->statusHistory->map(fn ($history) => [
                     'label' => $this->statusLabel($history->to_status),
                     'note' => $history->note,
                     'actor' => $history->actor?->name ?? 'Sistem',
                     'date' => $history->created_at->translatedFormat('d F Y, H:i'),
                 ]),
-                'actions' => collect($this->allowedTransitions($appointment->status))->map(fn (AppointmentStatus $status) => [
+                'actions' => $canReview ? collect($this->allowedTransitions($appointment->status))->map(fn (AppointmentStatus $status) => [
                     'status' => $status->value,
                     'label' => $this->actionLabel($status),
                     'requiresNote' => in_array($status, [AppointmentStatus::ChangeRequested, AppointmentStatus::Rejected, AppointmentStatus::Failed], true),
                     'tone' => in_array($status, [AppointmentStatus::Rejected, AppointmentStatus::Failed], true) ? 'danger' : 'primary',
-                ]),
+                ]) : [],
             ],
         ]);
+    }
+
+    private function can(Request $request, string $permission): bool
+    {
+        return $request->user()->role === 'admin' || $request->user()->hasPermissionTo($permission);
     }
 
     public function updateStatus(Request $request, string $publicId): RedirectResponse

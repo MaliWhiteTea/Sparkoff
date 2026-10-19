@@ -7,6 +7,7 @@ use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class AccessManagementTest extends TestCase
@@ -106,5 +107,19 @@ class AccessManagementTest extends TestCase
         ])->assertForbidden();
 
         $this->actingAs($admin)->delete(route('admin.roles.destroy', $role))->assertForbidden();
+    }
+
+    public function test_user_viewer_can_open_access_page_without_role_details(): void
+    {
+        $role = Role::query()->create(['name' => 'Kullanıcı Görüntüleyici', 'slug' => 'kullanici-goruntuleyici']);
+        $role->permissions()->attach(Permission::query()->where('key', 'users.view')->value('id'));
+        $viewer = User::factory()->create(['role' => 'operator', 'is_active' => true]);
+        $viewer->roles()->attach($role);
+
+        $this->actingAs($viewer)->get(route('admin.access.index'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('users')
+                ->where('permissionGroups', []));
     }
 }
