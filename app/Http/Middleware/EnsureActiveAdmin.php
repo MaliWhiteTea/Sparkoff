@@ -11,7 +11,9 @@ class EnsureActiveAdmin
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if (! $request->user()?->is_active || ! in_array($request->user()->role, ['admin', 'operator'], true)) {
+        $user = $request->user();
+
+        if (! $user?->is_active || (! in_array($user->role, ['admin', 'operator'], true) && ! $user->roles()->exists())) {
             Auth::logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();

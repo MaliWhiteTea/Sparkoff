@@ -87,9 +87,9 @@ Sparkoff Proje Atölyesi
 - [x] Yetki anahtarlarını merkezi katalogda tanımla
 - [x] Rol, yetki ve çoklu rol tablolarını oluştur
 - [x] Mevcut yöneticileri korunan Sistem Yöneticisi rolüne taşı
-- [ ] Sunucu tarafı yetki middleware/policy katmanını kur
-- [ ] Yönetici menülerini yetkilere göre göster
-- [ ] Rol-yetki güvenlik testlerini ekle
+- [x] Sunucu tarafı yetki middleware katmanını kur
+- [x] Yönetici menülerini yetkilere göre göster
+- [x] Rol-yetki temel güvenlik testlerini ekle
 
 ### B. Kullanıcı, rol ve yetki yönetimi
 

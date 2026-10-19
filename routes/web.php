@@ -38,40 +38,38 @@ Route::prefix('yonetim')->name('admin.')->group(function () {
 
     Route::middleware(['auth', 'admin.active'])->group(function () {
         Route::post('/cikis', [AdminAuthController::class, 'destroy'])->name('logout');
-        Route::middleware('admin.only')->group(function () {
-            Route::get('/islem-gecmisi', AdminActivityLogController::class)->name('activity-logs');
-            Route::get('/duyurular', [AdminAnnouncementController::class, 'index'])->name('announcements.index');
-            Route::post('/duyurular', [AdminAnnouncementController::class, 'store'])->name('announcements.store');
-            Route::patch('/duyurular/{announcement}', [AdminAnnouncementController::class, 'update'])->name('announcements.update');
-            Route::delete('/duyurular/{announcement}', [AdminAnnouncementController::class, 'destroy'])->name('announcements.destroy');
-        });
+        Route::get('/islem-gecmisi', AdminActivityLogController::class)->middleware('permission:audit_logs.view')->name('activity-logs');
+        Route::get('/duyurular', [AdminAnnouncementController::class, 'index'])->middleware('permission:announcements.view')->name('announcements.index');
+        Route::post('/duyurular', [AdminAnnouncementController::class, 'store'])->middleware('permission:announcements.create')->name('announcements.store');
+        Route::patch('/duyurular/{announcement}', [AdminAnnouncementController::class, 'update'])->middleware('permission:announcements.update')->name('announcements.update');
+        Route::delete('/duyurular/{announcement}', [AdminAnnouncementController::class, 'destroy'])->middleware('permission:announcements.archive')->name('announcements.destroy');
         Route::middleware('booking.enabled')->group(function () {
-            Route::get('/takvim', [AdminCalendarController::class, 'index'])->name('calendar.index');
-            Route::get('/randevular', [AdminAppointmentController::class, 'index'])->name('appointments.index');
-            Route::get('/randevular/{publicId}', [AdminAppointmentController::class, 'show'])->name('appointments.show');
-            Route::patch('/randevular/{publicId}/durum', [AdminAppointmentController::class, 'updateStatus'])->name('appointments.status');
-            Route::get('/randevular/{publicId}/dosyalar/{file}', [AdminAppointmentController::class, 'download'])->name('appointments.files.download');
+            Route::get('/takvim', [AdminCalendarController::class, 'index'])->middleware('permission:printers.manage_schedule')->name('calendar.index');
+            Route::get('/randevular', [AdminAppointmentController::class, 'index'])->middleware('permission:appointments.view')->name('appointments.index');
+            Route::get('/randevular/{publicId}', [AdminAppointmentController::class, 'show'])->middleware('permission:appointments.view')->name('appointments.show');
+            Route::patch('/randevular/{publicId}/durum', [AdminAppointmentController::class, 'updateStatus'])->middleware('permission:appointments.review')->name('appointments.status');
+            Route::get('/randevular/{publicId}/dosyalar/{file}', [AdminAppointmentController::class, 'download'])->middleware('permission:appointments.download_file')->name('appointments.files.download');
         });
 
-        Route::prefix('ayarlar')->name('settings.')->middleware('admin.only')->group(function () {
+        Route::prefix('ayarlar')->name('settings.')->group(function () {
             Route::middleware('booking.enabled')->group(function () {
-                Route::get('/randevu-kurallari', [AdminBookingSettingsController::class, 'edit'])->name('booking.edit');
-                Route::put('/randevu-kurallari', [AdminBookingSettingsController::class, 'update'])->name('booking.update');
-                Route::get('/kvkk', [AdminPrivacySettingsController::class, 'edit'])->name('privacy.edit');
-                Route::put('/kvkk', [AdminPrivacySettingsController::class, 'update'])->name('privacy.update');
+                Route::get('/randevu-kurallari', [AdminBookingSettingsController::class, 'edit'])->middleware('permission:system_settings.update')->name('booking.edit');
+                Route::put('/randevu-kurallari', [AdminBookingSettingsController::class, 'update'])->middleware('permission:system_settings.update')->name('booking.update');
+                Route::get('/kvkk', [AdminPrivacySettingsController::class, 'edit'])->middleware('permission:privacy_settings.update')->name('privacy.edit');
+                Route::put('/kvkk', [AdminPrivacySettingsController::class, 'update'])->middleware('permission:privacy_settings.update')->name('privacy.update');
             });
-            Route::get('/yazicilar', [AdminPrinterSettingsController::class, 'index'])->name('printers.index');
-            Route::post('/yazicilar', [AdminPrinterSettingsController::class, 'store'])->name('printers.store');
-            Route::patch('/yazicilar/{printer}', [AdminPrinterSettingsController::class, 'update'])->name('printers.update');
-            Route::post('/kapali-zamanlar', [AdminPrinterSettingsController::class, 'storeBlackout'])->name('blackouts.store');
-            Route::patch('/kapali-zamanlar/{blackout}', [AdminPrinterSettingsController::class, 'updateBlackout'])->name('blackouts.update');
-            Route::delete('/kapali-zamanlar/{blackout}', [AdminPrinterSettingsController::class, 'destroyBlackout'])->name('blackouts.destroy');
-            Route::get('/filamentler', [AdminFilamentSettingsController::class, 'index'])->name('filaments.index');
-            Route::post('/filamentler', [AdminFilamentSettingsController::class, 'store'])->name('filaments.store');
-            Route::patch('/filamentler/{filament}', [AdminFilamentSettingsController::class, 'update'])->name('filaments.update');
-            Route::patch('/filament-turleri/{material}/kullanilabilirlik', [AdminFilamentSettingsController::class, 'updateMaterialAvailability'])->name('filaments.material-availability');
-            Route::get('/atolye', [AdminWorkshopSettingsController::class, 'edit'])->name('workshop.edit');
-            Route::put('/atolye', [AdminWorkshopSettingsController::class, 'update'])->name('workshop.update');
+            Route::get('/yazicilar', [AdminPrinterSettingsController::class, 'index'])->middleware('permission:printers.view')->name('printers.index');
+            Route::post('/yazicilar', [AdminPrinterSettingsController::class, 'store'])->middleware('permission:printers.create')->name('printers.store');
+            Route::patch('/yazicilar/{printer}', [AdminPrinterSettingsController::class, 'update'])->middleware('permission:printers.update')->name('printers.update');
+            Route::post('/kapali-zamanlar', [AdminPrinterSettingsController::class, 'storeBlackout'])->middleware('permission:printers.manage_schedule')->name('blackouts.store');
+            Route::patch('/kapali-zamanlar/{blackout}', [AdminPrinterSettingsController::class, 'updateBlackout'])->middleware('permission:printers.manage_schedule')->name('blackouts.update');
+            Route::delete('/kapali-zamanlar/{blackout}', [AdminPrinterSettingsController::class, 'destroyBlackout'])->middleware('permission:printers.manage_schedule')->name('blackouts.destroy');
+            Route::get('/filamentler', [AdminFilamentSettingsController::class, 'index'])->middleware('permission:printers.manage_filaments')->name('filaments.index');
+            Route::post('/filamentler', [AdminFilamentSettingsController::class, 'store'])->middleware('permission:printers.manage_filaments')->name('filaments.store');
+            Route::patch('/filamentler/{filament}', [AdminFilamentSettingsController::class, 'update'])->middleware('permission:printers.manage_filaments')->name('filaments.update');
+            Route::patch('/filament-turleri/{material}/kullanilabilirlik', [AdminFilamentSettingsController::class, 'updateMaterialAvailability'])->middleware('permission:printers.manage_filaments')->name('filaments.material-availability');
+            Route::get('/atolye', [AdminWorkshopSettingsController::class, 'edit'])->middleware('permission:workshop_settings.update')->name('workshop.edit');
+            Route::put('/atolye', [AdminWorkshopSettingsController::class, 'update'])->middleware('permission:workshop_settings.update')->name('workshop.update');
         });
     });
 });

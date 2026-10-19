@@ -49,4 +49,42 @@ class RolePermissionFoundationTest extends TestCase
         $this->assertTrue($admin->fresh()->isSystemAdministrator());
         $this->assertTrue($admin->fresh()->hasPermissionTo('roles.update'));
     }
+
+    public function test_a_panel_user_cannot_open_a_route_without_its_permission(): void
+    {
+        $this->seed();
+        $role = Role::query()->create(['name' => 'Sınırlı Görevli', 'slug' => 'limited-operator']);
+        $user = User::factory()->create(['role' => 'operator', 'is_active' => true]);
+        $user->roles()->attach($role);
+
+        $this->actingAs($user)
+            ->get(route('admin.activity-logs'))
+            ->assertForbidden();
+    }
+
+    public function test_a_panel_user_can_open_a_route_through_a_role_permission(): void
+    {
+        $this->seed();
+        $role = Role::query()->create(['name' => 'Denetçi', 'slug' => 'auditor']);
+        $role->permissions()->attach(Permission::query()->where('key', 'audit_logs.view')->value('id'));
+        $user = User::factory()->create(['role' => 'operator', 'is_active' => true]);
+        $user->roles()->attach($role);
+
+        $this->actingAs($user)
+            ->get(route('admin.activity-logs'))
+            ->assertOk();
+    }
+
+    public function test_an_inactive_user_is_rejected_even_when_the_role_has_permission(): void
+    {
+        $this->seed();
+        $role = Role::query()->create(['name' => 'Denetçi', 'slug' => 'inactive-auditor']);
+        $role->permissions()->attach(Permission::query()->where('key', 'audit_logs.view')->value('id'));
+        $user = User::factory()->create(['role' => 'operator', 'is_active' => false]);
+        $user->roles()->attach($role);
+
+        $this->actingAs($user)
+            ->get(route('admin.activity-logs'))
+            ->assertRedirect(route('admin.login'));
+    }
 }
