@@ -11,5 +11,6 @@ export default function SettingsTabs() {
         {can('printers.manage_filaments') && <Link className={path.includes('/filamentler') ? 'active' : ''} href="/yonetim/ayarlar/filamentler">Filamentler</Link>}
         {page.props.features.onlineBooking && can('system_settings.update') && <Link className={path.includes('/randevu-kurallari') ? 'active' : ''} href="/yonetim/ayarlar/randevu-kurallari">Randevu kuralları</Link>}
         {page.props.features.onlineBooking && can('privacy_settings.update') && <Link className={path.includes('/kvkk') ? 'active' : ''} href="/yonetim/ayarlar/kvkk">KVKK ve saklama</Link>}
+        {(can('users.view') || can('roles.view')) && <Link className={path.includes('/yetkiler') ? 'active' : ''} href="/yonetim/yetkiler">Kullanıcılar ve roller</Link>}
     </nav>;
 }

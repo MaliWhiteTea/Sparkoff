@@ -36,4 +36,15 @@ class SettingsNavigationTest extends TestCase
         $this->actingAs($user)->get(route('admin.settings.index'))
             ->assertRedirect(route('admin.settings.filaments.index'));
     }
+
+    public function test_access_only_user_reaches_users_and_roles_from_settings_entry(): void
+    {
+        $role = Role::query()->create(['name' => 'Kullanıcı Görüntüleyici', 'slug' => 'ayar-kullanici-goruntuleyici']);
+        $role->permissions()->attach(Permission::query()->where('key', 'users.view')->value('id'));
+        $user = User::factory()->create(['role' => 'operator', 'is_active' => true]);
+        $user->roles()->attach($role);
+
+        $this->actingAs($user)->get(route('admin.settings.index'))
+            ->assertRedirect(route('admin.access.index'));
+    }
 }
