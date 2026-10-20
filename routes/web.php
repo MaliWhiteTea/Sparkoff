@@ -19,12 +19,14 @@ use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\FeedbackController;
 use App\Http\Controllers\FilamentController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\InventoryCatalogController;
 use App\Http\Controllers\PrinterPortalController;
 use App\Http\Controllers\PrivacyController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomeController::class)->name('home');
 Route::get('/filamentler', [FilamentController::class, 'index'])->name('filaments.index');
+Route::get('/malzemeler', InventoryCatalogController::class)->name('materials.index');
 Route::get('/kvkk-aydinlatma', PrivacyController::class)->name('privacy.notice');
 Route::get('/3d-yazicilar', PrinterPortalController::class)->name('printers.public');
 Route::get('/geri-bildirim', [FeedbackController::class, 'create'])->name('feedback.create');

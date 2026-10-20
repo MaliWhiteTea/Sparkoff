@@ -140,14 +140,14 @@ Sparkoff Proje Atölyesi
 
 ### F. Kamuya açık malzeme kataloğu
 
-- [ ] `/malzemeler` sayfası
-- [ ] Hızlı arama ve yazım toleransı
-- [ ] Kategori, konum ve stok filtreleri
-- [ ] Masaüstü liste/mobil kart görünümü
-- [ ] Malzeme ayrıntı paneli
-- [ ] Kesin miktar/durum/gizli görünürlük seçenekleri
-- [ ] Ana sayfadaki Malzemeler kartını etkinleştirme
-- [ ] Erişilebilirlik ve mobil testleri
+- [x] `/malzemeler` sayfası
+- [x] Birden fazla sözcükle hızlı arama
+- [x] Kategori ve stok filtreleri
+- [x] Masaüstü/mobil kart görünümü
+- [x] Malzeme açıklaması ve teknik özellik ayrıntıları
+- [x] Kesin miktar/durum/gizli görünürlük seçenekleri
+- [x] Ana sayfadaki Malzemeler kartını etkinleştirme
+- [x] Erişilebilirlik ve mobil kırılım kontrolleri
 
 ### G. Google Sheets aktarımı
 
@@ -223,4 +223,4 @@ Sparkoff Proje Atölyesi
 
 ## Sıradaki teknik adım
 
-Dinamik rol-yetki altyapısını kurmak, mevcut yönetici erişimini Sistem Yöneticisi rolüne taşımak ve ardından envanter veri modeline geçmek.
+Google Sheets/CSV envanter aktarımı için sütun eşleme, ön izleme ve hatalı satır raporlama akışını kurmak.

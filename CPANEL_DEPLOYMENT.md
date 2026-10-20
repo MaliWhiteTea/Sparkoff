@@ -82,7 +82,7 @@ Bu değişmiyorsa dosyaları gelişigüzel `public_html` içine taşımayın; ho
 ## 6. Canlı kontrol listesi
 
 - [ ] `/up` HTTP 200 döndürüyor.
-- [ ] `/`, `/3d-yazicilar` ve `/filamentler` açılıyor.
+- [ ] `/`, `/3d-yazicilar`, `/filamentler` ve `/malzemeler` açılıyor.
 - [ ] `/randevu` açılıyor; örnek bir talep, e-posta doğrulama ve takip akışı tamamlanıyor.
 - [ ] Yönetim sayfaları giriş ve admin rolü gerektiriyor.
 - [ ] Takvim, filament, iletişim ve duyuru değişiklikleri siteye yansıyor.

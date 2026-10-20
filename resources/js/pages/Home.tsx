@@ -17,12 +17,12 @@ export default function Home({ workshop, printers, contact, announcements, featu
         <Head title="Sparkoff Proje Atölyesi" />
         <header className="site-header"><div className="header-inner">
             <a className="brand" href="#ust" aria-label="Sparkoff Proje Atölyesi ana sayfa"><img src="/logo.jpg" alt="Sparkoff logosu" width={56} height={56} /><span><strong>Sparkoff</strong><small>Proje Atölyesi</small></span></a>
-            <nav className="desktop-nav" aria-label="Ana menü"><a href="#icerik">Atölye</a><a href="#hizmetler">Hizmetler</a><Link href="/3d-yazicilar">3D Yazıcılar</Link><Link href="/geri-bildirim">Geri bildirim</Link>{(contact.phone || contact.whatsapp || contact.email) && <a href="#iletisim">İletişim</a>}</nav>
+            <nav className="desktop-nav" aria-label="Ana menü"><a href="#icerik">Atölye</a><a href="#hizmetler">Hizmetler</a><Link href="/3d-yazicilar">3D Yazıcılar</Link><Link href="/malzemeler">Malzemeler</Link><Link href="/geri-bildirim">Geri bildirim</Link>{(contact.phone || contact.whatsapp || contact.email) && <a href="#iletisim">İletişim</a>}</nav>
             <Link className="header-button" href="/3d-yazicilar">Yazıcı durumları <ArrowIcon /></Link>
         </div></header>
 
         <section className="portal-hero" id="icerik">
-            <div className="portal-hero-copy"><h1>Sparkoff Proje Atölyesi</h1><div className="hero-actions"><Link className="button primary" href="/3d-yazicilar">3D yazıcılar <ArrowIcon /></Link><a className="button secondary" href="#malzemeler">Malzemeler <ArrowIcon /></a></div></div>
+            <div className="portal-hero-copy"><h1>Sparkoff Proje Atölyesi</h1><div className="hero-actions"><Link className="button primary" href="/3d-yazicilar">3D yazıcılar <ArrowIcon /></Link><Link className="button secondary" href="/malzemeler">Malzemeler <ArrowIcon /></Link></div></div>
             <aside className="portal-status-card" aria-label="Atölye durumu"><div className="portal-status-top"><span className={`open-badge ${workshop.isOpen ? '' : 'closed'}`}><i /> {workshop.isOpen ? 'Açık' : 'Kapalı'}</span><small>CANLI ATÖLYE DURUMU</small></div><h2>{workshop.statusLabel}</h2><div className="portal-status-row"><ClockIcon /><div><span>Bugünkü kullanım başlangıç aralığı</span><strong>{workshop.hours}</strong></div></div><div className="portal-printer-summary"><strong>{availableCount}/{printers.length}</strong><span>yazıcı şu anda boş</span></div><Link href="/3d-yazicilar">Ayrıntılı durumu görüntüle <ArrowIcon /></Link></aside>
         </section>
 
@@ -32,7 +32,7 @@ export default function Home({ workshop, printers, contact, announcements, featu
 
         <section className="portal-services section" id="hizmetler"><div className="section-title compact"><h2>Atölye olanakları</h2></div><div className="service-card-grid">
             <Link className="service-card active" href="/3d-yazicilar"><div className="service-icon"><CubeIcon /></div><span className="service-state">KULLANIMA AÇIK</span><h3>3D Yazıcılar</h3><p>Yazıcıların durumunu, müsaitlik bilgisini, filamentleri ve baskı kurallarını görüntüleyin.</p><strong>Modüle git <ArrowIcon /></strong></Link>
-            <article className="service-card coming" id="malzemeler"><div className="service-icon"><MaterialIcon /></div><span className="service-state">YAKINDA</span><h3>Malzemeler</h3><p>Arduino, sensör, motor ve diğer atölye malzemelerinin güncel stok durumu burada yer alacak.</p><strong>Hazırlanıyor</strong></article>
+            <Link className="service-card active" href="/malzemeler" id="malzemeler"><div className="service-icon"><MaterialIcon /></div><span className="service-state">KULLANIMA AÇIK</span><h3>Malzemeler</h3><p>Arduino, sensör, motor ve diğer atölye malzemelerinin güncel stok durumunu inceleyin.</p><strong>Kataloğa git <ArrowIcon /></strong></Link>
         </div></section>
 
         <section className="portal-printers section"><div className="section-title compact"><h2>Yazıcı durumu</h2></div><div className="printer-list">{printers.map((printer) => <article className={`printer-row ${printer.availability !== 'available' ? 'muted-row' : ''}`} key={printer.code}><span className="printer-code">{printer.code}</span><div><strong>{printer.name}</strong><span>{printer.description ?? 'Açıklama bulunmuyor'}</span></div><span className={`status ${printer.availability}`}>{printer.availability === 'available' && <i />} {printer.availabilityLabel}</span></article>)}</div></section>
