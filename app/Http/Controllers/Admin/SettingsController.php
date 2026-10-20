@@ -18,6 +18,7 @@ class SettingsController extends Controller
             ['permission' => 'printers.view', 'route' => 'admin.settings.printers.index', 'enabled' => true],
             ['permission' => 'printers.manage_filaments', 'route' => 'admin.settings.filaments.index', 'enabled' => true],
             ['permission' => 'system_settings.update', 'route' => 'admin.settings.booking.edit', 'enabled' => (bool) config('features.online_booking')],
+            ['permission' => 'printers.manage_hours', 'route' => 'admin.settings.booking.edit', 'enabled' => (bool) config('features.online_booking')],
             ['permission' => 'privacy_settings.update', 'route' => 'admin.settings.privacy.edit', 'enabled' => (bool) config('features.online_booking')],
             ['permission' => 'users.view', 'route' => 'admin.access.index', 'enabled' => true],
             ['permission' => 'roles.view', 'route' => 'admin.access.index', 'enabled' => true],

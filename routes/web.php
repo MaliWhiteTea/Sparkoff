@@ -62,7 +62,7 @@ Route::prefix('yonetim')->name('admin.')->group(function () {
         Route::put('/roller/{role}', [AdminAccessController::class, 'updateRole'])->middleware('permission:roles.update')->name('roles.update');
         Route::delete('/roller/{role}', [AdminAccessController::class, 'destroyRole'])->middleware('permission:roles.delete')->name('roles.destroy');
         Route::post('/kullanicilar', [AdminAccessController::class, 'storeUser'])->middleware(['permission:users.create', 'permission:roles.assign'])->name('users.store');
-        Route::put('/kullanicilar/{user}', [AdminAccessController::class, 'updateUser'])->middleware(['permission:users.update', 'permission:roles.assign'])->name('users.update');
+        Route::put('/kullanicilar/{user}', [AdminAccessController::class, 'updateUser'])->middleware('permission.any:users.update,users.disable,users.reset_password,roles.assign')->name('users.update');
         Route::get('/duyurular', [AdminAnnouncementController::class, 'index'])->middleware('permission:announcements.view')->name('announcements.index');
         Route::post('/duyurular', [AdminAnnouncementController::class, 'store'])->middleware('permission:announcements.create')->name('announcements.store');
         Route::patch('/duyurular/{announcement}', [AdminAnnouncementController::class, 'update'])->middleware('permission:announcements.update')->name('announcements.update');
@@ -71,21 +71,21 @@ Route::prefix('yonetim')->name('admin.')->group(function () {
             Route::get('/takvim', [AdminCalendarController::class, 'index'])->middleware('permission:printers.manage_schedule')->name('calendar.index');
             Route::get('/randevular', [AdminAppointmentController::class, 'index'])->middleware('permission:appointments.view')->name('appointments.index');
             Route::get('/randevular/{publicId}', [AdminAppointmentController::class, 'show'])->middleware('permission:appointments.view')->name('appointments.show');
-            Route::patch('/randevular/{publicId}/durum', [AdminAppointmentController::class, 'updateStatus'])->middleware('permission:appointments.review')->name('appointments.status');
+            Route::patch('/randevular/{publicId}/durum', [AdminAppointmentController::class, 'updateStatus'])->middleware('permission.any:appointments.review,appointments.manage_status')->name('appointments.status');
             Route::get('/randevular/{publicId}/dosyalar/{file}', [AdminAppointmentController::class, 'download'])->middleware('permission:appointments.download_file')->name('appointments.files.download');
         });
 
         Route::prefix('ayarlar')->name('settings.')->group(function () {
             Route::get('/', AdminSettingsController::class)->name('index');
             Route::middleware('booking.enabled')->group(function () {
-                Route::get('/randevu-kurallari', [AdminBookingSettingsController::class, 'edit'])->middleware('permission:system_settings.update')->name('booking.edit');
-                Route::put('/randevu-kurallari', [AdminBookingSettingsController::class, 'update'])->middleware('permission:system_settings.update')->name('booking.update');
+                Route::get('/randevu-kurallari', [AdminBookingSettingsController::class, 'edit'])->middleware('permission.any:system_settings.update,printers.manage_hours')->name('booking.edit');
+                Route::put('/randevu-kurallari', [AdminBookingSettingsController::class, 'update'])->middleware('permission.any:system_settings.update,printers.manage_hours')->name('booking.update');
                 Route::get('/kvkk', [AdminPrivacySettingsController::class, 'edit'])->middleware('permission:privacy_settings.update')->name('privacy.edit');
                 Route::put('/kvkk', [AdminPrivacySettingsController::class, 'update'])->middleware('permission:privacy_settings.update')->name('privacy.update');
             });
             Route::get('/yazicilar', [AdminPrinterSettingsController::class, 'index'])->middleware('permission:printers.view')->name('printers.index');
             Route::post('/yazicilar', [AdminPrinterSettingsController::class, 'store'])->middleware('permission:printers.create')->name('printers.store');
-            Route::patch('/yazicilar/{printer}', [AdminPrinterSettingsController::class, 'update'])->middleware('permission:printers.update')->name('printers.update');
+            Route::patch('/yazicilar/{printer}', [AdminPrinterSettingsController::class, 'update'])->middleware('permission.any:printers.update,printers.change_status')->name('printers.update');
             Route::post('/kapali-zamanlar', [AdminPrinterSettingsController::class, 'storeBlackout'])->middleware('permission:printers.manage_schedule')->name('blackouts.store');
             Route::patch('/kapali-zamanlar/{blackout}', [AdminPrinterSettingsController::class, 'updateBlackout'])->middleware('permission:printers.manage_schedule')->name('blackouts.update');
             Route::delete('/kapali-zamanlar/{blackout}', [AdminPrinterSettingsController::class, 'destroyBlackout'])->middleware('permission:printers.manage_schedule')->name('blackouts.destroy');

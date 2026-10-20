@@ -7,6 +7,7 @@ use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
@@ -121,5 +122,46 @@ class AccessManagementTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->has('users')
                 ->where('permissionGroups', []));
+    }
+
+    public function test_user_account_permissions_are_enforced_independently(): void
+    {
+        $targetRole = Role::query()->where('slug', 'inventory-moderator')->firstOrFail();
+        $target = User::factory()->create(['name' => 'Hedef Kullanıcı', 'role' => 'operator', 'is_active' => true]);
+        $target->roles()->attach($targetRole);
+
+        $resetRole = Role::query()->create(['name' => 'Parola Sorumlusu', 'slug' => 'parola-sorumlusu']);
+        $resetRole->permissions()->attach(Permission::query()->whereIn('key', ['users.view', 'users.reset_password'])->pluck('id'));
+        $resetter = User::factory()->create(['role' => 'operator', 'is_active' => true]);
+        $resetter->roles()->attach($resetRole);
+
+        $payload = [
+            'name' => $target->name, 'email' => $target->email, 'password' => 'yeni-guvenli-parola',
+            'is_active' => true, 'role_ids' => [$targetRole->id],
+        ];
+        $this->actingAs($resetter)->put(route('admin.users.update', $target), $payload)->assertSessionHas('success');
+        $this->assertTrue(Hash::check('yeni-guvenli-parola', $target->fresh()->password));
+
+        $payload['name'] = 'Yetkisiz ad değişikliği';
+        $this->actingAs($resetter)->put(route('admin.users.update', $target), $payload)->assertForbidden();
+        $this->assertSame('Hedef Kullanıcı', $target->fresh()->name);
+    }
+
+    public function test_user_editor_cannot_disable_account_without_disable_permission(): void
+    {
+        $targetRole = Role::query()->where('slug', 'inventory-moderator')->firstOrFail();
+        $target = User::factory()->create(['role' => 'operator', 'is_active' => true]);
+        $target->roles()->attach($targetRole);
+        $editorRole = Role::query()->create(['name' => 'Kullanıcı Editörü', 'slug' => 'kullanici-editoru']);
+        $editorRole->permissions()->attach(Permission::query()->whereIn('key', ['users.view', 'users.update'])->pluck('id'));
+        $editor = User::factory()->create(['role' => 'operator', 'is_active' => true]);
+        $editor->roles()->attach($editorRole);
+
+        $this->actingAs($editor)->put(route('admin.users.update', $target), [
+            'name' => $target->name, 'email' => $target->email, 'password' => '',
+            'is_active' => false, 'role_ids' => [$targetRole->id],
+        ])->assertForbidden();
+
+        $this->assertTrue($target->fresh()->is_active);
     }
 }

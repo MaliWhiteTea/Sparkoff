@@ -11,6 +11,7 @@ use App\Models\Role;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
@@ -58,6 +59,26 @@ class AppointmentPermissionBoundaryTest extends TestCase
 
                     return $event['name'] === 'Planlanmış baskı' && $event['publicId'] === null;
                 }));
+    }
+
+    public function test_review_and_print_status_permissions_are_separated(): void
+    {
+        Mail::fake();
+        $appointment = $this->appointment();
+        $reviewer = $this->userWithPermissions(['appointments.view', 'appointments.review']);
+        $operator = $this->userWithPermissions(['appointments.view', 'appointments.manage_status']);
+
+        $this->actingAs($reviewer)->get(route('admin.appointments.show', $appointment->public_id))
+            ->assertInertia(fn (Assert $page) => $page->has('appointment.actions', 0));
+        $this->actingAs($reviewer)->patch(route('admin.appointments.status', $appointment->public_id), [
+            'status' => AppointmentStatus::Ready->value,
+        ])->assertForbidden();
+
+        $this->actingAs($operator)->get(route('admin.appointments.show', $appointment->public_id))
+            ->assertInertia(fn (Assert $page) => $page->where('appointment.actions.0.status', AppointmentStatus::Ready->value));
+        $this->actingAs($operator)->patch(route('admin.appointments.status', $appointment->public_id), [
+            'status' => AppointmentStatus::Ready->value,
+        ])->assertSessionHas('success');
     }
 
     private function userWithPermissions(array $permissions): User

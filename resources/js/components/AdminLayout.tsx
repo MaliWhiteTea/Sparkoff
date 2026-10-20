@@ -12,7 +12,7 @@ export default function AdminLayout({ children }: PropsWithChildren) {
     const { auth, flash, features } = page.props;
     const path = page.url.split('?')[0];
     const can = (permission: string) => auth.user.permissions.includes(permission);
-    const canAccessSettings = can('workshop_settings.update') || can('printers.view') || can('printers.manage_filaments') || can('roles.view') || can('users.view') || (features.onlineBooking && (can('system_settings.update') || can('privacy_settings.update')));
+    const canAccessSettings = can('workshop_settings.update') || can('printers.view') || can('printers.manage_filaments') || can('roles.view') || can('users.view') || (features.onlineBooking && (can('system_settings.update') || can('printers.manage_hours') || can('privacy_settings.update')));
     const home = can('appointments.view') && features.onlineBooking ? '/yonetim/randevular'
         : can('printers.manage_schedule') && features.onlineBooking ? '/yonetim/takvim'
             : can('inventory.view') ? '/yonetim/envanter'

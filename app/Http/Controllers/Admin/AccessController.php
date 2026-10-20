@@ -123,6 +123,15 @@ class AccessController extends Controller
             'role_ids.*' => ['integer', 'distinct', 'exists:roles,id'],
         ]);
 
+        $can = fn (string $permission) => $request->user()->role === 'admin' || $request->user()->hasPermissionTo($permission);
+        $submittedRoleIds = collect($validated['role_ids'])->map(fn ($id) => (int) $id)->sort()->values()->all();
+        $currentRoleIds = $user->roles()->pluck('roles.id')->map(fn ($id) => (int) $id)->sort()->values()->all();
+
+        abort_if(! $can('users.update') && ($validated['name'] !== $user->name || Str::lower($validated['email']) !== $user->email), 403);
+        abort_if(! $can('users.disable') && (bool) $validated['is_active'] !== $user->is_active, 403);
+        abort_if(! $can('users.reset_password') && ! empty($validated['password']), 403);
+        abort_if(! $can('roles.assign') && $submittedRoleIds !== $currentRoleIds, 403);
+
         $this->authorizeSystemRoleAssignment($request, $validated['role_ids'], $user);
 
         $systemRoleId = Role::query()->where('is_system', true)->value('id');

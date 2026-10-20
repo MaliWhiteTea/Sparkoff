@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\OperatingHour;
+use App\Models\Permission;
+use App\Models\Role;
 use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -78,5 +80,31 @@ class BookingSettingsTest extends TestCase
         ])->assertSessionHasErrors('hours.0.latest_start_at');
 
         $this->assertSame('09:00:00', OperatingHour::query()->where('weekday', 1)->value('opens_at'));
+    }
+
+    public function test_hours_manager_can_only_change_operating_hours(): void
+    {
+        $role = Role::query()->create(['name' => 'Saat Sorumlusu', 'slug' => 'saat-sorumlusu']);
+        $role->permissions()->attach(Permission::query()->where('key', 'printers.manage_hours')->value('id'));
+        $manager = User::factory()->create(['role' => 'operator', 'is_active' => true]);
+        $manager->roles()->attach($role);
+        $hours = collect(range(1, 7))->map(fn (int $weekday) => [
+            'weekday' => $weekday, 'is_open' => true, 'opens_at' => '10:00', 'latest_start_at' => '19:00',
+        ])->all();
+
+        $this->actingAs($manager)->get(route('admin.settings.booking.edit'))->assertOk();
+        $this->actingAs($manager)->put(route('admin.settings.booking.update'), [
+            'hours' => $hours,
+            'slot_minutes' => 15,
+            'maximum_duration_hours' => 48,
+            'verification_hold_minutes' => 60,
+            'maximum_file_size_mb' => 25,
+            'allowed_extensions' => ['stl'],
+        ])->assertSessionHas('success');
+
+        $this->assertSame('10:00:00', OperatingHour::query()->where('weekday', 1)->value('opens_at'));
+        $this->assertSame(30, Setting::valueOf('booking.slot_minutes'));
+        $this->assertSame(24, Setting::valueOf('booking.maximum_duration_hours'));
+        $this->assertSame(100, Setting::valueOf('uploads.maximum_file_size_mb'));
     }
 }

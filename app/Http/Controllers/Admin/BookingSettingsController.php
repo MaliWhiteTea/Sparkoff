@@ -57,6 +57,9 @@ class BookingSettingsController extends Controller
             'allowed_extensions.*' => ['required', 'string', 'distinct', Rule::in(self::SUPPORTED_EXTENSIONS)],
         ]);
 
+        $canManageHours = $request->user()->role === 'admin' || $request->user()->hasPermissionTo('printers.manage_hours');
+        $canManageSystemSettings = $request->user()->role === 'admin' || $request->user()->hasPermissionTo('system_settings.update');
+
         foreach ($validated['hours'] as $index => $day) {
             if (! $day['is_open']) {
                 continue;
@@ -71,26 +74,30 @@ class BookingSettingsController extends Controller
             }
         }
 
-        DB::transaction(function () use ($validated) {
-            foreach ($validated['hours'] as $day) {
-                OperatingHour::query()->updateOrCreate(
-                    ['weekday' => $day['weekday']],
-                    [
-                        'is_open' => $day['is_open'],
-                        'opens_at' => $day['is_open'] ? $day['opens_at'].':00' : null,
-                        'latest_start_at' => $day['is_open'] ? $day['latest_start_at'].':00' : null,
-                    ],
-                );
+        DB::transaction(function () use ($validated, $canManageHours, $canManageSystemSettings) {
+            if ($canManageHours) {
+                foreach ($validated['hours'] as $day) {
+                    OperatingHour::query()->updateOrCreate(
+                        ['weekday' => $day['weekday']],
+                        [
+                            'is_open' => $day['is_open'],
+                            'opens_at' => $day['is_open'] ? $day['opens_at'].':00' : null,
+                            'latest_start_at' => $day['is_open'] ? $day['latest_start_at'].':00' : null,
+                        ],
+                    );
+                }
             }
 
-            foreach ([
-                ['key' => 'booking.slot_minutes', 'value' => $validated['slot_minutes'], 'group' => 'booking'],
-                ['key' => 'booking.maximum_duration_hours', 'value' => $validated['maximum_duration_hours'], 'group' => 'booking'],
-                ['key' => 'booking.verification_hold_minutes', 'value' => $validated['verification_hold_minutes'], 'group' => 'booking'],
-                ['key' => 'uploads.maximum_file_size_mb', 'value' => $validated['maximum_file_size_mb'], 'group' => 'uploads'],
-                ['key' => 'uploads.allowed_extensions', 'value' => array_values($validated['allowed_extensions']), 'group' => 'uploads'],
-            ] as $setting) {
-                Setting::query()->updateOrCreate(['key' => $setting['key']], $setting);
+            if ($canManageSystemSettings) {
+                foreach ([
+                    ['key' => 'booking.slot_minutes', 'value' => $validated['slot_minutes'], 'group' => 'booking'],
+                    ['key' => 'booking.maximum_duration_hours', 'value' => $validated['maximum_duration_hours'], 'group' => 'booking'],
+                    ['key' => 'booking.verification_hold_minutes', 'value' => $validated['verification_hold_minutes'], 'group' => 'booking'],
+                    ['key' => 'uploads.maximum_file_size_mb', 'value' => $validated['maximum_file_size_mb'], 'group' => 'uploads'],
+                    ['key' => 'uploads.allowed_extensions', 'value' => array_values($validated['allowed_extensions']), 'group' => 'uploads'],
+                ] as $setting) {
+                    Setting::query()->updateOrCreate(['key' => $setting['key']], $setting);
+                }
             }
         });
 

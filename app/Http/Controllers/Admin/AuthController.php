@@ -68,12 +68,13 @@ class AuthController extends Controller
             'roles.view' => 'admin.access.index',
             'printers.view' => 'admin.settings.printers.index',
             'printers.manage_filaments' => 'admin.settings.filaments.index',
+            'printers.manage_hours' => 'admin.settings.booking.edit',
             'announcements.view' => 'admin.announcements.index',
             'audit_logs.view' => 'admin.activity-logs',
         ];
 
         foreach ($destinations as $permission => $route) {
-            $requiresBooking = in_array($route, ['admin.appointments.index', 'admin.calendar.index'], true);
+            $requiresBooking = in_array($route, ['admin.appointments.index', 'admin.calendar.index', 'admin.settings.booking.edit'], true);
             if (($user->role === 'admin' || $user->hasPermissionTo($permission))
                 && (! $requiresBooking || config('features.online_booking'))) {
                 return route($route);

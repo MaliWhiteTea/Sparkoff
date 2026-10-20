@@ -76,6 +76,7 @@ class AppointmentController extends Controller
         $canViewPersonalData = $this->can($request, 'appointments.view_personal_data');
         $canDownloadFiles = $this->can($request, 'appointments.download_file');
         $canReview = $this->can($request, 'appointments.review');
+        $canManageStatus = $this->can($request, 'appointments.manage_status');
 
         return Inertia::render('Admin/Appointments/Show', [
             'appointment' => [
@@ -101,12 +102,14 @@ class AppointmentController extends Controller
                     'actor' => $history->actor?->name ?? 'Sistem',
                     'date' => $history->created_at->translatedFormat('d F Y, H:i'),
                 ]),
-                'actions' => $canReview ? collect($this->allowedTransitions($appointment->status))->map(fn (AppointmentStatus $status) => [
-                    'status' => $status->value,
-                    'label' => $this->actionLabel($status),
-                    'requiresNote' => in_array($status, [AppointmentStatus::ChangeRequested, AppointmentStatus::Rejected, AppointmentStatus::Failed], true),
-                    'tone' => in_array($status, [AppointmentStatus::Rejected, AppointmentStatus::Failed], true) ? 'danger' : 'primary',
-                ]) : [],
+                'actions' => collect($this->allowedTransitions($appointment->status))
+                    ->filter(fn (AppointmentStatus $status) => $this->isReviewStatus($status) ? $canReview : $canManageStatus)
+                    ->map(fn (AppointmentStatus $status) => [
+                        'status' => $status->value,
+                        'label' => $this->actionLabel($status),
+                        'requiresNote' => in_array($status, [AppointmentStatus::ChangeRequested, AppointmentStatus::Rejected, AppointmentStatus::Failed], true),
+                        'tone' => in_array($status, [AppointmentStatus::Rejected, AppointmentStatus::Failed], true) ? 'danger' : 'primary',
+                    ])->values(),
             ],
         ]);
     }
@@ -131,6 +134,9 @@ class AppointmentController extends Controller
                 ], true)),
             ],
         ]);
+
+        $requestedStatus = AppointmentStatus::from($validated['status']);
+        abort_unless($this->can($request, $this->isReviewStatus($requestedStatus) ? 'appointments.review' : 'appointments.manage_status'), 403);
 
         $appointment = DB::transaction(function () use ($publicId, $validated, $request) {
             $appointment = Appointment::query()->where('public_id', $publicId)->lockForUpdate()->firstOrFail();
@@ -212,6 +218,15 @@ class AppointmentController extends Controller
             AppointmentStatus::Failed => 'Başarısız olarak işaretle',
             default => $this->statusLabel($status),
         };
+    }
+
+    private function isReviewStatus(AppointmentStatus $status): bool
+    {
+        return in_array($status, [
+            AppointmentStatus::ChangeRequested,
+            AppointmentStatus::Approved,
+            AppointmentStatus::Rejected,
+        ], true);
     }
 
     private function defaultStatusNote(AppointmentStatus $status): string

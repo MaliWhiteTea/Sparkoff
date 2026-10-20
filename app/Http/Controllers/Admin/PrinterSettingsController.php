@@ -84,6 +84,12 @@ class PrinterSettingsController extends Controller
             'description' => ['nullable', 'string', 'max:1000'],
         ]);
 
+        $canUpdateDetails = $request->user()->role === 'admin' || $request->user()->hasPermissionTo('printers.update');
+        $canChangeStatus = $request->user()->role === 'admin' || $request->user()->hasPermissionTo('printers.change_status');
+
+        abort_if(! $canUpdateDetails && ($validated['name'] !== $printer->name || ($validated['description'] ?? null) !== $printer->description), 403);
+        abort_if(! $canChangeStatus && $validated['status'] !== $printer->status->value, 403);
+
         $printer->update($validated);
 
         return back()->with('success', "{$printer->code} yazıcısı güncellendi.");
