@@ -49,6 +49,7 @@ Route::prefix('yonetim')->name('admin.')->group(function () {
         Route::get('/talepler', [AdminFeedbackController::class, 'index'])->middleware('permission:feedback.view')->name('feedback.index');
         Route::patch('/talepler/{feedback}', [AdminFeedbackController::class, 'update'])->middleware('permission:feedback.update')->name('feedback.update');
         Route::get('/envanter', [AdminInventoryController::class, 'index'])->middleware('permission:inventory.view')->name('inventory.index');
+        Route::get('/envanter-disa-aktar', [AdminInventoryController::class, 'export'])->middleware('permission:inventory.export')->name('inventory.export');
         Route::post('/envanter', [AdminInventoryController::class, 'store'])->middleware('permission:inventory.create')->name('inventory.store');
         Route::put('/envanter/{item}', [AdminInventoryController::class, 'update'])->middleware('permission:inventory.update')->name('inventory.update');
         Route::patch('/envanter/{item}/arsiv', [AdminInventoryController::class, 'archive'])->middleware('permission:inventory.archive')->name('inventory.archive');

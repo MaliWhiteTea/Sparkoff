@@ -120,10 +120,10 @@ Sparkoff Proje Atölyesi
 - [x] Malzeme ekleme/düzenleme/arşivleme
 - [x] Hızlı stok artırma/azaltma
 - [x] Sarf/ödünç/demirbaş türü yönetimi
-- [ ] Kategori ve konum yönetimi (oluşturma tamamlandı; düzenleme arayüzü bekliyor)
+- [x] Kategori ve konum yönetimi
 - [x] Düşük stok ve tükenen ürün görünümü
 - [x] Hareket geçmişi
-- [ ] CSV/Excel dışa aktarma
+- [x] CSV/Excel dışa aktarma
 
 ### E. Teslim ve iade sistemi
 

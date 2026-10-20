@@ -20,31 +20,16 @@ use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 use LogicException;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class InventoryController extends Controller
 {
     public function index(Request $request): Response
     {
-        $filters = $request->validate([
-            'search' => ['nullable', 'string', 'max:100'],
-            'category' => ['nullable', 'integer', 'exists:inventory_categories,id'],
-            'type' => ['nullable', Rule::enum(InventoryItemType::class)],
-            'status' => ['nullable', Rule::in(['active', 'low', 'out', 'archived'])],
-        ]);
+        $filters = $this->validatedFilters($request);
 
-        $items = InventoryItem::query()
+        $items = $this->filteredItems($filters)
             ->with(['category:id,name', 'location:id,name,code'])
-            ->when($filters['search'] ?? null, function ($query, string $search) {
-                $query->where(fn ($nested) => $nested
-                    ->where('name', 'like', "%{$search}%")
-                    ->orWhere('sku', 'like', "%{$search}%"));
-            })
-            ->when($filters['category'] ?? null, fn ($query, $category) => $query->where('category_id', $category))
-            ->when($filters['type'] ?? null, fn ($query, $type) => $query->where('item_type', $type))
-            ->when(($filters['status'] ?? 'active') === 'active', fn ($query) => $query->whereNull('archived_at')->where('is_active', true))
-            ->when(($filters['status'] ?? null) === 'archived', fn ($query) => $query->whereNotNull('archived_at'))
-            ->when(($filters['status'] ?? null) === 'out', fn ($query) => $query->whereNull('archived_at')->where('quantity', '<=', 0))
-            ->when(($filters['status'] ?? null) === 'low', fn ($query) => $query->whereNull('archived_at')->whereNotNull('minimum_stock')->whereColumn('quantity', '<=', 'minimum_stock')->where('quantity', '>', 0))
             ->orderBy('name')
             ->paginate(20)
             ->withQueryString()
@@ -99,6 +84,35 @@ class InventoryController extends Controller
         });
 
         return back()->with('success', 'Malzeme envantere eklendi.');
+    }
+
+    public function export(Request $request): StreamedResponse
+    {
+        $filters = $this->validatedFilters($request);
+        $items = $this->filteredItems($filters)
+            ->with(['category:id,name', 'location:id,name,code'])
+            ->orderBy('name')
+            ->get();
+
+        return response()->streamDownload(function () use ($items) {
+            $output = fopen('php://output', 'wb');
+            fwrite($output, "\xEF\xBB\xBF");
+            fputcsv($output, ['Stok kodu', 'Malzeme', 'Tür', 'Kategori', 'Konum kodu', 'Konum', 'Miktar', 'Birim', 'Kritik stok', 'Durum', 'Katalog görünürlüğü', 'Açıklama'], ';', '"', '');
+
+            foreach ($items as $item) {
+                fputcsv($output, array_map($this->safeCsvValue(...), [
+                    $item->sku, $item->name, $this->itemTypeLabel($item->item_type), $item->category?->name,
+                    $item->location?->code, $item->location?->name, $item->quantity, $item->unit,
+                    $item->minimum_stock, $item->archived_at ? 'Arşivlendi' : ($item->is_active ? 'Aktif' : 'Pasif'),
+                    $this->visibilityLabel($item->public_visibility), $item->description,
+                ]), ';', '"', '');
+            }
+
+            fclose($output);
+        }, 'sparkoff-envanter-'.now()->format('Y-m-d-His').'.csv', [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Cache-Control' => 'no-store, private',
+        ]);
     }
 
     public function update(Request $request, InventoryItem $item): RedirectResponse
@@ -193,6 +207,55 @@ class InventoryController extends Controller
         return $request->validate($rules);
     }
 
+    private function validatedFilters(Request $request): array
+    {
+        return $request->validate([
+            'search' => ['nullable', 'string', 'max:100'],
+            'category' => ['nullable', 'integer', 'exists:inventory_categories,id'],
+            'type' => ['nullable', Rule::enum(InventoryItemType::class)],
+            'status' => ['nullable', Rule::in(['active', 'low', 'out', 'archived'])],
+        ]);
+    }
+
+    private function filteredItems(array $filters)
+    {
+        return InventoryItem::query()
+            ->when($filters['search'] ?? null, function ($query, string $search) {
+                $query->where(fn ($nested) => $nested->where('name', 'like', "%{$search}%")->orWhere('sku', 'like', "%{$search}%"));
+            })
+            ->when($filters['category'] ?? null, fn ($query, $category) => $query->where('category_id', $category))
+            ->when($filters['type'] ?? null, fn ($query, $type) => $query->where('item_type', $type))
+            ->when(($filters['status'] ?? 'active') === 'active', fn ($query) => $query->whereNull('archived_at')->where('is_active', true))
+            ->when(($filters['status'] ?? null) === 'archived', fn ($query) => $query->whereNotNull('archived_at'))
+            ->when(($filters['status'] ?? null) === 'out', fn ($query) => $query->whereNull('archived_at')->where('quantity', '<=', 0))
+            ->when(($filters['status'] ?? null) === 'low', fn ($query) => $query->whereNull('archived_at')->whereNotNull('minimum_stock')->whereColumn('quantity', '<=', 'minimum_stock')->where('quantity', '>', 0));
+    }
+
+    private function safeCsvValue(mixed $value): string
+    {
+        $value = (string) ($value ?? '');
+
+        return preg_match('/^[=+\-@]/u', $value) ? "'{$value}" : $value;
+    }
+
+    private function itemTypeLabel(InventoryItemType $type): string
+    {
+        return match ($type) {
+            InventoryItemType::Consumable => 'Sarf malzemesi',
+            InventoryItemType::Loanable => 'Ödünç verilebilir',
+            InventoryItemType::FixedAsset => 'Demirbaş',
+        };
+    }
+
+    private function visibilityLabel(InventoryVisibility $visibility): string
+    {
+        return match ($visibility) {
+            InventoryVisibility::Exact => 'Kesin miktar',
+            InventoryVisibility::Status => 'Stok durumu',
+            InventoryVisibility::Hidden => 'Gizli',
+        };
+    }
+
     private function validatedCategory(Request $request): array
     {
         $request->merge(['is_active' => $request->boolean('is_active')]);
@@ -202,7 +265,11 @@ class InventoryController extends Controller
 
     private function validatedLocation(Request $request, ?InventoryLocation $location = null): array
     {
-        $request->merge(['is_public' => $request->boolean('is_public'), 'is_active' => $request->boolean('is_active')]);
+        $request->merge([
+            'code' => mb_strtoupper(trim((string) $request->input('code'))),
+            'is_public' => $request->boolean('is_public'),
+            'is_active' => $request->boolean('is_active'),
+        ]);
 
         return $request->validate([
             'name' => ['required', 'string', 'max:120'],

@@ -4,7 +4,9 @@ namespace Tests\Feature;
 
 use App\Enums\InventoryItemType;
 use App\Enums\InventoryVisibility;
+use App\Models\InventoryCategory;
 use App\Models\InventoryItem;
+use App\Models\InventoryLocation;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
@@ -106,6 +108,52 @@ class AdminInventoryTest extends TestCase
 
         $this->post(route('admin.login.store'), ['email' => $staff->email, 'password' => 'guvenli-test-parolasi'])
             ->assertRedirect(route('admin.inventory.index'));
+    }
+
+    public function test_category_and_location_managers_can_edit_and_deactivate_definitions(): void
+    {
+        $manager = $this->userWithPermissions(['inventory.manage_categories', 'inventory.manage_locations']);
+        $category = InventoryCategory::query()->create(['name' => 'Elektronik', 'slug' => 'elektronik']);
+        $location = InventoryLocation::query()->create(['name' => 'Ana Raf', 'code' => 'R-01']);
+
+        $this->actingAs($manager)->patch(route('admin.inventory.categories.update', $category), [
+            'name' => 'Elektronik Kartlar', 'description' => 'Kart ve modüller', 'is_active' => false,
+        ])->assertSessionHas('success');
+        $this->actingAs($manager)->patch(route('admin.inventory.locations.update', $location), [
+            'name' => 'Elektronik Rafı', 'code' => ' e-r01 ', 'description' => null,
+            'is_public' => false, 'is_active' => false,
+        ])->assertSessionHas('success');
+
+        $this->assertDatabaseHas('inventory_categories', ['id' => $category->id, 'name' => 'Elektronik Kartlar', 'is_active' => false]);
+        $this->assertDatabaseHas('inventory_locations', ['id' => $location->id, 'code' => 'E-R01', 'is_public' => false, 'is_active' => false]);
+    }
+
+    public function test_inventory_export_requires_permission_and_respects_filters(): void
+    {
+        InventoryItem::query()->create($this->itemData(['name' => 'Arduino Uno', 'slug' => 'arduino-uno', 'item_type' => InventoryItemType::Loanable]));
+        InventoryItem::query()->create($this->itemData(['name' => 'Lehim Teli', 'slug' => 'lehim-teli', 'item_type' => InventoryItemType::Consumable]));
+        $viewer = $this->userWithPermissions(['inventory.view']);
+        $exporter = $this->userWithPermissions(['inventory.export']);
+
+        $this->actingAs($viewer)->get(route('admin.inventory.export'))->assertForbidden();
+        $response = $this->actingAs($exporter)->get(route('admin.inventory.export', ['type' => 'loanable']));
+        $response->assertOk()->assertHeader('content-type', 'text/csv; charset=UTF-8');
+        $csv = $response->streamedContent();
+
+        $this->assertStringStartsWith("\xEF\xBB\xBF", $csv);
+        $this->assertStringContainsString('Arduino Uno', $csv);
+        $this->assertStringNotContainsString('Lehim Teli', $csv);
+    }
+
+    public function test_inventory_export_neutralizes_spreadsheet_formulas(): void
+    {
+        InventoryItem::query()->create($this->itemData(['name' => '=HYPERLINK("https://example.test")', 'slug' => 'zararli']));
+        $exporter = $this->userWithPermissions(['inventory.export']);
+
+        $csv = $this->actingAs($exporter)->get(route('admin.inventory.export'))->streamedContent();
+
+        $this->assertStringContainsString("'=HYPERLINK", $csv);
+        $this->assertStringNotContainsString(';=HYPERLINK', $csv);
     }
 
     private function userWithPermissions(array $permissions, ?string $email = null, string $password = 'password'): User
