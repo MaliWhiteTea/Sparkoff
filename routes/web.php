@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\CalendarController as AdminCalendarController;
 use App\Http\Controllers\Admin\FeedbackController as AdminFeedbackController;
 use App\Http\Controllers\Admin\FilamentSettingsController as AdminFilamentSettingsController;
 use App\Http\Controllers\Admin\InventoryController as AdminInventoryController;
+use App\Http\Controllers\Admin\InventoryTransactionController as AdminInventoryTransactionController;
 use App\Http\Controllers\Admin\PrinterSettingsController as AdminPrinterSettingsController;
 use App\Http\Controllers\Admin\PrivacySettingsController as AdminPrivacySettingsController;
 use App\Http\Controllers\Admin\SettingsController as AdminSettingsController;
@@ -58,6 +59,10 @@ Route::prefix('yonetim')->name('admin.')->group(function () {
         Route::patch('/envanter-kategorileri/{category}', [AdminInventoryController::class, 'updateCategory'])->middleware('permission:inventory.manage_categories')->name('inventory.categories.update');
         Route::post('/envanter-konumlari', [AdminInventoryController::class, 'storeLocation'])->middleware('permission:inventory.manage_locations')->name('inventory.locations.store');
         Route::patch('/envanter-konumlari/{location}', [AdminInventoryController::class, 'updateLocation'])->middleware('permission:inventory.manage_locations')->name('inventory.locations.update');
+        Route::get('/teslimler', [AdminInventoryTransactionController::class, 'index'])->middleware('permission:loans.view')->name('loans.index');
+        Route::post('/teslimler', [AdminInventoryTransactionController::class, 'store'])->middleware('permission:loans.create')->name('loans.store');
+        Route::post('/teslimler/{transaction}/iade', [AdminInventoryTransactionController::class, 'receiveReturn'])->middleware('permission:loans.receive_return')->name('loans.return');
+        Route::patch('/teslimler/{transaction}/kapat', [AdminInventoryTransactionController::class, 'close'])->middleware('permission.any:loans.report_damage,loans.report_lost')->name('loans.close');
         Route::get('/yetkiler', [AdminAccessController::class, 'index'])->middleware('permission.any:roles.view,users.view')->name('access.index');
         Route::post('/roller', [AdminAccessController::class, 'storeRole'])->middleware('permission:roles.create')->name('roles.store');
         Route::put('/roller/{role}', [AdminAccessController::class, 'updateRole'])->middleware('permission:roles.update')->name('roles.update');

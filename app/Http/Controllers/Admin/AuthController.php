@@ -62,6 +62,7 @@ class AuthController extends Controller
         $destinations = [
             'appointments.view' => 'admin.appointments.index',
             'printers.manage_schedule' => 'admin.calendar.index',
+            'loans.view' => 'admin.loans.index',
             'inventory.view' => 'admin.inventory.index',
             'feedback.view' => 'admin.feedback.index',
             'users.view' => 'admin.access.index',

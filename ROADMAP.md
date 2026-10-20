@@ -127,16 +127,16 @@ Sparkoff Proje Atölyesi
 
 ### E. Teslim ve iade sistemi
 
-- [ ] Hızlı teslim formu
-- [ ] Sarf teslimi
-- [ ] Ödünç verme ve beklenen iade tarihi
-- [ ] Demirbaş/yerinde kullanım kaydı
-- [ ] Tam ve kısmi iade
-- [ ] Hasarlı ve kayıp işlemleri
-- [ ] Aktif ve gecikmiş teslim listeleri
+- [x] Hızlı teslim formu
+- [x] Sarf teslimi
+- [x] Ödünç verme ve beklenen iade tarihi
+- [x] Demirbaş/yerinde kullanım kaydı
+- [x] Tam ve kısmi iade
+- [x] Hasarlı ve kayıp işlemleri
+- [x] Aktif ve gecikmiş teslim listeleri
 - [ ] İşlem geri alma/ters hareket
-- [ ] Kişisel alanlar için ayrı görüntüleme yetkileri
-- [ ] Tamamlanan kayıtlarda otomatik anonimleştirme
+- [x] Kişisel alanlar için ayrı görüntüleme yetkileri
+- [x] Tamamlanan kayıtlarda otomatik anonimleştirme
 
 ### F. Kamuya açık malzeme kataloğu
 

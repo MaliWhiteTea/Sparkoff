@@ -1,9 +1,12 @@
 <?php
 
+use App\Models\InventoryTransaction;
 use App\Models\Role;
+use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schedule;
 use Illuminate\Support\Facades\Validator;
 
 Artisan::command('inspire', function () {
@@ -76,3 +79,15 @@ Artisan::command('admin:check', function () {
 
     return self::SUCCESS;
 })->purpose('Aktif bir yönetici hesabının bulunduğunu doğrular');
+
+Artisan::command('loans:anonymize', function () {
+    $days = max(1, (int) Setting::valueOf('loans.personal_data_retention_days', 30));
+    $count = InventoryTransaction::query()
+        ->whereNotNull('completed_at')->whereNull('anonymized_at')->where('completed_at', '<=', now()->subDays($days))
+        ->update(['recipient_name' => null, 'recipient_email' => null, 'notes' => null, 'closure_note' => null, 'anonymized_at' => now()]);
+    $this->info("{$count} tamamlanmış teslim kaydı anonimleştirildi.");
+
+    return self::SUCCESS;
+})->purpose('Saklama süresi dolan tamamlanmış teslim kayıtlarındaki kişisel verileri siler');
+
+Schedule::command('loans:anonymize')->dailyAt('03:10')->withoutOverlapping();

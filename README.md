@@ -95,7 +95,7 @@ Canlıda açmadan önce `randevu@sparkoff.tr` için SMTP, SPF/DKIM ve gerçek te
 
 ## Proje durumu
 
-3D yazıcı ve portal temeli, dinamik rol-yetki altyapısı ve yönetici envanter ekranı çalışmaktadır. Envanterde malzeme oluşturma, filtreleme, arşivleme, kritik stok takibi ve gerekçeli stok hareketleri kullanılabilir. Sıradaki geliştirme kategori/konum düzenleme, dışa aktarma ve teslim/iade sistemidir.
+3D yazıcı ve portal temeli, dinamik rol-yetki altyapısı, yönetici envanteri ve teslim/iade akışı çalışmaktadır. Envanterde stok takibi, kategori/konum yönetimi, CSV dışa aktarma; teslimlerde sarf, ödünç, demirbaş, kısmi iade, gecikme ve anonimleştirme kullanılabilir.
 
 ## Lisans
 
