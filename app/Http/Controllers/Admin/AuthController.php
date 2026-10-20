@@ -71,6 +71,7 @@ class AuthController extends Controller
             'printers.manage_filaments' => 'admin.settings.filaments.index',
             'printers.manage_hours' => 'admin.settings.booking.edit',
             'announcements.view' => 'admin.announcements.index',
+            'staff_announcements.view' => 'admin.announcements.index',
             'audit_logs.view' => 'admin.activity-logs',
         ];
 

@@ -15,6 +15,7 @@ Sparkoff; atölye hizmetlerini, 3D yazıcı randevularını ve malzeme envanteri
 - Halka açık, filtrelenebilir malzeme kataloğu
 - Dinamik rol/yetki, envanter ve teslim/iade yönetimi
 - Sütun eşleme, hata ön izlemesi ve tekrar kontrolü bulunan CSV envanter aktarımı
+- Kamu ve yönetim ekibi için hedef kitle/rol seçilebilen birleşik duyuru sistemi
 - Kişisel teslim bilgilerinin süre sonunda otomatik anonimleştirilmesi
 - Kişisel bilgi istemeyen öneri, şikâyet ve hata bildirim sistemi
 - cPanel bölünmüş dizin dağıtımı
@@ -23,7 +24,6 @@ Sparkoff; atölye hizmetlerini, 3D yazıcı randevularını ve malzeme envanteri
 
 ### Geliştirilmekte olanlar
 
-- Yönetim paneline özel iç duyurular
 - Google Sheets/CSV envanter aktarımı
 
 ## Veri yaklaşımı

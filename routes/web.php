@@ -77,10 +77,11 @@ Route::prefix('yonetim')->name('admin.')->group(function () {
         Route::delete('/roller/{role}', [AdminAccessController::class, 'destroyRole'])->middleware('permission:roles.delete')->name('roles.destroy');
         Route::post('/kullanicilar', [AdminAccessController::class, 'storeUser'])->middleware(['permission:users.create', 'permission:roles.assign'])->name('users.store');
         Route::put('/kullanicilar/{user}', [AdminAccessController::class, 'updateUser'])->middleware('permission.any:users.update,users.disable,users.reset_password,roles.assign')->name('users.update');
-        Route::get('/duyurular', [AdminAnnouncementController::class, 'index'])->middleware('permission:announcements.view')->name('announcements.index');
-        Route::post('/duyurular', [AdminAnnouncementController::class, 'store'])->middleware('permission:announcements.create')->name('announcements.store');
-        Route::patch('/duyurular/{announcement}', [AdminAnnouncementController::class, 'update'])->middleware('permission:announcements.update')->name('announcements.update');
-        Route::delete('/duyurular/{announcement}', [AdminAnnouncementController::class, 'destroy'])->middleware('permission:announcements.archive')->name('announcements.destroy');
+        Route::get('/duyurular', [AdminAnnouncementController::class, 'index'])->middleware('permission.any:announcements.view,staff_announcements.view')->name('announcements.index');
+        Route::post('/duyurular', [AdminAnnouncementController::class, 'store'])->middleware('permission.any:announcements.create,staff_announcements.create')->name('announcements.store');
+        Route::patch('/duyurular/{announcement}', [AdminAnnouncementController::class, 'update'])->middleware('permission.any:announcements.update,staff_announcements.update')->name('announcements.update');
+        Route::delete('/duyurular/{announcement}', [AdminAnnouncementController::class, 'destroy'])->middleware('permission.any:announcements.archive,staff_announcements.archive')->name('announcements.destroy');
+        Route::post('/duyurular/{announcement}/okundu', [AdminAnnouncementController::class, 'acknowledge'])->middleware('permission:staff_announcements.view')->name('announcements.acknowledge');
         Route::middleware('booking.enabled')->group(function () {
             Route::get('/takvim', [AdminCalendarController::class, 'index'])->middleware('permission:printers.manage_schedule')->name('calendar.index');
             Route::get('/randevular', [AdminAppointmentController::class, 'index'])->middleware('permission:appointments.view')->name('appointments.index');

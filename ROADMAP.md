@@ -162,12 +162,12 @@ Sparkoff Proje Atölyesi
 
 ### H. Yönetim içi duyurular
 
-- [ ] Ayrı iç duyuru veri modeli
-- [ ] Oluşturma/düzenleme/arşivleme yetkileri
-- [ ] Önem seviyesi ve yayın süresi
-- [ ] Hedef roller
-- [ ] Okundu/onaylandı bilgisi
-- [ ] Yönetim ana ekranı bildirimi ve okunmamış sayacı
+- [x] Kamu ve yönetim duyurularını birleştiren hedef kitle modeli
+- [x] Oluşturma/düzenleme/arşivleme yetkileri
+- [x] Önem seviyesi, sabitleme ve yayın süresi
+- [x] Tüm yetkililer veya seçili hedef roller
+- [x] Okundu/onaylandı bilgisi ve yönetici sayacı
+- [x] Yönetim ekranlarında bildirim ve menüde okunmamış sayacı
 
 ### I. Geri bildirim ve talepler
 
@@ -224,4 +224,4 @@ Sparkoff Proje Atölyesi
 
 ## Sıradaki teknik adım
 
-Google Sheets kaynak listesini analiz etmek, gerekirse XLSX desteğini eklemek ve ardından yönetim içi duyuru modülünü kurmak.
+Teslim işlem geri alma/ters hareket akışını kurmak; ardından Google Sheets kaynak listesini analiz edip gerekirse XLSX desteğini eklemek.
