@@ -10,6 +10,7 @@ use App\Services\InventoryTransactionService;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -38,8 +39,9 @@ class InventoryTransactionController extends Controller
                 'remaining' => number_format($transaction->remainingQuantity(), 3, '.', ''),
                 'issuedAt' => $transaction->issued_at->format('d.m.Y H:i'), 'dueAt' => $transaction->due_at?->format('d.m.Y H:i'),
                 'isOverdue' => $transaction->status === InventoryTransactionStatus::Active && $transaction->due_at?->isPast(),
-                'completedAt' => $transaction->completed_at?->format('d.m.Y H:i'), 'notes' => $transaction->notes,
-                'closureNote' => $transaction->closure_note, 'issuer' => $transaction->issuer?->name ?? 'Sistem',
+                'completedAt' => $transaction->completed_at?->format('d.m.Y H:i'),
+                'notes' => $canSeeName ? $transaction->notes : null, 'closureNote' => $canSeeName ? $transaction->closure_note : null,
+                'issuer' => $transaction->issuer?->name ?? 'Sistem',
             ]);
 
         return Inertia::render('Admin/InventoryTransactions/Index', [
@@ -56,13 +58,21 @@ class InventoryTransactionController extends Controller
 
     public function store(Request $request, InventoryTransactionService $service): RedirectResponse
     {
+        $request->merge([
+            'recipient_name' => trim((string) $request->input('recipient_name')),
+            'recipient_email' => $request->filled('recipient_email') ? Str::lower(trim((string) $request->input('recipient_email'))) : null,
+        ]);
         $data = $request->validate([
             'inventory_item_id' => ['required', 'integer', 'exists:inventory_items,id'], 'recipient_name' => ['required', 'string', 'max:150'],
             'recipient_email' => ['nullable', 'email:rfc', 'max:255'], 'quantity' => ['required', 'numeric', 'min:0.001', 'max:9999999999'],
             'due_at' => ['nullable', 'date_format:Y-m-d\TH:i', 'after:now'], 'notes' => ['nullable', 'string', 'max:2000'],
         ]);
+        $item = InventoryItem::query()->findOrFail($data['inventory_item_id']);
+        if ($item->item_type->value === 'loanable' && empty($data['due_at'])) {
+            throw ValidationException::withMessages(['due_at' => 'Ödünç malzeme için beklenen iade tarihi zorunludur.']);
+        }
         try {
-            $service->issue(InventoryItem::query()->findOrFail($data['inventory_item_id']), $request->user(), trim($data['recipient_name']), $data['recipient_email'] ?? null, (float) $data['quantity'], isset($data['due_at']) ? CarbonImmutable::createFromFormat('Y-m-d\TH:i', $data['due_at'], config('app.timezone')) : null, $data['notes'] ?? null);
+            $service->issue($item, $request->user(), $data['recipient_name'], $data['recipient_email'] ?? null, (float) $data['quantity'], isset($data['due_at']) ? CarbonImmutable::createFromFormat('Y-m-d\TH:i', $data['due_at'], config('app.timezone')) : null, $data['notes'] ?? null);
         } catch (LogicException $exception) {
             throw ValidationException::withMessages(['quantity' => $exception->getMessage()]);
         }

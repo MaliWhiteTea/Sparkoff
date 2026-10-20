@@ -2,7 +2,7 @@
 
 ## Gereksinimler
 
-- PHP 8.3+, MySQL/MariaDB, Composer 2 ve SSL
+- PHP 8.4.1+, MySQL/MariaDB, Composer 2 ve SSL
 - PHP: `pdo_mysql`, `mbstring`, `openssl`, `tokenizer`, `xml`, `ctype`, `json`, `fileinfo`
 - Alan adının belge kökünü Laravel `public` klasörüne yönlendirebilme
 
@@ -37,7 +37,7 @@ DB_PASSWORD=GUCLU_PAROLA
 SESSION_DRIVER=database
 SESSION_SECURE_COOKIE=true
 SESSION_SAME_SITE=lax
-ONLINE_BOOKING_ENABLED=false
+ONLINE_BOOKING_ENABLED=true
 ```
 
 ```bash
@@ -47,7 +47,22 @@ php artisan admin:create yonetici@sparkoff.tr --name="Atölye Yöneticisi"
 php artisan optimize
 ```
 
-## 3. Belge kökü ve izinler
+Randevu e-postalarının gönderilebilmesi için `.env` içindeki `MAIL_*` değerlerini
+`randevu@sparkoff.tr` hesabının SMTP bilgileriyle doldurun.
+
+## 3. Zamanlanmış görev
+
+cPanel Cron İşleri bölümüne dakikada bir çalışan yalnızca şu görevi ekleyin
+(`CPANEL_KULLANICI` kısmını hesabınıza göre değiştirin):
+
+```cron
+* * * * * cd /home/CPANEL_KULLANICI/sparkoff_app && /opt/alt/php84/usr/bin/php artisan schedule:run >> /dev/null 2>&1
+```
+
+`migrate` veya `db:seed` komutlarını dakikada bir çalıştırmayın. Bunlar yalnızca ilk
+kurulumda ve gerektiğinde güncelleme sırasında çalıştırılmalıdır.
+
+## 4. Belge kökü ve izinler
 
 Document root proje kökü değil şu dizin olmalıdır:
 
@@ -57,23 +72,24 @@ Document root proje kökü değil şu dizin olmalıdır:
 
 Bu değişmiyorsa dosyaları gelişigüzel `public_html` içine taşımayın; hosting sağlayıcısından document root değişikliği isteyin. `storage` ve `bootstrap/cache` PHP tarafından yazılabilir olmalıdır (`755`, gerekirse `775`; `777` kullanmayın).
 
-## 4. SSL ve yedekleme
+## 5. SSL ve yedekleme
 
 - AutoSSL/Let's Encrypt'i etkinleştir ve HTTP'yi HTTPS'e yönlendir.
 - JetBackup/cPanel Backup ile günlük veritabanı yedeği al.
 - En az bir yedeği indirip geri yükleme denemesi yap.
 - `.env` yedeğini erişimi sınırlı ayrı bir yerde tut.
 
-## 5. Canlı kontrol listesi
+## 6. Canlı kontrol listesi
 
 - [ ] `/up` HTTP 200 döndürüyor.
 - [ ] `/`, `/3d-yazicilar` ve `/filamentler` açılıyor.
-- [ ] `/randevu` yazıcı sayfasına gidiyor; randevu POST/takip uçları 404 dönüyor.
+- [ ] `/randevu` açılıyor; örnek bir talep, e-posta doğrulama ve takip akışı tamamlanıyor.
 - [ ] Yönetim sayfaları giriş ve admin rolü gerektiriyor.
 - [ ] Takvim, filament, iletişim ve duyuru değişiklikleri siteye yansıyor.
 - [ ] İşlem geçmişi değişiklikleri kaydediyor.
 - [ ] Telefon, WhatsApp ve e-posta bağlantıları doğru.
-- [ ] `APP_DEBUG=false`, `ONLINE_BOOKING_ENABLED=false` ve SSL etkin.
+- [ ] `APP_DEBUG=false`, `ONLINE_BOOKING_ENABLED=true` ve SSL etkin.
+- [ ] `schedule:run` cron görevi dakikada bir çalışıyor.
 - [ ] Otomatik veritabanı yedeği etkin ve geri yükleme denendi.
 
 ## Güncelleme

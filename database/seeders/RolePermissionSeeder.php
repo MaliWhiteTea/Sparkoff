@@ -47,10 +47,12 @@ class RolePermissionSeeder extends Seeder
                 'is_protected' => false,
             ],
         );
-        $inventoryModerator->permissions()->sync(Permission::query()->whereIn('key', [
-            'inventory.view', 'loans.view', 'loans.create', 'loans.receive_return',
-            'loans.view_personal_data', 'loans.view_email',
-        ])->pluck('id'));
+        if ($inventoryModerator->wasRecentlyCreated || $inventoryModerator->permissions()->doesntExist()) {
+            $inventoryModerator->permissions()->sync(Permission::query()->whereIn('key', [
+                'inventory.view', 'loans.view', 'loans.create', 'loans.receive_return',
+                'loans.view_personal_data', 'loans.view_email',
+            ])->pluck('id'));
+        }
 
         User::query()
             ->where('role', 'admin')

@@ -11,6 +11,7 @@ use App\Models\Permission;
 use App\Models\Role;
 use App\Models\Setting;
 use App\Models\User;
+use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
@@ -103,7 +104,8 @@ class InventoryTransactionTest extends TestCase
         $this->actingAs($viewer)->get(route('admin.loans.index', ['status' => 'completed']))
             ->assertInertia(fn (Assert $page) => $page
                 ->where('transactions.data.0.recipientName', 'Gizli kullanıcı')
-                ->where('transactions.data.0.recipientEmail', null));
+                ->where('transactions.data.0.recipientEmail', null)
+                ->where('transactions.data.0.notes', null));
     }
 
     public function test_anonymization_never_touches_active_transactions(): void
@@ -129,6 +131,61 @@ class InventoryTransactionTest extends TestCase
         $this->assertContains('loans.receive_return', $keys);
         $this->assertNotContains('inventory.adjust_stock', $keys);
         $this->assertNotContains('inventory.change_item_type', $keys);
+    }
+
+    public function test_reseeding_does_not_overwrite_custom_moderator_permissions(): void
+    {
+        $role = Role::query()->where('slug', 'inventory-moderator')->firstOrFail();
+        $role->permissions()->sync(Permission::query()->whereIn('key', ['loans.view', 'loans.create'])->pluck('id'));
+
+        $this->seed(RolePermissionSeeder::class);
+
+        $this->assertEqualsCanonicalizing(['loans.view', 'loans.create'], $role->permissions()->pluck('key')->all());
+    }
+
+    public function test_return_cannot_exceed_remaining_quantity(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+        $item = $this->item(InventoryItemType::Loanable, 5);
+        $this->actingAs($admin)->post(route('admin.loans.store'), [
+            'inventory_item_id' => $item->id, 'recipient_name' => 'Test Kullanıcı', 'quantity' => 2,
+            'due_at' => now()->addDay()->format('Y-m-d\TH:i'),
+        ]);
+        $transaction = InventoryTransaction::query()->firstOrFail();
+
+        $this->actingAs($admin)->post(route('admin.loans.return', $transaction), ['quantity' => 3])->assertSessionHasErrors('quantity');
+
+        $this->assertSame('3.000', $item->fresh()->quantity);
+        $this->assertSame('0.000', $transaction->fresh()->quantity_returned);
+    }
+
+    public function test_damage_reporter_cannot_mark_an_item_as_lost(): void
+    {
+        $reporter = $this->userWithPermissions(['loans.report_damage']);
+        $item = $this->item(InventoryItemType::Loanable, 2);
+        $transaction = InventoryTransaction::query()->create($this->transactionData($item, ['status' => InventoryTransactionStatus::Active]));
+
+        $this->actingAs($reporter)->patch(route('admin.loans.close', $transaction), [
+            'status' => 'lost', 'note' => 'Yetkisiz kayıp işlemi',
+        ])->assertForbidden();
+
+        $this->assertSame(InventoryTransactionStatus::Active, $transaction->fresh()->status);
+    }
+
+    public function test_delivery_rejects_blank_name_and_loan_without_due_date(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+        $item = $this->item(InventoryItemType::Loanable, 2);
+
+        $this->actingAs($admin)->post(route('admin.loans.store'), [
+            'inventory_item_id' => $item->id, 'recipient_name' => '   ', 'quantity' => 1,
+        ])->assertSessionHasErrors('recipient_name');
+        $this->actingAs($admin)->post(route('admin.loans.store'), [
+            'inventory_item_id' => $item->id, 'recipient_name' => 'Ada Lovelace', 'quantity' => 1,
+        ])->assertSessionHasErrors('due_at');
+
+        $this->assertDatabaseCount('inventory_transactions', 0);
+        $this->assertSame('2.000', $item->fresh()->quantity);
     }
 
     private function item(InventoryItemType $type, float $quantity): InventoryItem
