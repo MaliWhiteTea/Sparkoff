@@ -51,10 +51,20 @@ Ziyaretçiler hesap açmadan kamuya açık bilgileri görebilir. Yönetim işlem
 
 ### Yönetim içi duyurular
 
-- Kamu duyurularından tamamen ayrı tutulur.
+- Kamu ve yönetim duyuruları aynı yönetim ekranından oluşturulur; hedef kitle ve yetkileri birbirinden ayrılır.
 - Yalnızca yetkili panel kullanıcıları görebilir.
-- Başlangıçta yalnızca Sistem Yöneticisi yayımlar ve düzenler.
+- Sistem Yöneticisi bütün duyuruları görür; diğer yetkililer yalnız atanmış duyuru yetkileri kapsamında işlem yapar.
 - Önem seviyesi, hedef roller, yayın süresi, sabitleme ve okundu bilgisi desteklenir.
+
+### Kullanılabilirlik tercihleri
+
+- Yönetim paneli masaüstünde yeniden boyutlandırılabilir ve daraltılabilir bir sol menü kullanır.
+- Mobil yönetim menüsü ekran üzerinden açılır; masaüstü sürükleme davranışı mobilde kullanılmaz.
+- Tablo yoğunluğu, görünür sütunlar ve kayıtlı filtreler yalnız ilgili yetkilinin kişisel tercihi olur; başka kullanıcıların görünümünü değiştirmez.
+- Filtre, sıralama, sayfa ve kaydırma konumu işlemden sonra mümkün olduğunca korunur.
+- Taslak saklama kişisel veri, parola, model dosyası ve benzeri hassas alanlara uygulanmaz.
+- Toplu işlem ve geri alma yalnız işlem geçmişini ve yetki sınırlarını koruyan güvenli eylemlerde sunulur.
+- Renk hiçbir zaman tek başına durum göstergesi değildir; metin veya ikonla desteklenir.
 
 ## Bilgi mimarisi
 
@@ -69,12 +79,12 @@ Sparkoff Proje Atölyesi
 │   ├── Arama ve filtreler
 │   └── Malzeme ayrıntısı
 └── Yönetim Paneli
-    ├── Genel bakış ve iç duyurular
+    ├── Genel bakış ve yönetim duyuruları
     ├── 3D yazıcılar ve randevular
     ├── Envanter ve stok hareketleri
     ├── Teslimler ve iadeler
     ├── Kullanıcılar, roller ve yetkiler
-    ├── Kamu duyuruları
+    ├── Duyurular (ziyaretçi ve yönetim hedefli)
     ├── İşlem geçmişi
     └── Sistem/KVKK ayarları
 ```
@@ -143,7 +153,7 @@ Sparkoff Proje Atölyesi
 - [x] `/malzemeler` sayfası
 - [x] Birden fazla sözcükle hızlı arama
 - [x] Kategori ve stok filtreleri
-- [x] Masaüstü/mobil kart görünümü
+- [x] Masaüstü tablo/mobil satır görünümü
 - [x] Malzeme açıklaması ve teknik özellik ayrıntıları
 - [x] Kesin miktar/durum/gizli görünürlük seçenekleri
 - [x] Ana sayfadaki Malzemeler kartını etkinleştirme
@@ -199,6 +209,69 @@ Sparkoff Proje Atölyesi
 - [ ] cPanel üretim paketleri ve migration
 - [ ] Mobil, masaüstü ve canlı kabul testi
 
+### L. Yönetim arayüzü temeli — birinci uygulama paketi
+
+- [ ] Durum renkleri, rozetleri ve metinlerini bütün modüllerde standartlaştır (seçim 19)
+- [ ] Mobil yönetim menüsünü ekran üzerinden açılır/kapanır hâle getir (seçim 20)
+- [ ] Sol menü sınırını fare ve klavyeyle yeniden boyutlandır; minimum/maksimum sınır ve çift tıklamayla sıfırlama ekle (seçim 1)
+- [ ] Sol menünün geniş/dar durumunu değiştir ve tercihi yerel olarak sakla (seçim 2)
+- [ ] Rahat, normal ve sıkışık tablo yoğunluklarını ortak bileşen olarak ekle (seçim 7)
+- [ ] Filtre, sıralama, sayfa ve kaydırma konumunu dönüşlerde koru (seçim 17)
+- [ ] Masaüstü, tablet, mobil ve klavye erişilebilirlik testlerini ekle
+
+### M. Tablo ve liste verimliliği — ikinci uygulama paketi
+
+- [ ] Envanter, teslim, randevu, talep ve kullanıcı tablolarında sunucu tarafı sıralama ekle (seçim 8)
+- [ ] Görünür sütun ve sütun sırası tercihlerini yalnız ilgili yetkiliye özel sakla; hassas sütunları yetkiyle sınırla (seçim 6)
+- [ ] Yetkiliye özel kayıtlı filtreler ve varsayılana dönme işlemi ekle (seçim 9)
+- [ ] Seçim kutuları ve ortak toplu işlem çubuğu altyapısını kur (seçim 10)
+- [ ] Envanterde toplu kategori, konum, görünürlük ve arşiv işlemlerini yetki/onay/denetim kaydıyla ekle
+- [ ] Toplu işlemlerde etkilenecek kayıt özetini ve kısmi hata raporunu göster
+
+### N. Form güvenliği ve taslaklar — üçüncü uygulama paketi
+
+- [ ] Kaydedilmemiş değişiklikle sayfadan veya sekmeden ayrılma uyarısı ekle (seçim 12)
+- [ ] Duyuru, malzeme ve sistem ayarı formlarında hassas olmayan yerel taslak saklama ekle (seçim 13)
+- [ ] Taslağı geri yükle, reddet ve temizle akışlarını oluştur
+- [ ] Parola, kişi bilgisi, e-posta, model dosyası ve teslim verilerinin tarayıcı taslağına yazılmadığını test et
+
+### O. Yönetim çalışma alanı — dördüncü uygulama paketi
+
+- [ ] Yetkiye göre şekillenen yönetim genel bakış ekranı oluştur (seçim 3)
+- [ ] Kritik stok, geciken teslim, bekleyen randevu, arızalı yazıcı ve açık talep özetlerini ekle
+- [ ] Modüller arası hızlı arama altyapısı kur; kişisel sonuçları ayrı izinlerle sınırla (seçim 5)
+- [ ] Yetkiye bağlı sistem bildirimleri, bildirim zili ve okunmamış sayacı ekle (seçim 16)
+- [ ] Son görüntülenen kayıtları kişisel veri saklamadan yetkiliye özel tut (seçim 15)
+- [ ] Bulunulan sayfaya ve yetkiye göre hızlı işlem düğmesi göster (seçim 4)
+
+### P. Güvenli geri alma ve ters işlemler — beşinci uygulama paketi
+
+- [ ] Teslim ve stok işlemleri için silme yerine ters hareket altyapısını tamamla
+- [ ] Hangi işlemlerin kısa süreli doğrudan geri alınabileceğini merkezi kurallarla belirle (seçim 11)
+- [ ] Stok, kategori, konum, görünürlük ve duyuru durumu için güvenli geri alma bildirimi ekle
+- [ ] Parola, kullanıcı yetkisi, teslim/iade, hasar/kayıp ve içe aktarmada doğrudan geri almayı engelle
+- [ ] Her geri alma ve ters hareketi işlem geçmişine bağlantılı biçimde kaydet
+
+### Q. Ziyaretçi malzeme kataloğu — altıncı uygulama paketi
+
+- [ ] Malzeme tablosuna sıralama ve kategori başına sonuç sayısı ekle (seçim 18)
+- [ ] “Yalnız stokta olanlar” hızlı filtresi ve mobil filtre paneli ekle
+- [ ] Filtrelenmiş katalog bağlantılarının paylaşılabilir ve yenilemede kalıcı olmasını sağla
+- [ ] Teknik özellik açılımını ve son güncellenme bilgisini iyileştir
+- [ ] Hesap oluşturmadan tarayıcıda tutulan favori malzemeleri ekle
+- [ ] Mobil ve ekran okuyucu kabul testlerini tamamla
+
+## Seçilen kullanılabilirlik özelliklerinin uygulama sırası
+
+1. **Arayüz temeli:** L paketi — durum dili, mobil menü, sürüklenebilir/daraltılabilir menü, yoğunluk ve görünümün korunması.
+2. **Tablo altyapısı:** M paketi — sıralama, kişisel sütun tercihleri, kayıtlı filtreler ve güvenli toplu seçim.
+3. **Form güvenliği:** N paketi — kayıp değişiklik uyarıları ve hassas veri içermeyen taslaklar.
+4. **Çalışma alanı:** O paketi — genel bakış, arama, bildirimler, son kayıtlar ve hızlı işlem.
+5. **İşlem güvenliği:** P paketi — ters hareket ve yalnız güvenli işlemlerde geri alma.
+6. **Ziyaretçi deneyimi:** Q paketi — kamu kataloğunun sıralama, mobil filtre ve favori özellikleri.
+
+Bu sıra ortak bileşenleri önce kurarak aynı özelliğin farklı sayfalarda tekrar yazılmasını önler. Her paket kendi yetki sınırı, mobil görünüm, regresyon ve güvenlik testleri tamamlandıktan sonra ayrı commit edilir.
+
 ## Başlangıç yetki grupları
 
 | Modül | Örnek yetkiler |
@@ -224,4 +297,4 @@ Sparkoff Proje Atölyesi
 
 ## Sıradaki teknik adım
 
-Teslim işlem geri alma/ters hareket akışını kurmak; ardından Google Sheets kaynak listesini analiz edip gerekirse XLSX desteğini eklemek.
+L paketinden başlamak: önce ortak durum dili ve mobil yönetim kabuğunu, ardından sürüklenebilir/daraltılabilir sol menüyü kurmak. Sonraki paketlere geçmeden önce masaüstü, mobil ve klavye erişilebilirlik testlerini tamamlamak.
