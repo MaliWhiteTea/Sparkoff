@@ -1,5 +1,7 @@
 # Sparkoff Proje Atölyesi
 
+> **Yapay zekâ ile geliştirildi:** Bu proje, tasarımından yazılım geliştirmesine, testlerinden dokümantasyonuna kadar tamamen yapay zekâ ürünleri kullanılarak oluşturulmuş ve geliştirilmiştir.
+
 Sparkoff; atölye hizmetlerini, 3D yazıcı randevularını ve malzeme envanterini tek merkezde sunan mobil uyumlu bir atölye portalıdır.
 
 ## Modüller
