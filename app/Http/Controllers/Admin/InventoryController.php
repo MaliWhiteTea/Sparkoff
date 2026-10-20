@@ -1,0 +1,238 @@
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use App\Enums\InventoryItemType;
+use App\Enums\InventoryVisibility;
+use App\Enums\StockMovementType;
+use App\Http\Controllers\Controller;
+use App\Models\InventoryCategory;
+use App\Models\InventoryItem;
+use App\Models\InventoryLocation;
+use App\Models\StockMovement;
+use App\Services\InventoryStockService;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
+use Inertia\Inertia;
+use Inertia\Response;
+use LogicException;
+
+class InventoryController extends Controller
+{
+    public function index(Request $request): Response
+    {
+        $filters = $request->validate([
+            'search' => ['nullable', 'string', 'max:100'],
+            'category' => ['nullable', 'integer', 'exists:inventory_categories,id'],
+            'type' => ['nullable', Rule::enum(InventoryItemType::class)],
+            'status' => ['nullable', Rule::in(['active', 'low', 'out', 'archived'])],
+        ]);
+
+        $items = InventoryItem::query()
+            ->with(['category:id,name', 'location:id,name,code'])
+            ->when($filters['search'] ?? null, function ($query, string $search) {
+                $query->where(fn ($nested) => $nested
+                    ->where('name', 'like', "%{$search}%")
+                    ->orWhere('sku', 'like', "%{$search}%"));
+            })
+            ->when($filters['category'] ?? null, fn ($query, $category) => $query->where('category_id', $category))
+            ->when($filters['type'] ?? null, fn ($query, $type) => $query->where('item_type', $type))
+            ->when(($filters['status'] ?? 'active') === 'active', fn ($query) => $query->whereNull('archived_at')->where('is_active', true))
+            ->when(($filters['status'] ?? null) === 'archived', fn ($query) => $query->whereNotNull('archived_at'))
+            ->when(($filters['status'] ?? null) === 'out', fn ($query) => $query->whereNull('archived_at')->where('quantity', '<=', 0))
+            ->when(($filters['status'] ?? null) === 'low', fn ($query) => $query->whereNull('archived_at')->whereNotNull('minimum_stock')->whereColumn('quantity', '<=', 'minimum_stock')->where('quantity', '>', 0))
+            ->orderBy('name')
+            ->paginate(20)
+            ->withQueryString()
+            ->through(fn (InventoryItem $item) => $this->itemData($item));
+
+        $active = InventoryItem::query()->whereNull('archived_at');
+
+        return Inertia::render('Admin/Inventory/Index', [
+            'items' => $items,
+            'filters' => [
+                'search' => $filters['search'] ?? '',
+                'category' => isset($filters['category']) ? (string) $filters['category'] : '',
+                'type' => $filters['type'] ?? '',
+                'status' => $filters['status'] ?? 'active',
+            ],
+            'summary' => [
+                'total' => (clone $active)->count(),
+                'low' => (clone $active)->whereNotNull('minimum_stock')->whereColumn('quantity', '<=', 'minimum_stock')->where('quantity', '>', 0)->count(),
+                'out' => (clone $active)->where('quantity', '<=', 0)->count(),
+                'archived' => InventoryItem::query()->whereNotNull('archived_at')->count(),
+            ],
+            'categories' => InventoryCategory::query()->orderBy('sort_order')->orderBy('name')->get()->map(fn ($category) => [
+                'id' => $category->id, 'name' => $category->name, 'description' => $category->description,
+                'isActive' => $category->is_active, 'itemCount' => $category->items()->count(),
+            ]),
+            'locations' => InventoryLocation::query()->orderBy('name')->get()->map(fn ($location) => [
+                'id' => $location->id, 'name' => $location->name, 'code' => $location->code,
+                'description' => $location->description, 'isPublic' => $location->is_public,
+                'isActive' => $location->is_active, 'itemCount' => $location->items()->count(),
+            ]),
+            'recentMovements' => ($request->user()->role === 'admin' || $request->user()->hasPermissionTo('inventory.view_movements'))
+                ? StockMovement::query()->with(['item:id,name,unit', 'user:id,name'])->latest()->limit(15)->get()->map(fn ($movement) => [
+                    'id' => $movement->id, 'item' => $movement->item->name, 'unit' => $movement->item->unit,
+                    'type' => $movement->movement_type->value, 'change' => $movement->quantity_change,
+                    'balance' => $movement->balance_after, 'reason' => $movement->reason,
+                    'actor' => $movement->user?->name ?? 'Sistem', 'createdAt' => $movement->created_at->format('d.m.Y H:i'),
+                ]) : [],
+        ]);
+    }
+
+    public function store(Request $request, InventoryStockService $stock): RedirectResponse
+    {
+        $data = $this->validatedItem($request, true);
+        $quantity = $data['quantity'];
+        unset($data['quantity']);
+
+        DB::transaction(function () use ($data, $quantity, $request, $stock) {
+            $item = InventoryItem::query()->create([...$data, 'slug' => $this->uniqueSlug($data['name']), 'quantity' => 0]);
+            if ((float) $quantity > 0) {
+                $stock->adjust($item, $quantity, StockMovementType::Initial, $request->user(), 'İlk stok kaydı');
+            }
+        });
+
+        return back()->with('success', 'Malzeme envantere eklendi.');
+    }
+
+    public function update(Request $request, InventoryItem $item): RedirectResponse
+    {
+        $data = $this->validatedItem($request, false, $item);
+        if ($item->archived_at) {
+            throw ValidationException::withMessages(['item' => 'Arşivlenmiş bir malzeme düzenlenemez.']);
+        }
+        if ($request->user()->role !== 'admin' && ! $request->user()->hasPermissionTo('inventory.change_item_type')) {
+            unset($data['item_type']);
+        }
+        $item->update($data);
+
+        return back()->with('success', 'Malzeme bilgileri güncellendi.');
+    }
+
+    public function archive(InventoryItem $item): RedirectResponse
+    {
+        if (! $item->archived_at) {
+            $item->update(['is_active' => false, 'archived_at' => now()]);
+        }
+
+        return back()->with('success', 'Malzeme arşivlendi; hareket geçmişi korundu.');
+    }
+
+    public function adjustStock(Request $request, InventoryItem $item, InventoryStockService $stock): RedirectResponse
+    {
+        $data = $request->validate([
+            'quantity_change' => ['required', 'numeric', 'not_in:0', 'between:-9999999999,9999999999'],
+            'reason' => ['required', 'string', 'min:3', 'max:500'],
+        ]);
+        if ($item->archived_at) {
+            throw ValidationException::withMessages(['quantity_change' => 'Arşivlenmiş malzemenin stoku değiştirilemez.']);
+        }
+        try {
+            $stock->adjust($item, $data['quantity_change'], StockMovementType::Adjustment, $request->user(), $data['reason']);
+        } catch (LogicException $exception) {
+            throw ValidationException::withMessages(['quantity_change' => $exception->getMessage()]);
+        }
+
+        return back()->with('success', 'Stok hareketi kaydedildi.');
+    }
+
+    public function storeCategory(Request $request): RedirectResponse
+    {
+        $data = $this->validatedCategory($request);
+        InventoryCategory::query()->create([...$data, 'slug' => $this->uniqueSlug($data['name'], InventoryCategory::class)]);
+
+        return back()->with('success', 'Kategori oluşturuldu.');
+    }
+
+    public function updateCategory(Request $request, InventoryCategory $category): RedirectResponse
+    {
+        $category->update($this->validatedCategory($request));
+
+        return back()->with('success', 'Kategori güncellendi.');
+    }
+
+    public function storeLocation(Request $request): RedirectResponse
+    {
+        InventoryLocation::query()->create($this->validatedLocation($request));
+
+        return back()->with('success', 'Konum oluşturuldu.');
+    }
+
+    public function updateLocation(Request $request, InventoryLocation $location): RedirectResponse
+    {
+        $location->update($this->validatedLocation($request, $location));
+
+        return back()->with('success', 'Konum güncellendi.');
+    }
+
+    private function validatedItem(Request $request, bool $creating, ?InventoryItem $item = null): array
+    {
+        $rules = [
+            'name' => ['required', 'string', 'max:180'],
+            'sku' => ['nullable', 'string', 'max:100', Rule::unique('inventory_items')->ignore($item)],
+            'category_id' => ['nullable', 'integer', 'exists:inventory_categories,id'],
+            'location_id' => ['nullable', 'integer', 'exists:inventory_locations,id'],
+            'item_type' => ['required', Rule::enum(InventoryItemType::class)],
+            'unit' => ['required', 'string', 'max:30'],
+            'minimum_stock' => ['nullable', 'numeric', 'min:0', 'max:9999999999'],
+            'public_visibility' => ['required', Rule::enum(InventoryVisibility::class)],
+            'description' => ['nullable', 'string', 'max:3000'],
+            'is_active' => ['required', 'boolean'],
+        ];
+        if ($creating) {
+            $rules['quantity'] = ['required', 'numeric', 'min:0', 'max:9999999999'];
+        }
+        $request->merge(['is_active' => $request->boolean('is_active')]);
+
+        return $request->validate($rules);
+    }
+
+    private function validatedCategory(Request $request): array
+    {
+        $request->merge(['is_active' => $request->boolean('is_active')]);
+
+        return $request->validate(['name' => ['required', 'string', 'max:120'], 'description' => ['nullable', 'string', 'max:1000'], 'is_active' => ['required', 'boolean']]);
+    }
+
+    private function validatedLocation(Request $request, ?InventoryLocation $location = null): array
+    {
+        $request->merge(['is_public' => $request->boolean('is_public'), 'is_active' => $request->boolean('is_active')]);
+
+        return $request->validate([
+            'name' => ['required', 'string', 'max:120'],
+            'code' => ['required', 'string', 'max:50', Rule::unique('inventory_locations')->ignore($location)],
+            'description' => ['nullable', 'string', 'max:1000'],
+            'is_public' => ['required', 'boolean'], 'is_active' => ['required', 'boolean'],
+        ]);
+    }
+
+    private function uniqueSlug(string $name, string $model = InventoryItem::class): string
+    {
+        $base = Str::slug($name) ?: 'malzeme';
+        $slug = $base;
+        for ($suffix = 2; $model::query()->where('slug', $slug)->exists(); $suffix++) {
+            $slug = "{$base}-{$suffix}";
+        }
+
+        return $slug;
+    }
+
+    private function itemData(InventoryItem $item): array
+    {
+        return [
+            'id' => $item->id, 'name' => $item->name, 'sku' => $item->sku,
+            'categoryId' => $item->category_id, 'category' => $item->category?->name,
+            'locationId' => $item->location_id, 'location' => $item->location ? "{$item->location->code} · {$item->location->name}" : null,
+            'itemType' => $item->item_type->value, 'unit' => $item->unit, 'quantity' => $item->quantity,
+            'minimumStock' => $item->minimum_stock, 'publicVisibility' => $item->public_visibility->value,
+            'description' => $item->description, 'isActive' => $item->is_active,
+            'isLow' => $item->isLowOnStock(), 'isArchived' => $item->archived_at !== null,
+        ];
+    }
+}

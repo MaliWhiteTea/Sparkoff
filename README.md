@@ -95,7 +95,7 @@ Canlıda açmadan önce `randevu@sparkoff.tr` için SMTP, SPF/DKIM ve gerçek te
 
 ## Proje durumu
 
-3D yazıcı ve portal temeli çalışmaktadır. Sıradaki geliştirme, dinamik rol-yetki altyapısı ve bunun üzerine kurulacak malzeme envanteri/teslim sistemidir.
+3D yazıcı ve portal temeli, dinamik rol-yetki altyapısı ve yönetici envanter ekranı çalışmaktadır. Envanterde malzeme oluşturma, filtreleme, arşivleme, kritik stok takibi ve gerekçeli stok hareketleri kullanılabilir. Sıradaki geliştirme kategori/konum düzenleme, dışa aktarma ve teslim/iade sistemidir.
 
 ## Lisans
 

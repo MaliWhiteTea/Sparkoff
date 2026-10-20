@@ -115,14 +115,14 @@ Sparkoff Proje Atölyesi
 
 ### D. Yönetici envanter arayüzü
 
-- [ ] Genel stok özeti
-- [ ] Arama, filtreleme ve sayfalama
-- [ ] Malzeme ekleme/düzenleme/arşivleme
-- [ ] Hızlı stok artırma/azaltma
-- [ ] Sarf/ödünç/demirbaş türü yönetimi
-- [ ] Kategori ve konum yönetimi
-- [ ] Düşük stok ve tükenen ürün görünümü
-- [ ] Hareket geçmişi
+- [x] Genel stok özeti
+- [x] Arama, filtreleme ve sayfalama
+- [x] Malzeme ekleme/düzenleme/arşivleme
+- [x] Hızlı stok artırma/azaltma
+- [x] Sarf/ödünç/demirbaş türü yönetimi
+- [ ] Kategori ve konum yönetimi (oluşturma tamamlandı; düzenleme arayüzü bekliyor)
+- [x] Düşük stok ve tükenen ürün görünümü
+- [x] Hareket geçmişi
 - [ ] CSV/Excel dışa aktarma
 
 ### E. Teslim ve iade sistemi

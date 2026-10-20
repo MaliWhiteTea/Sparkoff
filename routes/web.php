@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\BookingSettingsController as AdminBookingSettings
 use App\Http\Controllers\Admin\CalendarController as AdminCalendarController;
 use App\Http\Controllers\Admin\FeedbackController as AdminFeedbackController;
 use App\Http\Controllers\Admin\FilamentSettingsController as AdminFilamentSettingsController;
+use App\Http\Controllers\Admin\InventoryController as AdminInventoryController;
 use App\Http\Controllers\Admin\PrinterSettingsController as AdminPrinterSettingsController;
 use App\Http\Controllers\Admin\PrivacySettingsController as AdminPrivacySettingsController;
 use App\Http\Controllers\Admin\SettingsController as AdminSettingsController;
@@ -47,6 +48,15 @@ Route::prefix('yonetim')->name('admin.')->group(function () {
         Route::get('/islem-gecmisi', AdminActivityLogController::class)->middleware('permission:audit_logs.view')->name('activity-logs');
         Route::get('/talepler', [AdminFeedbackController::class, 'index'])->middleware('permission:feedback.view')->name('feedback.index');
         Route::patch('/talepler/{feedback}', [AdminFeedbackController::class, 'update'])->middleware('permission:feedback.update')->name('feedback.update');
+        Route::get('/envanter', [AdminInventoryController::class, 'index'])->middleware('permission:inventory.view')->name('inventory.index');
+        Route::post('/envanter', [AdminInventoryController::class, 'store'])->middleware('permission:inventory.create')->name('inventory.store');
+        Route::put('/envanter/{item}', [AdminInventoryController::class, 'update'])->middleware('permission:inventory.update')->name('inventory.update');
+        Route::patch('/envanter/{item}/arsiv', [AdminInventoryController::class, 'archive'])->middleware('permission:inventory.archive')->name('inventory.archive');
+        Route::post('/envanter/{item}/stok', [AdminInventoryController::class, 'adjustStock'])->middleware('permission:inventory.adjust_stock')->name('inventory.stock.adjust');
+        Route::post('/envanter-kategorileri', [AdminInventoryController::class, 'storeCategory'])->middleware('permission:inventory.manage_categories')->name('inventory.categories.store');
+        Route::patch('/envanter-kategorileri/{category}', [AdminInventoryController::class, 'updateCategory'])->middleware('permission:inventory.manage_categories')->name('inventory.categories.update');
+        Route::post('/envanter-konumlari', [AdminInventoryController::class, 'storeLocation'])->middleware('permission:inventory.manage_locations')->name('inventory.locations.store');
+        Route::patch('/envanter-konumlari/{location}', [AdminInventoryController::class, 'updateLocation'])->middleware('permission:inventory.manage_locations')->name('inventory.locations.update');
         Route::get('/yetkiler', [AdminAccessController::class, 'index'])->middleware('permission.any:roles.view,users.view')->name('access.index');
         Route::post('/roller', [AdminAccessController::class, 'storeRole'])->middleware('permission:roles.create')->name('roles.store');
         Route::put('/roller/{role}', [AdminAccessController::class, 'updateRole'])->middleware('permission:roles.update')->name('roles.update');
