@@ -152,12 +152,13 @@ Sparkoff Proje Atölyesi
 ### G. Google Sheets aktarımı
 
 - [ ] Kaynak sütunları ve veri kalitesini analiz et
-- [ ] Kategorileri ve konumları standartlaştır
-- [ ] Olası tekrarları belirle
-- [ ] Ön izlemeli CSV/XLSX içe aktarma
-- [ ] Hatalı satırları ayrı raporla
-- [ ] Onay sonrası toplu kayıt oluştur
-- [ ] Aktarım sonucunu işlem geçmişine yaz
+- [x] Kategori ve konumları aktarım sırasında eşleştir veya oluştur
+- [x] Envanterdeki ve dosya içindeki olası tekrarları belirle
+- [x] Sütun eşlemeli ve ön izlemeli CSV içe aktarma
+- [ ] XLSX dosyası desteği
+- [x] Hatalı satırları ayrı raporla
+- [x] Onay sonrası geçerli kayıtları toplu oluştur
+- [x] Aktarım sonucunu işlem geçmişine yaz
 
 ### H. Yönetim içi duyurular
 
@@ -223,4 +224,4 @@ Sparkoff Proje Atölyesi
 
 ## Sıradaki teknik adım
 
-Google Sheets/CSV envanter aktarımı için sütun eşleme, ön izleme ve hatalı satır raporlama akışını kurmak.
+Google Sheets kaynak listesini analiz etmek, gerekirse XLSX desteğini eklemek ve ardından yönetim içi duyuru modülünü kurmak.
