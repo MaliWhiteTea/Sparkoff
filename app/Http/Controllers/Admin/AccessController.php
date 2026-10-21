@@ -22,9 +22,19 @@ class AccessController extends Controller
     {
         $canViewRoles = $request->user()->role === 'admin' || $request->user()->hasPermissionTo('roles.view');
         $canViewUsers = $request->user()->role === 'admin' || $request->user()->hasPermissionTo('users.view');
+        $sorting = $request->validate([
+            'user_sort' => ['nullable', Rule::in(['name', 'email', 'is_active', 'created_at'])],
+            'user_direction' => ['nullable', Rule::in(['asc', 'desc'])],
+            'role_sort' => ['nullable', Rule::in(['name', 'users_count', 'created_at'])],
+            'role_direction' => ['nullable', Rule::in(['asc', 'desc'])],
+        ]);
+        $userSort = $sorting['user_sort'] ?? 'name';
+        $userDirection = $sorting['user_direction'] ?? 'asc';
+        $roleSort = $sorting['role_sort'] ?? 'name';
+        $roleDirection = $sorting['role_direction'] ?? 'asc';
 
         return Inertia::render('Admin/Access/Index', [
-            'roles' => Role::query()->withCount('users')->when($canViewRoles, fn ($query) => $query->with('permissions:id,key'))->orderByDesc('is_system')->orderBy('name')->get()->map(fn (Role $role) => [
+            'roles' => Role::query()->withCount('users')->when($canViewRoles, fn ($query) => $query->with('permissions:id,key'))->orderByDesc('is_system')->orderBy($roleSort, $roleDirection)->orderBy('id')->get()->map(fn (Role $role) => [
                 'id' => $role->id,
                 'name' => $role->name,
                 'slug' => $role->slug,
@@ -39,13 +49,17 @@ class AccessController extends Controller
                 'label' => $permission->label,
                 'isSensitive' => $permission->is_sensitive,
             ])->values()) : (object) [],
-            'users' => $canViewUsers ? User::query()->with('roles:id,name')->orderBy('name')->get()->map(fn (User $user) => [
+            'users' => $canViewUsers ? User::query()->with('roles:id,name')->orderBy($userSort, $userDirection)->orderBy('id')->get()->map(fn (User $user) => [
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
                 'isActive' => $user->is_active,
                 'roles' => $user->roles->map(fn (Role $role) => ['id' => $role->id, 'name' => $role->name]),
             ]) : [],
+            'sorting' => [
+                'userSort' => $userSort, 'userDirection' => $userDirection,
+                'roleSort' => $roleSort, 'roleDirection' => $roleDirection,
+            ],
         ]);
     }
 

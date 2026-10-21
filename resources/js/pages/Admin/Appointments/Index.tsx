@@ -1,5 +1,6 @@
 import AdminLayout from '@/components/AdminLayout';
 import StatusBadge from '@/components/StatusBadge';
+import ListSort from '@/components/ListSort';
 import { useRememberListUrl } from '@/hooks/useListReturnUrl';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { FormEvent, useState } from 'react';
@@ -8,7 +9,7 @@ type Appointment = { publicId: string; name: string; email: string | null; statu
 type LinkItem = { url: string | null; label: string; active: boolean };
 type Props = {
     appointments: { data: Appointment[]; links: LinkItem[]; total: number };
-    filters: { status: string; search: string };
+    filters: { status: string; search: string; sort: string; direction: string };
     statusOptions: { value: string; label: string }[];
     counts: { pending: number; approved: number; today: number };
 };
@@ -19,11 +20,11 @@ export default function AppointmentIndex({ appointments, filters, statusOptions,
 
     function filter(event: FormEvent) {
         event.preventDefault();
-        router.get('/yonetim/randevular', { search, status: filters.status }, { preserveState: true, preserveScroll: true, replace: true });
+        router.get('/yonetim/randevular', { ...filters, search }, { preserveState: true, preserveScroll: true, replace: true });
     }
 
     function changeStatus(status: string) {
-        router.get('/yonetim/randevular', { search, status }, { preserveState: true, preserveScroll: true, replace: true });
+        router.get('/yonetim/randevular', { ...filters, search, status }, { preserveState: true, preserveScroll: true, replace: true });
     }
 
     return (
@@ -40,6 +41,7 @@ export default function AppointmentIndex({ appointments, filters, statusOptions,
                     <form onSubmit={filter}><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Randevu numarası, ad veya e-posta" /><button>Arayın</button></form>
                     <select value={filters.status} onChange={(event) => changeStatus(event.target.value)}><option value="">Tüm durumlar</option>{statusOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select>
                 </div>
+                <ListSort sort={filters.sort} direction={filters.direction} options={[{ value: 'starts_at', label: 'Başlangıç zamanı' }, { value: 'created_at', label: 'Başvuru zamanı' }, { value: 'status', label: 'Durum' }, { value: 'duration_minutes', label: 'Süre' }]} />
                 <div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>Kullanıcı</th><th>Başlangıç</th><th>Yazıcı</th><th>Durum</th><th /></tr></thead><tbody>
                     {appointments.data.map((appointment) => <tr key={appointment.publicId}><td><strong>{appointment.name}</strong>{appointment.email && <small>{appointment.email}</small>}</td><td><strong>{appointment.startsAt}</strong><small>{appointment.durationMinutes} dakika</small></td><td>{appointment.printer}</td><td><StatusBadge status={appointment.status} label={appointment.statusLabel} /></td><td><Link href={`/yonetim/randevular/${appointment.publicId}`}>İncele →</Link></td></tr>)}
                     {appointments.data.length === 0 && <tr><td colSpan={5} className="admin-empty">Bu filtrelerle eşleşen randevu bulunamadı.</td></tr>}

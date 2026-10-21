@@ -25,9 +25,13 @@ class AppointmentController extends Controller
         $validated = $request->validate([
             'status' => ['nullable', Rule::in(array_column(AppointmentStatus::cases(), 'value'))],
             'search' => ['nullable', 'string', 'max:100'],
+            'sort' => ['nullable', Rule::in(['starts_at', 'created_at', 'status', 'duration_minutes'])],
+            'direction' => ['nullable', Rule::in(['asc', 'desc'])],
         ]);
         $status = $validated['status'] ?? '';
         $search = trim($validated['search'] ?? '');
+        $sort = $validated['sort'] ?? 'starts_at';
+        $direction = $validated['direction'] ?? 'desc';
         $canViewPersonalData = $this->can($request, 'appointments.view_personal_data');
 
         $appointments = Appointment::query()
@@ -41,7 +45,7 @@ class AppointmentController extends Controller
                         ->orWhere('email', 'like', "%{$search}%");
                 }
             }))
-            ->latest('starts_at')
+            ->orderBy($sort, $direction)->orderBy('id', $direction)
             ->paginate(15)
             ->withQueryString()
             ->through(fn (Appointment $appointment) => [
@@ -57,7 +61,7 @@ class AppointmentController extends Controller
 
         return Inertia::render('Admin/Appointments/Index', [
             'appointments' => $appointments,
-            'filters' => ['status' => $status, 'search' => $search],
+            'filters' => ['status' => $status, 'search' => $search, 'sort' => $sort, 'direction' => $direction],
             'statusOptions' => collect(AppointmentStatus::cases())->map(fn ($case) => [
                 'value' => $case->value,
                 'label' => $this->statusLabel($case),

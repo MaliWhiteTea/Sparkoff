@@ -1,5 +1,6 @@
 import AdminLayout from "@/components/AdminLayout";
 import StatusBadge from "@/components/StatusBadge";
+import ListSort from "@/components/ListSort";
 import usePermissions from "@/hooks/usePermissions";
 import { Head, Link, router } from "@inertiajs/react";
 import { FormEvent, useMemo, useState } from "react";
@@ -187,11 +188,13 @@ export default function Transactions({
   items,
   filter,
   counts,
+  sorting,
 }: {
   transactions: PageData;
   items: Item[];
   filter: string;
   counts: { active: number; overdue: number };
+  sorting: { sort: string; direction: string };
 }) {
   const can = usePermissions();
   const [data, setData] = useState({
@@ -336,7 +339,7 @@ export default function Transactions({
             onClick={() =>
               router.get(
                 "/yonetim/teslimler",
-                { status: value },
+                { status: value, ...sorting },
                 { preserveState: true, preserveScroll: true, replace: true },
               )
             }
@@ -346,6 +349,7 @@ export default function Transactions({
           </button>
         ))}
       </nav>
+      <ListSort sort={sorting.sort} direction={sorting.direction} options={[{ value: 'issued_at', label: 'Teslim zamanı' }, { value: 'due_at', label: 'Beklenen iade' }, { value: 'quantity', label: 'Miktar' }, { value: 'status', label: 'Durum' }]} />
       <section className="loan-list">
         {transactions.data.map((x) => (
           <TransactionCard transaction={x} key={x.id} />

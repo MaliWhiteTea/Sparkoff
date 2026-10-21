@@ -232,7 +232,7 @@ Sparkoff Proje Atölyesi
 
 ### M. Tablo ve liste verimliliği — ikinci uygulama paketi
 
-- [ ] Envanter, teslim, randevu, talep ve kullanıcı tablolarında sunucu tarafı sıralama ekle (seçim 8)
+- [x] Envanter, teslim, randevu, talep ve kullanıcı tablolarında sunucu tarafı sıralama ekle (seçim 8)
 - [ ] Görünür sütun ve sütun sırası tercihlerini yalnız ilgili yetkiliye özel sakla; hassas sütunları yetkiyle sınırla (seçim 6)
 - [ ] Yetkiliye özel kayıtlı filtreler ve varsayılana dönme işlemi ekle (seçim 9)
 - [ ] Seçim kutuları ve ortak toplu işlem çubuğu altyapısını kur (seçim 10)

@@ -21,15 +21,21 @@ class InventoryTransactionController extends Controller
 {
     public function index(Request $request): Response
     {
-        $filters = $request->validate(['status' => ['nullable', Rule::in(['active', 'overdue', 'completed', 'damaged', 'lost'])]]);
+        $filters = $request->validate([
+            'status' => ['nullable', Rule::in(['active', 'overdue', 'completed', 'damaged', 'lost'])],
+            'sort' => ['nullable', Rule::in(['issued_at', 'due_at', 'quantity', 'status'])],
+            'direction' => ['nullable', Rule::in(['asc', 'desc'])],
+        ]);
         $status = $filters['status'] ?? 'active';
+        $sort = $filters['sort'] ?? 'issued_at';
+        $direction = $filters['direction'] ?? 'desc';
         $canSeeName = $this->can($request, 'loans.view_personal_data');
         $canSeeEmail = $this->can($request, 'loans.view_email');
         $transactions = InventoryTransaction::query()->with(['item:id,name,unit', 'issuer:id,name'])
             ->when($status === 'active', fn ($query) => $query->where('status', InventoryTransactionStatus::Active))
             ->when($status === 'overdue', fn ($query) => $query->where('status', InventoryTransactionStatus::Active)->whereNotNull('due_at')->where('due_at', '<', now()))
             ->when(! in_array($status, ['active', 'overdue'], true), fn ($query) => $query->where('status', $status))
-            ->latest('issued_at')->paginate(20)->withQueryString()
+            ->orderBy($sort, $direction)->orderBy('id', $direction)->paginate(20)->withQueryString()
             ->through(fn (InventoryTransaction $transaction) => [
                 'id' => $transaction->id, 'item' => $transaction->item->name, 'unit' => $transaction->item->unit,
                 'itemType' => $transaction->item_type->value, 'status' => $transaction->status->value,
@@ -46,6 +52,7 @@ class InventoryTransactionController extends Controller
 
         return Inertia::render('Admin/InventoryTransactions/Index', [
             'transactions' => $transactions, 'filter' => $status,
+            'sorting' => ['sort' => $sort, 'direction' => $direction],
             'items' => InventoryItem::query()->whereNull('archived_at')->where('is_active', true)->orderBy('name')->get()->map(fn ($item) => [
                 'id' => $item->id, 'name' => $item->name, 'type' => $item->item_type->value, 'quantity' => $item->quantity, 'unit' => $item->unit,
             ]),

@@ -18,12 +18,16 @@ class FeedbackController extends Controller
     {
         $validated = $request->validate([
             'status' => ['nullable', Rule::enum(FeedbackStatus::class)],
+            'sort' => ['nullable', Rule::in(['created_at', 'handled_at', 'status', 'type'])],
+            'direction' => ['nullable', Rule::in(['asc', 'desc'])],
         ]);
         $status = $validated['status'] ?? '';
+        $sort = $validated['sort'] ?? 'created_at';
+        $direction = $validated['direction'] ?? 'desc';
         $reports = FeedbackReport::query()
             ->with('handler:id,name')
             ->when($status, fn ($query) => $query->where('status', $status))
-            ->latest()
+            ->orderBy($sort, $direction)->orderBy('id', $direction)
             ->paginate(30)
             ->withQueryString()
             ->through(fn (FeedbackReport $report) => [
@@ -44,7 +48,7 @@ class FeedbackController extends Controller
 
         return Inertia::render('Admin/Feedback/Index', [
             'reports' => $reports,
-            'filters' => ['status' => $status],
+            'filters' => ['status' => $status, 'sort' => $sort, 'direction' => $direction],
             'counts' => [
                 'new' => FeedbackReport::query()->where('status', FeedbackStatus::New)->count(),
                 'reviewing' => FeedbackReport::query()->where('status', FeedbackStatus::Reviewing)->count(),

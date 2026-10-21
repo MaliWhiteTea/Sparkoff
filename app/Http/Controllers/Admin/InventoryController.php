@@ -28,9 +28,12 @@ class InventoryController extends Controller
     {
         $filters = $this->validatedFilters($request);
 
+        $sorts = ['name' => 'name', 'quantity' => 'quantity', 'minimum_stock' => 'minimum_stock', 'updated_at' => 'updated_at'];
+        $sort = $filters['sort'] ?? 'name';
+        $direction = $filters['direction'] ?? 'asc';
         $items = $this->filteredItems($filters)
             ->with(['category:id,name', 'location:id,name,code', 'media'])
-            ->orderBy('name')
+            ->orderBy($sorts[$sort], $direction)->orderBy('id')
             ->paginate(20)
             ->withQueryString()
             ->through(fn (InventoryItem $item) => $this->itemData($item));
@@ -44,6 +47,7 @@ class InventoryController extends Controller
                 'category' => isset($filters['category']) ? (string) $filters['category'] : '',
                 'type' => $filters['type'] ?? '',
                 'status' => $filters['status'] ?? 'active',
+                'sort' => $sort, 'direction' => $direction,
             ],
             'summary' => [
                 'total' => (clone $active)->count(),
@@ -214,6 +218,8 @@ class InventoryController extends Controller
             'category' => ['nullable', 'integer', 'exists:inventory_categories,id'],
             'type' => ['nullable', Rule::enum(InventoryItemType::class)],
             'status' => ['nullable', Rule::in(['active', 'low', 'out', 'archived'])],
+            'sort' => ['nullable', Rule::in(['name', 'quantity', 'minimum_stock', 'updated_at'])],
+            'direction' => ['nullable', Rule::in(['asc', 'desc'])],
         ]);
     }
 

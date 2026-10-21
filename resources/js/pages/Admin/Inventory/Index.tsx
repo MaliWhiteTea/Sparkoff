@@ -1,5 +1,6 @@
 import AdminLayout from "@/components/AdminLayout";
 import StatusBadge from "@/components/StatusBadge";
+import ListSort from "@/components/ListSort";
 import usePermissions from "@/hooks/usePermissions";
 import { Head, Link, router } from "@inertiajs/react";
 import { FormEvent, useState } from "react";
@@ -937,6 +938,7 @@ export default function Inventory({
         </label>
         <button>Ara</button>
       </form>
+      <ListSort sort={filters.sort} direction={filters.direction} options={[{ value: 'name', label: 'Malzeme adı' }, { value: 'quantity', label: 'Stok miktarı' }, { value: 'minimum_stock', label: 'Kritik stok eşiği' }, { value: 'updated_at', label: 'Son güncelleme' }]} />
       <section className="inventory-list">
         {items.data.map((x) => (
           <ItemCard
