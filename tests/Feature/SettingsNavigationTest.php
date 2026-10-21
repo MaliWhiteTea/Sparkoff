@@ -18,15 +18,15 @@ class SettingsNavigationTest extends TestCase
         $this->seed();
     }
 
-    public function test_settings_entry_redirects_an_administrator_to_the_first_available_section(): void
+    public function test_settings_entry_redirects_an_administrator_to_personal_settings(): void
     {
         $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
 
         $this->actingAs($admin)->get(route('admin.settings.index'))
-            ->assertRedirect(route('admin.settings.workshop.edit'));
+            ->assertRedirect(route('admin.settings.personal.edit'));
     }
 
-    public function test_settings_entry_respects_limited_user_permissions(): void
+    public function test_settings_entry_redirects_limited_user_to_personal_settings(): void
     {
         $role = Role::query()->create(['name' => 'Filament Sorumlusu', 'slug' => 'filament-sorumlusu']);
         $role->permissions()->attach(Permission::query()->where('key', 'printers.manage_filaments')->value('id'));
@@ -34,10 +34,10 @@ class SettingsNavigationTest extends TestCase
         $user->roles()->attach($role);
 
         $this->actingAs($user)->get(route('admin.settings.index'))
-            ->assertRedirect(route('admin.settings.filaments.index'));
+            ->assertRedirect(route('admin.settings.personal.edit'));
     }
 
-    public function test_access_only_user_reaches_users_and_roles_from_settings_entry(): void
+    public function test_access_only_user_reaches_personal_settings_from_settings_entry(): void
     {
         $role = Role::query()->create(['name' => 'Kullanıcı Görüntüleyici', 'slug' => 'ayar-kullanici-goruntuleyici']);
         $role->permissions()->attach(Permission::query()->where('key', 'users.view')->value('id'));
@@ -45,6 +45,69 @@ class SettingsNavigationTest extends TestCase
         $user->roles()->attach($role);
 
         $this->actingAs($user)->get(route('admin.settings.index'))
-            ->assertRedirect(route('admin.access.index'));
+            ->assertRedirect(route('admin.settings.personal.edit'));
+    }
+
+    public function test_every_active_staff_user_can_open_personal_settings(): void
+    {
+        $user = User::factory()->create(['role' => 'operator', 'is_active' => true]);
+
+        $this->actingAs($user)->get(route('admin.settings.personal.edit'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Admin/Settings/Personal')
+                ->where('preferences.theme', 'system')
+                ->where('preferences.scale', 'normal')
+                ->where('preferences.density', 'normal')
+                ->where('preferences.sidebar', 'wide'));
+    }
+
+    public function test_user_can_save_only_their_own_interface_preferences(): void
+    {
+        $user = User::factory()->create(['role' => 'operator', 'is_active' => true]);
+        $other = User::factory()->create(['role' => 'operator', 'is_active' => true]);
+
+        $this->actingAs($user)->put(route('admin.settings.personal.update'), [
+            'theme' => 'dark', 'scale' => 'large', 'density' => 'compact', 'sidebar' => 'narrow',
+        ])->assertRedirect();
+
+        $this->assertSame([
+            'theme' => 'dark', 'scale' => 'large', 'density' => 'compact', 'sidebar' => 'narrow',
+        ], $user->fresh()->interface_preferences);
+        $this->assertNull($other->fresh()->interface_preferences);
+    }
+
+    public function test_invalid_interface_preferences_are_rejected(): void
+    {
+        $user = User::factory()->create(['role' => 'operator', 'is_active' => true]);
+
+        $this->actingAs($user)->from(route('admin.settings.personal.edit'))->put(route('admin.settings.personal.update'), [
+            'theme' => 'neon', 'scale' => 'huge', 'density' => 'none', 'sidebar' => 'hidden',
+        ])->assertRedirect(route('admin.settings.personal.edit'))->assertSessionHasErrors(['theme', 'scale', 'density', 'sidebar']);
+
+        $this->assertNull($user->fresh()->interface_preferences);
+    }
+
+    public function test_user_can_reset_interface_preferences(): void
+    {
+        $user = User::factory()->create([
+            'role' => 'operator', 'is_active' => true,
+            'interface_preferences' => ['theme' => 'dark', 'scale' => 'large', 'density' => 'compact', 'sidebar' => 'narrow'],
+        ]);
+
+        $this->actingAs($user)->delete(route('admin.settings.personal.destroy'))->assertRedirect();
+
+        $this->assertNull($user->fresh()->interface_preferences);
+        $this->assertSame('system', $user->fresh()->interfacePreferences()['theme']);
+    }
+
+    public function test_user_without_system_permissions_cannot_open_system_settings_directly(): void
+    {
+        $user = User::factory()->create(['role' => 'operator', 'is_active' => true]);
+
+        $this->actingAs($user)->get(route('admin.settings.workshop.edit'))->assertForbidden();
+        $this->actingAs($user)->get(route('admin.settings.printers.index'))->assertForbidden();
+        $this->actingAs($user)->get(route('admin.settings.filaments.index'))->assertForbidden();
+        $this->actingAs($user)->get(route('admin.access.index'))->assertForbidden();
     }
 }

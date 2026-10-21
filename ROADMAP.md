@@ -221,14 +221,14 @@ Sparkoff Proje Atölyesi
 
 ### L.1. Hesaba özel görünüm ayarları — beta öncesi ara paket
 
-- [ ] Sol menüdeki tablo yoğunluğu seçimini kaldırıp `Ayarlar → Kişisel ayarlar` sayfasına taşı
-- [ ] Kişisel ayarlar sayfasını oturum açmış her yetkili kullanıcının yalnız kendi hesabı için kullanabilmesini sağla
-- [ ] Yalnız tema (açık/koyu/sistem), yazı ve arayüz boyutu (küçük/normal/büyük), tablo yoğunluğu (rahat/normal/sıkışık) ve sol menü (geniş/dar) seçeneklerini sun
-- [ ] Kişisel tercihleri kullanıcı hesabına bağlı olarak veritabanında sakla ve farklı cihazlarda uygula
-- [ ] Tüm kişisel görünüm tercihlerini güvenli varsayılanlara döndüren tek işlem ekle
-- [ ] Ayarlar sekmelerini kullanıcının yetkilerine göre oluştur; kullanıcı yalnız kişisel ayarları ve yetkili olduğu sistem ayarlarını görsün
-- [ ] Yetkisiz ayar adreslerine doğrudan erişimi sunucu tarafında 403 ile engelle ve izin/verilmeme testlerini ekle
-- [ ] Açık/koyu tema, üç ölçek, mobil görünüm ve klavye erişilebilirliği için kabul testlerini tamamla
+- [x] Sol menüdeki tablo yoğunluğu seçimini kaldırıp `Ayarlar → Kişisel ayarlar` sayfasına taşı
+- [x] Kişisel ayarlar sayfasını oturum açmış her yetkili kullanıcının yalnız kendi hesabı için kullanabilmesini sağla
+- [x] Yalnız tema (açık/koyu/sistem), yazı ve arayüz boyutu (küçük/normal/büyük), tablo yoğunluğu (rahat/normal/sıkışık) ve sol menü (geniş/dar) seçeneklerini sun
+- [x] Kişisel tercihleri kullanıcı hesabına bağlı olarak veritabanında sakla ve farklı cihazlarda uygula
+- [x] Tüm kişisel görünüm tercihlerini güvenli varsayılanlara döndüren tek işlem ekle
+- [x] Ayarlar sekmelerini kullanıcının yetkilerine göre oluştur; kullanıcı yalnız kişisel ayarları ve yetkili olduğu sistem ayarlarını görsün
+- [x] Yetkisiz ayar adreslerine doğrudan erişimi sunucu tarafında 403 ile engelle ve izin/verilmeme testlerini ekle
+- [x] Açık/koyu tema, üç ölçek, mobil görünüm ve klavye erişilebilirliği için kabul testlerini tamamla
 
 ### M. Tablo ve liste verimliliği — ikinci uygulama paketi
 
@@ -272,15 +272,27 @@ Sparkoff Proje Atölyesi
 - [ ] Hesap oluşturmadan tarayıcıda tutulan favori malzemeleri ekle
 - [ ] Mobil ve ekran okuyucu kabul testlerini tamamla
 
+### R. Malzeme görselleri ve bağlantıları — envanter medya paketi
+
+- [ ] Malzeme başına bir kapak ve sıralanabilir birden fazla fotoğraf ekleme, değiştirme ve kaldırma altyapısını kur
+- [ ] Fotoğraflarda dosya türü/boyut sınırı, güvenli dosya adı, yetki kontrolü ve kullanılmayan dosya temizliği uygula
+- [ ] Her görsel için erişilebilir alternatif metin alanı ekle
+- [ ] Malzemeye isteğe bağlı video veya harici kaynak bağlantıları ekleme ve düzenleme alanı sun
+- [ ] Harici adresleri yalnız güvenli `https` bağlantılarıyla sınırla; video/dosya gösterimini güvenli içerik kurallarıyla uygula
+- [ ] Yönetim envanterinde medya ön izlemesi ve sıralama arayüzü oluştur
+- [ ] Ziyaretçi malzeme tablosunda küçük kapak görseli, ayrıntıda galeri, video ve ilgili bağlantıları göster
+- [ ] Mobil görünüm, bozuk bağlantı/yedek görsel, dosya yetkisi ve güvenlik kabul testlerini tamamla
+
 ## Seçilen kullanılabilirlik özelliklerinin uygulama sırası
 
 1. **Arayüz temeli:** L paketi — durum dili, mobil menü, sürüklenebilir/daraltılabilir menü, yoğunluk ve görünümün korunması.
 2. **Kişisel görünüm:** L.1 ara paketi — sade hesap tercihleri ve yetkiye göre ayar sekmeleri.
-3. **Tablo altyapısı:** M paketi — sıralama, kişisel sütun tercihleri, kayıtlı filtreler ve güvenli toplu seçim.
-4. **Form güvenliği:** N paketi — kayıp değişiklik uyarıları ve hassas veri içermeyen taslaklar.
-5. **Çalışma alanı:** O paketi — genel bakış, arama, bildirimler, son kayıtlar ve hızlı işlem.
-6. **İşlem güvenliği:** P paketi — ters hareket ve yalnız güvenli işlemlerde geri alma.
-7. **Ziyaretçi deneyimi:** Q paketi — kamu kataloğunun sıralama, mobil filtre ve favori özellikleri.
+3. **Malzeme medyası:** R paketi — yönetilebilir fotoğraf galerisi, isteğe bağlı video ve güvenli harici bağlantılar.
+4. **Tablo altyapısı:** M paketi — sıralama, kişisel sütun tercihleri, kayıtlı filtreler ve güvenli toplu seçim.
+5. **Form güvenliği:** N paketi — kayıp değişiklik uyarıları ve hassas veri içermeyen taslaklar.
+6. **Çalışma alanı:** O paketi — genel bakış, arama, bildirimler, son kayıtlar ve hızlı işlem.
+7. **İşlem güvenliği:** P paketi — ters hareket ve yalnız güvenli işlemlerde geri alma.
+8. **Ziyaretçi deneyimi:** Q paketi — kamu kataloğunun sıralama, mobil filtre ve favori özellikleri.
 
 Bu sıra ortak bileşenleri önce kurarak aynı özelliğin farklı sayfalarda tekrar yazılmasını önler. Her paket kendi yetki sınırı, mobil görünüm, regresyon ve güvenlik testleri tamamlandıktan sonra ayrı commit edilir.
 

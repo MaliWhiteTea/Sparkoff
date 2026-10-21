@@ -6,6 +6,7 @@ export default function SettingsTabs() {
     const can = (permission: string) => page.props.auth.user.permissions.includes(permission);
 
     return <nav className="settings-tabs" aria-label="Ayar bölümleri">
+        <Link className={path.includes('/kisisel') ? 'active' : ''} href="/yonetim/ayarlar/kisisel">Kişisel ayarlar</Link>
         {can('workshop_settings.update') && <Link className={path.includes('/atolye') ? 'active' : ''} href="/yonetim/ayarlar/atolye">Atölye ve iletişim</Link>}
         {can('printers.view') && <Link className={path.includes('/yazicilar') ? 'active' : ''} href="/yonetim/ayarlar/yazicilar">Yazıcılar ve bakım</Link>}
         {can('printers.manage_filaments') && <Link className={path.includes('/filamentler') ? 'active' : ''} href="/yonetim/ayarlar/filamentler">Filamentler</Link>}

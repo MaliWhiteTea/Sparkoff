@@ -33,4 +33,21 @@ class AdminAccessibilityFoundationTest extends TestCase
         $this->assertStringContainsString('@media(prefers-reduced-motion:reduce)', $styles);
         $this->assertStringContainsString(':focus-visible', $styles);
     }
+
+    public function test_personal_settings_keep_theme_scale_mobile_and_keyboard_contracts(): void
+    {
+        $layout = file_get_contents(resource_path('js/components/AdminLayout.tsx'));
+        $settings = file_get_contents(resource_path('js/pages/Admin/Settings/Personal.tsx'));
+        $styles = file_get_contents(resource_path('css/admin-shell.css'))
+            .file_get_contents(resource_path('css/app.css'));
+
+        $this->assertStringContainsString('theme-${preferences.theme}', $layout);
+        $this->assertStringContainsString('density-${preferences.density}', $layout);
+        $this->assertStringContainsString('document.documentElement.dataset.adminScale', $layout);
+        $this->assertStringContainsString('type="radio"', $settings);
+        $this->assertStringContainsString('<fieldset', $settings);
+        $this->assertStringContainsString('@media(prefers-color-scheme:dark)', $styles);
+        $this->assertStringContainsString('html[data-admin-scale="large"]', $styles);
+        $this->assertStringContainsString('@media(max-width:600px)', $styles);
+    }
 }

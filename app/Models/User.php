@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'email', 'password', 'role', 'is_active'])]
+#[Fillable(['name', 'email', 'password', 'role', 'is_active', 'interface_preferences'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -29,7 +29,19 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_active' => 'boolean',
+            'interface_preferences' => 'array',
         ];
+    }
+
+    /** @return array{theme: string, scale: string, density: string, sidebar: string} */
+    public function interfacePreferences(): array
+    {
+        return array_merge([
+            'theme' => 'system',
+            'scale' => 'normal',
+            'density' => 'normal',
+            'sidebar' => 'wide',
+        ], $this->interface_preferences ?? []);
     }
 
     public function roles(): BelongsToMany

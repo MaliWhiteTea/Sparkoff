@@ -2,8 +2,13 @@
 .admin-page{grid-template-columns:var(--admin-sidebar-width,245px) minmax(0,1fr)}
 .admin-sidebar{width:var(--admin-sidebar-width,245px);padding:20px 14px}
 .admin-page.sidebar-resizing{transition:none}
-.admin-density+.admin-user{margin-top:0}
-.admin-density{margin:auto 5px 14px;padding:12px 0 0;border:0;border-top:1px solid var(--border)}.admin-density legend{padding:0;color:var(--muted);font-size:.55rem;font-weight:800}.admin-density>div{margin-top:8px;display:grid;grid-template-columns:repeat(3,1fr);gap:4px}.admin-density button{height:30px;padding:0 4px;border:1px solid var(--border);border-radius:5px;background:#fff;color:var(--muted);font-size:.52rem;cursor:pointer}.admin-density button.active{border-color:var(--navy);background:#edf4f8;color:var(--navy);font-weight:800}.admin-density button b{display:none}.sidebar-collapsed .admin-density{width:42px;margin-right:auto;margin-left:auto}.sidebar-collapsed .admin-density legend,.sidebar-collapsed .admin-density button span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}.sidebar-collapsed .admin-density>div{grid-template-columns:1fr}.sidebar-collapsed .admin-density button b{display:inline}.density-comfortable .admin-table th{padding:16px 18px}.density-comfortable .admin-table td{padding:21px 18px}.density-compact .admin-table th{padding:9px 14px}.density-compact .admin-table td{padding:11px 14px;font-size:.65rem}
+.density-comfortable .admin-table th{padding:16px 18px}.density-comfortable .admin-table td{padding:21px 18px}.density-compact .admin-table th{padding:9px 14px}.density-compact .admin-table td{padding:11px 14px;font-size:.65rem}
+html[data-admin-scale="small"]{font-size:14px}html[data-admin-scale="normal"]{font-size:16px}html[data-admin-scale="large"]{font-size:18px}
+.theme-dark{--background:#101820;--surface:#17232e;--text:#edf3f7;--muted:#a7b4c0;--border:#334351;--navy:#70b7ed;--navy-dark:#98cef5;--sky:#233c4b;--burgundy:#f07a9b;--success:#72c7a2;--warning:#e1ae65;color-scheme:dark;background:#101820}
+.theme-dark .admin-sidebar,.theme-dark .admin-mobile-bar,.theme-dark .admin-panel,.theme-dark .settings-save-bar,.theme-dark input,.theme-dark select,.theme-dark textarea,.theme-dark button,.theme-dark .admin-table th,.theme-dark .admin-table td{background-color:var(--surface);color:var(--text);border-color:var(--border)}
+.theme-dark .admin-content,.theme-dark .admin-page{background:#101820}.theme-dark .admin-sidebar nav a.active,.theme-dark .settings-tabs a.active{background:#213746}.theme-dark .field input,.theme-dark .field select,.theme-dark .field textarea{color:var(--text)}
+.theme-dark .preference-group label.selected{background:#213746}.theme-dark .staff-announcement p{color:#344454}
+@media(prefers-color-scheme:dark){.theme-system{--background:#101820;--surface:#17232e;--text:#edf3f7;--muted:#a7b4c0;--border:#334351;--navy:#70b7ed;--navy-dark:#98cef5;--sky:#233c4b;--burgundy:#f07a9b;--success:#72c7a2;--warning:#e1ae65;color-scheme:dark;background:#101820}.theme-system .admin-sidebar,.theme-system .admin-mobile-bar,.theme-system .admin-panel,.theme-system .settings-save-bar,.theme-system input,.theme-system select,.theme-system textarea,.theme-system button,.theme-system .admin-table th,.theme-system .admin-table td{background-color:var(--surface);color:var(--text);border-color:var(--border)}.theme-system .admin-content,.theme-system .admin-page{background:#101820}.theme-system .admin-sidebar nav a.active,.theme-system .settings-tabs a.active,.theme-system .preference-group label.selected{background:#213746}}
 
 @media(max-width:900px){
   .admin-page{padding-top:64px;display:block}
@@ -18,7 +23,6 @@
   .admin-sidebar nav a,.sidebar-collapsed .admin-sidebar nav a{padding:12px 13px;justify-content:flex-start}
   .admin-sidebar .admin-nav-count,.sidebar-collapsed .admin-sidebar .admin-nav-count{margin-left:auto;position:static}
   .admin-user,.sidebar-collapsed .admin-user{margin-top:auto;padding:18px 5px 0;align-items:stretch;border-top:1px solid var(--border)}
-  .admin-density,.sidebar-collapsed .admin-density{width:auto;margin:auto 5px 14px}.admin-density legend,.sidebar-collapsed .admin-density legend,.admin-density button span,.sidebar-collapsed .admin-density button span{position:static;width:auto;height:auto;overflow:visible;clip:auto}.admin-density>div,.sidebar-collapsed .admin-density>div{grid-template-columns:repeat(3,1fr)}.admin-density button b,.sidebar-collapsed .admin-density button b{display:none}
   .admin-user strong,.admin-user small{display:block}
   .admin-user button,.sidebar-collapsed .admin-user button{width:auto;height:auto;margin-top:9px;display:flex;place-items:initial;border:0}
   .admin-content{padding-top:34px}

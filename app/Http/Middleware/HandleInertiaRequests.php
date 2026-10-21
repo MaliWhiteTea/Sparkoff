@@ -31,6 +31,7 @@ class HandleInertiaRequests extends Middleware
                     'permissions' => $user->role === 'admin' || $user->isSystemAdministrator()
                         ? collect(config('permissions'))->flatMap(fn ($permissions) => array_keys($permissions))->values()
                         : $user->roles()->with('permissions:id,key')->get()->flatMap->permissions->pluck('key')->unique()->values(),
+                    'interfacePreferences' => $user->interfacePreferences(),
                 ] : null,
             ],
             'staffAnnouncements' => $staffAnnouncements,

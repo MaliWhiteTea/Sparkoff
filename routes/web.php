@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\FilamentSettingsController as AdminFilamentSettin
 use App\Http\Controllers\Admin\InventoryController as AdminInventoryController;
 use App\Http\Controllers\Admin\InventoryImportController as AdminInventoryImportController;
 use App\Http\Controllers\Admin\InventoryTransactionController as AdminInventoryTransactionController;
+use App\Http\Controllers\Admin\PersonalSettingsController as AdminPersonalSettingsController;
 use App\Http\Controllers\Admin\PrinterSettingsController as AdminPrinterSettingsController;
 use App\Http\Controllers\Admin\PrivacySettingsController as AdminPrivacySettingsController;
 use App\Http\Controllers\Admin\SettingsController as AdminSettingsController;
@@ -93,6 +94,9 @@ Route::prefix('yonetim')->name('admin.')->group(function () {
 
         Route::prefix('ayarlar')->name('settings.')->group(function () {
             Route::get('/', AdminSettingsController::class)->name('index');
+            Route::get('/kisisel', [AdminPersonalSettingsController::class, 'edit'])->name('personal.edit');
+            Route::put('/kisisel', [AdminPersonalSettingsController::class, 'update'])->name('personal.update');
+            Route::delete('/kisisel', [AdminPersonalSettingsController::class, 'destroy'])->name('personal.destroy');
             Route::middleware('booking.enabled')->group(function () {
                 Route::get('/randevu-kurallari', [AdminBookingSettingsController::class, 'edit'])->middleware('permission.any:system_settings.update,printers.manage_hours')->name('booking.edit');
                 Route::put('/randevu-kurallari', [AdminBookingSettingsController::class, 'update'])->middleware('permission.any:system_settings.update,printers.manage_hours')->name('booking.update');
