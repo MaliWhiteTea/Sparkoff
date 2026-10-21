@@ -32,6 +32,7 @@ class HandleInertiaRequests extends Middleware
                         ? collect(config('permissions'))->flatMap(fn ($permissions) => array_keys($permissions))->values()
                         : $user->roles()->with('permissions:id,key')->get()->flatMap->permissions->pluck('key')->unique()->values(),
                     'interfacePreferences' => $user->interfacePreferences(),
+                    'tablePreferences' => $user->table_preferences ?? [],
                 ] : null,
             ],
             'staffAnnouncements' => $staffAnnouncements,

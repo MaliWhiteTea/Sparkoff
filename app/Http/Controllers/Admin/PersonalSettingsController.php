@@ -34,8 +34,51 @@ class PersonalSettingsController extends Controller
 
     public function destroy(Request $request): RedirectResponse
     {
-        $request->user()->update(['interface_preferences' => null]);
+        $request->user()->update(['interface_preferences' => null, 'table_preferences' => null]);
 
         return back()->with('success', 'Kişisel görünüm ayarlarınız varsayılanlara döndürüldü.');
+    }
+
+    public function updateTable(Request $request): RedirectResponse
+    {
+        $table = $request->validate(['table' => ['required', Rule::in(array_keys($this->tableColumns()))]])['table'];
+        $allowed = $this->allowedColumns($request, $table);
+        $data = $request->validate([
+            'columns' => ['required', 'array', 'min:1', 'max:12'],
+            'columns.*' => ['required', 'string', 'distinct', Rule::in($allowed)],
+        ]);
+
+        $preferences = $request->user()->table_preferences ?? [];
+        $preferences[$table] = array_values($data['columns']);
+        $request->user()->update(['table_preferences' => $preferences]);
+
+        return back()->with('success', 'Tablo sütunları hesabınıza kaydedildi.');
+    }
+
+    private function allowedColumns(Request $request, string $table): array
+    {
+        $columns = $this->tableColumns()[$table];
+
+        return array_keys(array_filter($columns, function (?string $permission) use ($request) {
+            return $permission === null || $request->user()->role === 'admin' || $request->user()->hasPermissionTo($permission);
+        }));
+    }
+
+    /** @return array<string, array<string, string|null>> */
+    private function tableColumns(): array
+    {
+        return [
+            'appointments' => [
+                'applicant' => 'appointments.view_personal_data',
+                'starts_at' => null,
+                'duration' => null,
+                'printer' => null,
+                'status' => null,
+            ],
+            'inventory' => ['name' => null, 'category' => null, 'location' => null, 'quantity' => null, 'visibility' => null],
+            'loans' => ['item' => null, 'recipient' => 'loans.view_personal_data', 'quantity' => null, 'issued_at' => null, 'due_at' => null, 'status' => null],
+            'feedback' => ['type' => null, 'message' => null, 'status' => null, 'created_at' => null, 'handler' => null],
+            'users' => ['name' => null, 'email' => null, 'roles' => null, 'status' => null],
+        ];
     }
 }

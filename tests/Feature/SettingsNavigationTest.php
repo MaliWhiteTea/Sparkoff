@@ -110,4 +110,47 @@ class SettingsNavigationTest extends TestCase
         $this->actingAs($user)->get(route('admin.settings.filaments.index'))->assertForbidden();
         $this->actingAs($user)->get(route('admin.access.index'))->assertForbidden();
     }
+
+    public function test_user_can_store_personal_table_columns(): void
+    {
+        $user = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+
+        $this->actingAs($user)->put(route('admin.settings.personal.table.update'), [
+            'table' => 'appointments', 'columns' => ['status', 'starts_at', 'applicant'],
+        ])->assertSessionHas('success');
+
+        $this->assertSame(['status', 'starts_at', 'applicant'], $user->fresh()->table_preferences['appointments']);
+    }
+
+    public function test_sensitive_table_column_requires_matching_permission(): void
+    {
+        $role = Role::query()->create(['name' => 'Randevu Görüntüleyici', 'slug' => 'randevu-goruntuleyici']);
+        $role->permissions()->attach(Permission::query()->where('key', 'appointments.view')->value('id'));
+        $user = User::factory()->create(['role' => 'operator', 'is_active' => true]);
+        $user->roles()->attach($role);
+
+        $this->actingAs($user)->put(route('admin.settings.personal.table.update'), [
+            'table' => 'appointments', 'columns' => ['starts_at', 'applicant'],
+        ])->assertSessionHasErrors('columns.1');
+        $this->assertNull($user->fresh()->table_preferences);
+
+        $this->actingAs($user)->put(route('admin.settings.personal.table.update'), [
+            'table' => 'appointments', 'columns' => ['status', 'starts_at'],
+        ])->assertSessionHas('success');
+    }
+
+    public function test_table_preferences_reject_unknown_tables_columns_and_duplicates(): void
+    {
+        $user = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+
+        $this->actingAs($user)->put(route('admin.settings.personal.table.update'), [
+            'table' => 'secrets', 'columns' => ['password'],
+        ])->assertSessionHasErrors('table');
+        $this->actingAs($user)->put(route('admin.settings.personal.table.update'), [
+            'table' => 'users', 'columns' => ['name', 'password'],
+        ])->assertSessionHasErrors('columns.1');
+        $this->actingAs($user)->put(route('admin.settings.personal.table.update'), [
+            'table' => 'users', 'columns' => ['name', 'name'],
+        ])->assertSessionHasErrors('columns.1');
+    }
 }

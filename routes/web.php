@@ -101,6 +101,7 @@ Route::prefix('yonetim')->name('admin.')->group(function () {
             Route::get('/kisisel', [AdminPersonalSettingsController::class, 'edit'])->name('personal.edit');
             Route::put('/kisisel', [AdminPersonalSettingsController::class, 'update'])->name('personal.update');
             Route::delete('/kisisel', [AdminPersonalSettingsController::class, 'destroy'])->name('personal.destroy');
+            Route::put('/kisisel/tablo', [AdminPersonalSettingsController::class, 'updateTable'])->name('personal.table.update');
             Route::middleware('booking.enabled')->group(function () {
                 Route::get('/randevu-kurallari', [AdminBookingSettingsController::class, 'edit'])->middleware('permission.any:system_settings.update,printers.manage_hours')->name('booking.edit');
                 Route::put('/randevu-kurallari', [AdminBookingSettingsController::class, 'update'])->middleware('permission.any:system_settings.update,printers.manage_hours')->name('booking.update');

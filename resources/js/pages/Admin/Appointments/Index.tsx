@@ -1,6 +1,7 @@
 import AdminLayout from '@/components/AdminLayout';
 import StatusBadge from '@/components/StatusBadge';
 import ListSort from '@/components/ListSort';
+import TableColumns, { ColumnDefinition, initialTableColumns } from '@/components/TableColumns';
 import { useRememberListUrl } from '@/hooks/useListReturnUrl';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { FormEvent, useState } from 'react';
@@ -15,6 +16,14 @@ type Props = {
 };
 
 export default function AppointmentIndex({ appointments, filters, statusOptions, counts }: Props) {
+    const page = usePage<{ auth: { user: { permissions: string[]; tablePreferences: Record<string, string[]> } } }>();
+    const canSeeApplicant = page.props.auth.user.permissions.includes('appointments.view_personal_data');
+    const columnDefinitions: ColumnDefinition[] = [
+        ...(canSeeApplicant ? [{ key: 'applicant', label: 'Başvuru sahibi' }] : []),
+        { key: 'starts_at', label: 'Başlangıç' }, { key: 'duration', label: 'Süre' },
+        { key: 'printer', label: 'Yazıcı' }, { key: 'status', label: 'Durum' },
+    ];
+    const [columns, setColumns] = useState(() => initialTableColumns(page.props.auth.user.tablePreferences.appointments, columnDefinitions));
     const [search, setSearch] = useState(filters.search);
     useRememberListUrl('appointments', usePage().url);
 
@@ -42,9 +51,10 @@ export default function AppointmentIndex({ appointments, filters, statusOptions,
                     <select value={filters.status} onChange={(event) => changeStatus(event.target.value)}><option value="">Tüm durumlar</option>{statusOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select>
                 </div>
                 <ListSort sort={filters.sort} direction={filters.direction} options={[{ value: 'starts_at', label: 'Başlangıç zamanı' }, { value: 'created_at', label: 'Başvuru zamanı' }, { value: 'status', label: 'Durum' }, { value: 'duration_minutes', label: 'Süre' }]} />
-                <div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>Kullanıcı</th><th>Başlangıç</th><th>Yazıcı</th><th>Durum</th><th /></tr></thead><tbody>
-                    {appointments.data.map((appointment) => <tr key={appointment.publicId}><td><strong>{appointment.name}</strong>{appointment.email && <small>{appointment.email}</small>}</td><td><strong>{appointment.startsAt}</strong><small>{appointment.durationMinutes} dakika</small></td><td>{appointment.printer}</td><td><StatusBadge status={appointment.status} label={appointment.statusLabel} /></td><td><Link href={`/yonetim/randevular/${appointment.publicId}`}>İncele →</Link></td></tr>)}
-                    {appointments.data.length === 0 && <tr><td colSpan={5} className="admin-empty">Bu filtrelerle eşleşen randevu bulunamadı.</td></tr>}
+                <TableColumns table="appointments" definitions={columnDefinitions} active={columns} setActive={setColumns} />
+                <div className="admin-table-wrap"><table className="admin-table"><thead><tr>{columns.map((column) => <th key={column}>{columnDefinitions.find((definition) => definition.key === column)?.label}</th>)}<th><span className="sr-only">İşlem</span></th></tr></thead><tbody>
+                    {appointments.data.map((appointment) => <tr key={appointment.publicId}>{columns.map((column) => <td key={column}>{column === 'applicant' ? <><strong>{appointment.name}</strong>{appointment.email && <small>{appointment.email}</small>}</> : column === 'starts_at' ? <strong>{appointment.startsAt}</strong> : column === 'duration' ? `${appointment.durationMinutes} dakika` : column === 'printer' ? appointment.printer : <StatusBadge status={appointment.status} label={appointment.statusLabel} />}</td>)}<td><Link href={`/yonetim/randevular/${appointment.publicId}`}>İncele →</Link></td></tr>)}
+                    {appointments.data.length === 0 && <tr><td colSpan={columns.length + 1} className="admin-empty">Bu filtrelerle eşleşen randevu bulunamadı.</td></tr>}
                 </tbody></table></div>
                 {appointments.links.length > 3 && <div className="admin-pagination">{appointments.links.map((link, index) => link.url ? <Link key={index} className={link.active ? 'active' : ''} href={link.url} preserveScroll preserveState dangerouslySetInnerHTML={{ __html: link.label }} /> : <span key={index} dangerouslySetInnerHTML={{ __html: link.label }} />)}</div>}
             </section>
