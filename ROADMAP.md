@@ -229,6 +229,7 @@ Sparkoff Proje Atölyesi
 - [x] Ayarlar sekmelerini kullanıcının yetkilerine göre oluştur; kullanıcı yalnız kişisel ayarları ve yetkili olduğu sistem ayarlarını görsün
 - [x] Yetkisiz ayar adreslerine doğrudan erişimi sunucu tarafında 403 ile engelle ve izin/verilmeme testlerini ekle
 - [x] Açık/koyu tema, üç ölçek, mobil görünüm ve klavye erişilebilirliği için kabul testlerini tamamla
+- [ ] Açık/koyu tema geçişini göz yormayan kısa bir renk animasyonuyla yumuşat; `prefers-reduced-motion` kullananlarda animasyonu devre dışı bırak
 
 ### M. Tablo ve liste verimliliği — ikinci uygulama paketi
 
