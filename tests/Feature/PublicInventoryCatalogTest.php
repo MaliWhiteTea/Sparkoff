@@ -54,6 +54,22 @@ class PublicInventoryCatalogTest extends TestCase
         $this->get(route('materials.index', ['stock' => 'secret']))->assertSessionHasErrors('stock');
     }
 
+    public function test_catalog_exposes_accessible_media_without_internal_file_paths(): void
+    {
+        $category = InventoryCategory::query()->create(['name' => 'Elektronik', 'slug' => 'elektronik', 'is_active' => true]);
+        $item = $this->item('Arduino Uno', InventoryVisibility::Status, 5, $category);
+        $item->media()->create(['type' => 'image', 'file_path' => 'inventory-media/1/arduino.jpg', 'alt_text' => 'Arduino kartı', 'is_cover' => true]);
+        $item->media()->create(['type' => 'link', 'external_url' => 'https://docs.example.com/arduino', 'title' => 'Teknik belge']);
+
+        $this->get(route('materials.index'))->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->has('items.data.0.media', 2)
+            ->where('items.data.0.media.0.type', 'image')
+            ->where('items.data.0.media.0.altText', 'Arduino kartı')
+            ->where('items.data.0.media.0.url', url('/storage/inventory-media/1/arduino.jpg'))
+            ->missing('items.data.0.media.0.file_path')
+            ->where('items.data.0.media.1.url', 'https://docs.example.com/arduino'));
+    }
+
     private function item(string $name, InventoryVisibility $visibility, float $quantity, InventoryCategory $category, ?InventoryLocation $location = null): InventoryItem
     {
         return InventoryItem::query()->create([

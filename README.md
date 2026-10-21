@@ -15,6 +15,7 @@ Sparkoff; atölye hizmetlerini, 3D yazıcı randevularını ve malzeme envanteri
 - E-posta doğrulama, yönetici onayı ve takip bağlantısı
 - Yönetici paneli ve işlem geçmişi
 - Halka açık, filtrelenebilir malzeme kataloğu
+- Malzemeler için sıralanabilir fotoğraf galerisi, kapak görseli, video ve güvenli bağlantı yönetimi
 - Dinamik rol/yetki, envanter ve teslim/iade yönetimi
 - Sütun eşleme, hata ön izlemesi ve tekrar kontrolü bulunan CSV envanter aktarımı
 - Kamu ve yönetim ekibi için hedef kitle/rol seçilebilen birleşik duyuru sistemi
@@ -97,7 +98,7 @@ Canlıda açmadan önce `randevu@sparkoff.tr` için SMTP, SPF/DKIM ve gerçek te
 
 ## Proje durumu
 
-3D yazıcı ve portal temeli, dinamik rol-yetki altyapısı, yönetici envanteri, halka açık malzeme kataloğu ve teslim/iade akışı çalışmaktadır. Envanterde stok takibi, kategori/konum yönetimi, CSV dışa aktarma; teslimlerde sarf, ödünç, demirbaş, kısmi iade, gecikme ve anonimleştirme kullanılabilir.
+3D yazıcı ve portal temeli, dinamik rol-yetki altyapısı, yönetici envanteri, halka açık malzeme kataloğu ve teslim/iade akışı çalışmaktadır. Envanterde stok takibi, kategori/konum yönetimi, fotoğraf-video-bağlantı medyası ve CSV dışa aktarma; teslimlerde sarf, ödünç, demirbaş, kısmi iade, gecikme ve anonimleştirme kullanılabilir.
 
 ## Lisans
 

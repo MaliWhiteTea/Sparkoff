@@ -274,14 +274,14 @@ Sparkoff Proje Atölyesi
 
 ### R. Malzeme görselleri ve bağlantıları — envanter medya paketi
 
-- [ ] Malzeme başına bir kapak ve sıralanabilir birden fazla fotoğraf ekleme, değiştirme ve kaldırma altyapısını kur
-- [ ] Fotoğraflarda dosya türü/boyut sınırı, güvenli dosya adı, yetki kontrolü ve kullanılmayan dosya temizliği uygula
-- [ ] Her görsel için erişilebilir alternatif metin alanı ekle
-- [ ] Malzemeye isteğe bağlı video veya harici kaynak bağlantıları ekleme ve düzenleme alanı sun
-- [ ] Harici adresleri yalnız güvenli `https` bağlantılarıyla sınırla; video/dosya gösterimini güvenli içerik kurallarıyla uygula
-- [ ] Yönetim envanterinde medya ön izlemesi ve sıralama arayüzü oluştur
-- [ ] Ziyaretçi malzeme tablosunda küçük kapak görseli, ayrıntıda galeri, video ve ilgili bağlantıları göster
-- [ ] Mobil görünüm, bozuk bağlantı/yedek görsel, dosya yetkisi ve güvenlik kabul testlerini tamamla
+- [x] Malzeme başına bir kapak ve sıralanabilir birden fazla fotoğraf ekleme, değiştirme ve kaldırma altyapısını kur
+- [x] Fotoğraflarda dosya türü/boyut sınırı, güvenli dosya adı, yetki kontrolü ve kullanılmayan dosya temizliği uygula
+- [x] Her görsel için erişilebilir alternatif metin alanı ekle
+- [x] Malzemeye isteğe bağlı video veya harici kaynak bağlantıları ekleme ve düzenleme alanı sun
+- [x] Harici adresleri yalnız güvenli `https` bağlantılarıyla sınırla; video/dosya gösterimini güvenli içerik kurallarıyla uygula
+- [x] Yönetim envanterinde medya ön izlemesi ve sıralama arayüzü oluştur
+- [x] Ziyaretçi malzeme tablosunda küçük kapak görseli, ayrıntıda galeri, video ve ilgili bağlantıları göster
+- [x] Mobil görünüm, bozuk bağlantı/yedek görsel, dosya yetkisi ve güvenlik kabul testlerini tamamla
 
 ## Seçilen kullanılabilirlik özelliklerinin uygulama sırası
 

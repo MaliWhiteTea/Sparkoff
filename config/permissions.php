@@ -5,6 +5,7 @@ return [
         'inventory.view' => ['label' => 'Malzemeleri görüntüle'],
         'inventory.create' => ['label' => 'Malzeme oluştur'],
         'inventory.update' => ['label' => 'Malzeme bilgilerini düzenle'],
+        'inventory.manage_media' => ['label' => 'Malzeme fotoğraf, video ve bağlantılarını yönet'],
         'inventory.archive' => ['label' => 'Malzemeyi arşivle'],
         'inventory.change_item_type' => ['label' => 'Sarf, ödünç veya demirbaş türünü değiştir', 'sensitive' => true],
         'inventory.adjust_stock' => ['label' => 'Stok sayımı ve düzeltmesi yap', 'sensitive' => true],

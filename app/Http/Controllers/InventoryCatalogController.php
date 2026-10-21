@@ -21,7 +21,7 @@ class InventoryCatalogController extends Controller
         $search = trim((string) ($filters['search'] ?? ''));
 
         $items = InventoryItem::query()
-            ->with(['category:id,name', 'location:id,name,is_public'])
+            ->with(['category:id,name', 'location:id,name,is_public', 'media'])
             ->whereNull('archived_at')
             ->where('is_active', true)
             ->where('public_visibility', '!=', InventoryVisibility::Hidden->value)
@@ -53,6 +53,10 @@ class InventoryCatalogController extends Controller
                 'technicalSpecs' => $item->technical_specs ?? [],
                 'availability' => (float) $item->quantity > 0 ? 'available' : 'out',
                 'quantity' => $item->public_visibility === InventoryVisibility::Exact ? $item->quantity : null,
+                'media' => $item->media->map(fn ($medium) => [
+                    'id' => $medium->id, 'type' => $medium->type, 'url' => $medium->publicUrl(),
+                    'title' => $medium->title, 'altText' => $medium->alt_text, 'isCover' => $medium->is_cover,
+                ]),
             ]);
 
         return Inertia::render('Materials', [

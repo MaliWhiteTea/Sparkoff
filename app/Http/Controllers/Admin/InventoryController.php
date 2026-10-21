@@ -29,7 +29,7 @@ class InventoryController extends Controller
         $filters = $this->validatedFilters($request);
 
         $items = $this->filteredItems($filters)
-            ->with(['category:id,name', 'location:id,name,code'])
+            ->with(['category:id,name', 'location:id,name,code', 'media'])
             ->orderBy('name')
             ->paginate(20)
             ->withQueryString()
@@ -300,6 +300,11 @@ class InventoryController extends Controller
             'minimumStock' => $item->minimum_stock, 'publicVisibility' => $item->public_visibility->value,
             'description' => $item->description, 'isActive' => $item->is_active,
             'isLow' => $item->isLowOnStock(), 'isArchived' => $item->archived_at !== null,
+            'media' => $item->media->map(fn ($medium) => [
+                'id' => $medium->id, 'type' => $medium->type, 'url' => $medium->publicUrl(),
+                'title' => $medium->title, 'altText' => $medium->alt_text,
+                'sortOrder' => $medium->sort_order, 'isCover' => $medium->is_cover,
+            ]),
         ];
     }
 }

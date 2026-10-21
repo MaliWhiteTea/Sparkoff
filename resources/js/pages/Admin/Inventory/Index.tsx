@@ -4,6 +4,7 @@ import usePermissions from "@/hooks/usePermissions";
 import { Head, Link, router } from "@inertiajs/react";
 import { FormEvent, useState } from "react";
 
+type Media = { id: number; type: 'image' | 'video' | 'link'; url: string; title: string | null; altText: string | null; sortOrder: number; isCover: boolean };
 type Item = {
   id: number;
   name: string;
@@ -21,6 +22,7 @@ type Item = {
   isActive: boolean;
   isLow: boolean;
   isArchived: boolean;
+  media: Media[];
 };
 type Option = {
   id: number;
@@ -253,6 +255,7 @@ function ItemCard({
   const can = usePermissions();
   const [editing, setEditing] = useState(false);
   const [stocking, setStocking] = useState(false);
+  const [managingMedia, setManagingMedia] = useState(false);
   const [error, setError] = useState("");
   const [stock, setStock] = useState({ quantity_change: "", reason: "" });
   const [data, setData] = useState<ItemForm>({
@@ -374,6 +377,7 @@ function ItemCard({
           </button>
         </form>
       )}
+      {managingMedia && <MediaManager item={item} onError={setError} />}
       <footer>
         <div>
           <span>{typeLabels[item.itemType]}</span>
@@ -388,6 +392,11 @@ function ItemCard({
           {can("inventory.update") && !item.isArchived && (
             <button type="button" onClick={() => setEditing(true)}>
               Düzenle
+            </button>
+          )}
+          {can("inventory.manage_media") && !item.isArchived && (
+            <button type="button" onClick={() => setManagingMedia(!managingMedia)}>
+              Medya ({item.media.length})
             </button>
           )}
           {can("inventory.archive") && !item.isArchived && (
@@ -410,6 +419,43 @@ function ItemCard({
       </footer>
     </article>
   );
+}
+
+function MediaManager({ item, onError }: { item: Item; onError: (message: string) => void }) {
+  const [kind, setKind] = useState<'image' | 'video' | 'link'>('image');
+  const [file, setFile] = useState<File | null>(null);
+  const [title, setTitle] = useState('');
+  const [altText, setAltText] = useState('');
+  const [url, setUrl] = useState('');
+  const submit = (event: FormEvent) => {
+    event.preventDefault();
+    const payload = new FormData();
+    payload.append('type', kind); payload.append('title', title); payload.append('alt_text', altText);
+    if (file) payload.append('file', file);
+    if (url) payload.append('external_url', url);
+    router.post(`/yonetim/envanter/${item.id}/medya`, payload, {
+      forceFormData: true, preserveScroll: true,
+      onSuccess: () => { setFile(null); setTitle(''); setAltText(''); setUrl(''); },
+      onError: (errors) => onError(Object.values(errors)[0] ?? 'Medya eklenemedi.'),
+    });
+  };
+  return <section className="inventory-media-manager" aria-label={`${item.name} medya yönetimi`}>
+    <div className="inventory-media-list">{item.media.map((medium, index) => <MediaEditor itemId={item.id} medium={medium} first={index === 0} last={index === item.media.length - 1} onError={onError} key={medium.id} />)}</div>
+    <form onSubmit={submit}><div className="inventory-media-kind">{(['image', 'video', 'link'] as const).map((value) => <label className={kind === value ? 'selected' : ''} key={value}><input type="radio" name={`media-type-${item.id}`} checked={kind === value} onChange={() => { setKind(value); setFile(null); }} /><span>{value === 'image' ? 'Fotoğraf' : value === 'video' ? 'Video' : 'Bağlantı'}</span></label>)}</div>
+      <div className="inventory-media-fields">{kind === 'link' ? <label className="field"><span>HTTPS bağlantısı</span><input type="url" required pattern="https://.*" value={url} onChange={(event) => setUrl(event.target.value)} placeholder="https://…" /></label> : <label className="field"><span>{kind === 'image' ? 'JPG, PNG veya WebP · en fazla 8 MB' : 'MP4 veya WebM · en fazla 50 MB'}</span><input type="file" required accept={kind === 'image' ? '.jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp' : '.mp4,.webm,video/mp4,video/webm'} onChange={(event) => setFile(event.target.files?.[0] ?? null)} /></label>}<label className="field"><span>Başlık (isteğe bağlı)</span><input maxLength={180} value={title} onChange={(event) => setTitle(event.target.value)} /></label>{kind === 'image' && <label className="field"><span>Görsel açıklaması</span><input required maxLength={180} value={altText} onChange={(event) => setAltText(event.target.value)} placeholder="Görselde ne olduğunu kısaca yazın" /></label>}<button className="settings-submit">Medya ekle</button></div>
+    </form>
+  </section>;
+}
+
+function MediaEditor({ itemId, medium, first, last, onError }: { itemId: number; medium: Media; first: boolean; last: boolean; onError: (message: string) => void }) {
+  const [editing, setEditing] = useState(false);
+  const [values, setValues] = useState({ title: medium.title ?? '', alt_text: medium.altText ?? '', external_url: medium.type === 'link' ? medium.url : '', sort_order: medium.sortOrder, is_cover: medium.isCover });
+  const save = (changes: Partial<typeof values> = {}) => router.patch(`/yonetim/envanter/${itemId}/medya/${medium.id}`, { ...values, ...changes }, { preserveScroll: true, onSuccess: () => setEditing(false), onError: (errors) => onError(Object.values(errors)[0] ?? 'Medya güncellenemedi.') });
+  return <article>
+    {medium.type === 'image' ? <img src={medium.url} alt={medium.altText ?? ''} /> : medium.type === 'video' ? <video src={medium.url} controls preload="metadata" /> : <a href={medium.url} target="_blank" rel="noopener noreferrer">Bağlantıyı aç ↗</a>}
+    {editing ? <div className="inventory-media-edit"><input aria-label="Medya başlığı" maxLength={180} value={values.title} onChange={(event) => setValues({ ...values, title: event.target.value })} />{medium.type === 'image' && <input aria-label="Görsel açıklaması" required maxLength={180} value={values.alt_text} onChange={(event) => setValues({ ...values, alt_text: event.target.value })} />}{medium.type === 'link' && <input aria-label="HTTPS bağlantısı" type="url" required pattern="https://.*" value={values.external_url} onChange={(event) => setValues({ ...values, external_url: event.target.value })} />}<div><button type="button" onClick={() => save()}>Kaydet</button><button type="button" onClick={() => setEditing(false)}>Vazgeç</button></div></div> : <div><strong>{medium.title || (medium.type === 'image' ? 'Fotoğraf' : medium.type === 'video' ? 'Video' : 'Bağlantı')}</strong>{medium.isCover && <span>Kapak</span>}<small>{medium.altText || medium.url}</small></div>}
+    <div className="inventory-media-actions"><button type="button" disabled={first} aria-label="Medyayı yukarı taşı" onClick={() => save({ sort_order: Math.max(0, medium.sortOrder - 1) })}>↑</button><button type="button" disabled={last} aria-label="Medyayı aşağı taşı" onClick={() => save({ sort_order: medium.sortOrder + 1 })}>↓</button><button type="button" onClick={() => setEditing(!editing)}>Düzenle</button>{medium.type === 'image' && !medium.isCover && <button type="button" onClick={() => save({ is_cover: true })}>Kapak yap</button>}<button className="danger" type="button" onClick={() => window.confirm('Bu medya kaldırılsın mı?') && router.delete(`/yonetim/envanter/${itemId}/medya/${medium.id}`, { preserveScroll: true })}>Kaldır</button></div>
+  </article>;
 }
 
 function CategoryRow({

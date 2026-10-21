@@ -50,4 +50,19 @@ class AdminAccessibilityFoundationTest extends TestCase
         $this->assertStringContainsString('html[data-admin-scale="large"]', $styles);
         $this->assertStringContainsString('@media(max-width:600px)', $styles);
     }
+
+    public function test_inventory_media_keeps_accessibility_and_safe_link_contracts(): void
+    {
+        $catalog = file_get_contents(resource_path('js/pages/Materials.tsx'));
+        $manager = file_get_contents(resource_path('js/pages/Admin/Inventory/Index.tsx'));
+        $styles = file_get_contents(resource_path('css/app.css'));
+
+        $this->assertStringContainsString('alt={medium.altText', $catalog);
+        $this->assertStringContainsString('onError={() => setFailed(true)}', $catalog);
+        $this->assertStringContainsString('rel="noopener noreferrer"', $catalog);
+        $this->assertStringContainsString('aria-label="Medyayı yukarı taşı"', $manager);
+        $this->assertStringContainsString('aria-label="Görsel açıklaması"', $manager);
+        $this->assertStringContainsString('.material-image-fallback', $styles);
+        $this->assertStringContainsString('@media(max-width:600px)', $styles);
+    }
 }

@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\FeedbackController as AdminFeedbackController;
 use App\Http\Controllers\Admin\FilamentSettingsController as AdminFilamentSettingsController;
 use App\Http\Controllers\Admin\InventoryController as AdminInventoryController;
 use App\Http\Controllers\Admin\InventoryImportController as AdminInventoryImportController;
+use App\Http\Controllers\Admin\InventoryMediaController as AdminInventoryMediaController;
 use App\Http\Controllers\Admin\InventoryTransactionController as AdminInventoryTransactionController;
 use App\Http\Controllers\Admin\PersonalSettingsController as AdminPersonalSettingsController;
 use App\Http\Controllers\Admin\PrinterSettingsController as AdminPrinterSettingsController;
@@ -63,6 +64,9 @@ Route::prefix('yonetim')->name('admin.')->group(function () {
         Route::delete('/envanter-ice-aktar', [AdminInventoryImportController::class, 'cancel'])->middleware('permission:inventory.import')->name('inventory.import.cancel');
         Route::post('/envanter', [AdminInventoryController::class, 'store'])->middleware('permission:inventory.create')->name('inventory.store');
         Route::put('/envanter/{item}', [AdminInventoryController::class, 'update'])->middleware('permission:inventory.update')->name('inventory.update');
+        Route::post('/envanter/{item}/medya', [AdminInventoryMediaController::class, 'store'])->middleware('permission:inventory.manage_media')->name('inventory.media.store');
+        Route::patch('/envanter/{item}/medya/{medium}', [AdminInventoryMediaController::class, 'update'])->middleware('permission:inventory.manage_media')->name('inventory.media.update');
+        Route::delete('/envanter/{item}/medya/{medium}', [AdminInventoryMediaController::class, 'destroy'])->middleware('permission:inventory.manage_media')->name('inventory.media.destroy');
         Route::patch('/envanter/{item}/arsiv', [AdminInventoryController::class, 'archive'])->middleware('permission:inventory.archive')->name('inventory.archive');
         Route::post('/envanter/{item}/stok', [AdminInventoryController::class, 'adjustStock'])->middleware('permission:inventory.adjust_stock')->name('inventory.stock.adjust');
         Route::post('/envanter-kategorileri', [AdminInventoryController::class, 'storeCategory'])->middleware('permission:inventory.manage_categories')->name('inventory.categories.store');

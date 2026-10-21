@@ -43,6 +43,8 @@ ONLINE_BOOKING_ENABLED=true
 ```bash
 php artisan key:generate
 php artisan migrate --force
+php artisan db:seed --class=RolePermissionSeeder --force
+php artisan storage:link
 php artisan admin:create yonetici@sparkoff.tr --name="Atölye Yöneticisi"
 php artisan optimize
 ```

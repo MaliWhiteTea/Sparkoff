@@ -44,6 +44,11 @@ class InventoryItem extends Model
         return $this->hasMany(StockMovement::class);
     }
 
+    public function media(): HasMany
+    {
+        return $this->hasMany(InventoryMedia::class)->orderBy('sort_order')->orderBy('id');
+    }
+
     public function isLowOnStock(): bool
     {
         return $this->minimum_stock !== null && (float) $this->quantity <= (float) $this->minimum_stock;
