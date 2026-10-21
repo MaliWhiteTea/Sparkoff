@@ -37,14 +37,22 @@ class InventoryMediaController extends Controller
             $path = $request->file('file')->store("inventory-media/{$item->id}", 'public');
         }
 
-        DB::transaction(function () use ($item, $type, $data, $path) {
-            $isCover = $type === 'image' && ! $item->media()->where('type', 'image')->exists();
-            $item->media()->create([
-                'type' => $type, 'file_path' => $path, 'external_url' => $data['external_url'] ?? null,
-                'title' => $data['title'] ?? null, 'alt_text' => $data['alt_text'] ?? null,
-                'sort_order' => ((int) $item->media()->max('sort_order')) + 1, 'is_cover' => $isCover,
-            ]);
-        });
+        try {
+            DB::transaction(function () use ($item, $type, $data, $path) {
+                $isCover = $type === 'image' && ! $item->media()->where('type', 'image')->exists();
+                $item->media()->create([
+                    'type' => $type, 'file_path' => $path, 'external_url' => $data['external_url'] ?? null,
+                    'title' => $data['title'] ?? null, 'alt_text' => $data['alt_text'] ?? null,
+                    'sort_order' => ((int) $item->media()->max('sort_order')) + 1, 'is_cover' => $isCover,
+                ]);
+            });
+        } catch (\Throwable $exception) {
+            if ($path) {
+                Storage::disk('public')->delete($path);
+            }
+
+            throw $exception;
+        }
 
         return back()->with('success', 'Malzeme medyası eklendi.');
     }
@@ -90,6 +98,7 @@ class InventoryMediaController extends Controller
 
         DB::transaction(function () use ($item, $medium, $wasCover) {
             $medium->delete();
+            $this->normalizeSortOrder($item);
             if ($wasCover) {
                 $item->media()->where('type', 'image')->orderBy('sort_order')->first()?->update(['is_cover' => true]);
             }
@@ -118,5 +127,12 @@ class InventoryMediaController extends Controller
         return match ($type) {
             'image' => 'fotoğraf', 'video' => 'video', default => 'bağlantı',
         };
+    }
+
+    private function normalizeSortOrder(InventoryItem $item): void
+    {
+        $item->media()->orderBy('sort_order')->orderBy('id')->pluck('id')->each(
+            fn (int $id, int $index) => InventoryMedia::query()->whereKey($id)->update(['sort_order' => $index + 1])
+        );
     }
 }

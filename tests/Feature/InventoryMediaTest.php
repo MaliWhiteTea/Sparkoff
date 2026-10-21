@@ -119,6 +119,29 @@ class InventoryMediaTest extends TestCase
         ])->assertSessionHasErrors('external_url');
     }
 
+    public function test_deleting_media_normalizes_remaining_sort_order(): void
+    {
+        $user = $this->userWithPermission('inventory.manage_media');
+        $item = $this->item();
+        $first = $item->media()->create(['type' => 'link', 'external_url' => 'https://example.com/1', 'sort_order' => 1]);
+        $second = $item->media()->create(['type' => 'link', 'external_url' => 'https://example.com/2', 'sort_order' => 2]);
+        $third = $item->media()->create(['type' => 'link', 'external_url' => 'https://example.com/3', 'sort_order' => 3]);
+
+        $this->actingAs($user)->delete(route('admin.inventory.media.destroy', [$item, $second]))
+            ->assertSessionHas('success');
+
+        $this->assertSame(1, $first->fresh()->sort_order);
+        $this->assertSame(2, $third->fresh()->sort_order);
+
+        $this->actingAs($user)->patch(route('admin.inventory.media.update', [$item, $first]), [
+            'title' => null, 'alt_text' => null, 'external_url' => $first->external_url,
+            'sort_order' => 2, 'is_cover' => false,
+        ])->assertSessionHas('success');
+
+        $this->assertSame(2, $first->fresh()->sort_order);
+        $this->assertSame(1, $third->fresh()->sort_order);
+    }
+
     public function test_medium_cannot_be_changed_through_another_item_or_when_item_is_archived(): void
     {
         $user = $this->userWithPermission('inventory.manage_media');
