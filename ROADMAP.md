@@ -219,6 +219,17 @@ Sparkoff Proje Atölyesi
 - [x] Filtre, sıralama, sayfa ve kaydırma konumunu dönüşlerde koru (seçim 17)
 - [x] Masaüstü, tablet, mobil ve klavye erişilebilirlik testlerini ekle
 
+### L.1. Hesaba özel görünüm ayarları — beta öncesi ara paket
+
+- [ ] Sol menüdeki tablo yoğunluğu seçimini kaldırıp `Ayarlar → Kişisel ayarlar` sayfasına taşı
+- [ ] Kişisel ayarlar sayfasını oturum açmış her yetkili kullanıcının yalnız kendi hesabı için kullanabilmesini sağla
+- [ ] Yalnız tema (açık/koyu/sistem), yazı ve arayüz boyutu (küçük/normal/büyük), tablo yoğunluğu (rahat/normal/sıkışık) ve sol menü (geniş/dar) seçeneklerini sun
+- [ ] Kişisel tercihleri kullanıcı hesabına bağlı olarak veritabanında sakla ve farklı cihazlarda uygula
+- [ ] Tüm kişisel görünüm tercihlerini güvenli varsayılanlara döndüren tek işlem ekle
+- [ ] Ayarlar sekmelerini kullanıcının yetkilerine göre oluştur; kullanıcı yalnız kişisel ayarları ve yetkili olduğu sistem ayarlarını görsün
+- [ ] Yetkisiz ayar adreslerine doğrudan erişimi sunucu tarafında 403 ile engelle ve izin/verilmeme testlerini ekle
+- [ ] Açık/koyu tema, üç ölçek, mobil görünüm ve klavye erişilebilirliği için kabul testlerini tamamla
+
 ### M. Tablo ve liste verimliliği — ikinci uygulama paketi
 
 - [ ] Envanter, teslim, randevu, talep ve kullanıcı tablolarında sunucu tarafı sıralama ekle (seçim 8)
@@ -264,11 +275,12 @@ Sparkoff Proje Atölyesi
 ## Seçilen kullanılabilirlik özelliklerinin uygulama sırası
 
 1. **Arayüz temeli:** L paketi — durum dili, mobil menü, sürüklenebilir/daraltılabilir menü, yoğunluk ve görünümün korunması.
-2. **Tablo altyapısı:** M paketi — sıralama, kişisel sütun tercihleri, kayıtlı filtreler ve güvenli toplu seçim.
-3. **Form güvenliği:** N paketi — kayıp değişiklik uyarıları ve hassas veri içermeyen taslaklar.
-4. **Çalışma alanı:** O paketi — genel bakış, arama, bildirimler, son kayıtlar ve hızlı işlem.
-5. **İşlem güvenliği:** P paketi — ters hareket ve yalnız güvenli işlemlerde geri alma.
-6. **Ziyaretçi deneyimi:** Q paketi — kamu kataloğunun sıralama, mobil filtre ve favori özellikleri.
+2. **Kişisel görünüm:** L.1 ara paketi — sade hesap tercihleri ve yetkiye göre ayar sekmeleri.
+3. **Tablo altyapısı:** M paketi — sıralama, kişisel sütun tercihleri, kayıtlı filtreler ve güvenli toplu seçim.
+4. **Form güvenliği:** N paketi — kayıp değişiklik uyarıları ve hassas veri içermeyen taslaklar.
+5. **Çalışma alanı:** O paketi — genel bakış, arama, bildirimler, son kayıtlar ve hızlı işlem.
+6. **İşlem güvenliği:** P paketi — ters hareket ve yalnız güvenli işlemlerde geri alma.
+7. **Ziyaretçi deneyimi:** Q paketi — kamu kataloğunun sıralama, mobil filtre ve favori özellikleri.
 
 Bu sıra ortak bileşenleri önce kurarak aynı özelliğin farklı sayfalarda tekrar yazılmasını önler. Her paket kendi yetki sınırı, mobil görünüm, regresyon ve güvenlik testleri tamamlandıktan sonra ayrı commit edilir.
 
@@ -297,4 +309,4 @@ Bu sıra ortak bileşenleri önce kurarak aynı özelliğin farklı sayfalarda t
 
 ## Sıradaki teknik adım
 
-L paketinin son adımı olarak masaüstü, tablet, mobil ve klavye erişilebilirlik kabul testlerini tamamlamak. Ardından cPanel beta paketi hazırlanabilir; sonraki geliştirme M paketindeki tablo sıralama ve kişisel görünüm tercihleridir.
+Beta öncesinde L.1 ara paketini tamamlamak: sade kişisel görünüm ayarlarını hesaba bağlamak, tablo yoğunluğunu bu sayfaya taşımak ve ayar sekmelerini yetkilere göre kesin biçimde sınırlandırmak. Ardından tam kabul testi yapılarak cPanel beta paketi hazırlanabilir; sonraki geliştirme M paketindeki tablo sıralama ve kişisel sütun tercihleridir.
