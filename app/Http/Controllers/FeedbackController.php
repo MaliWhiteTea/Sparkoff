@@ -24,6 +24,13 @@ class FeedbackController extends Controller
             'type' => ['required', Rule::enum(FeedbackType::class)],
             'message' => ['required', 'string', 'min:10', 'max:3000'],
             'website' => ['nullable', 'max:0'],
+        ], [
+            'type.required' => 'Bildirim türünü seçin.',
+            'type.enum' => 'Geçerli bir bildirim türü seçin.',
+            'message.required' => 'Açıklama alanını doldurun.',
+            'message.min' => 'Açıklama en az 10 karakter olmalıdır.',
+            'message.max' => 'Açıklama en fazla 3000 karakter olabilir.',
+            'website.max' => 'Bildirim gönderilemedi. Lütfen tekrar deneyin.',
         ]);
 
         FeedbackReport::query()->create([

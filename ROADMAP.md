@@ -212,10 +212,10 @@ Sparkoff Proje Atölyesi
 ### L. Yönetim arayüzü temeli — birinci uygulama paketi
 
 - [ ] Durum renkleri, rozetleri ve metinlerini bütün modüllerde standartlaştır (seçim 19)
-- [ ] Mobil yönetim menüsünü ekran üzerinden açılır/kapanır hâle getir (seçim 20)
-- [ ] Sol menü sınırını fare ve klavyeyle yeniden boyutlandır; minimum/maksimum sınır ve çift tıklamayla sıfırlama ekle (seçim 1)
-- [ ] Sol menünün geniş/dar durumunu değiştir ve tercihi yerel olarak sakla (seçim 2)
-- [ ] Rahat, normal ve sıkışık tablo yoğunluklarını ortak bileşen olarak ekle (seçim 7)
+- [x] Mobil yönetim menüsünü ekran üzerinden açılır/kapanır hâle getir (seçim 20)
+- [x] Sol menü sınırını fare ve klavyeyle yeniden boyutlandır; minimum/maksimum sınır ve çift tıklamayla sıfırlama ekle (seçim 1)
+- [x] Sol menünün geniş/dar durumunu değiştir ve tercihi yerel olarak sakla (seçim 2)
+- [x] Rahat, normal ve sıkışık tablo yoğunluklarını ortak bileşen olarak ekle (seçim 7)
 - [ ] Filtre, sıralama, sayfa ve kaydırma konumunu dönüşlerde koru (seçim 17)
 - [ ] Masaüstü, tablet, mobil ve klavye erişilebilirlik testlerini ekle
 

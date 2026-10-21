@@ -50,6 +50,20 @@ class FeedbackTest extends TestCase
         $this->assertDatabaseCount('feedback_reports', 0);
     }
 
+    public function test_short_feedback_uses_a_readable_turkish_validation_message(): void
+    {
+        $this->from(route('feedback.create'))->post(route('feedback.store'), [
+            'type' => FeedbackType::Complaint->value,
+            'message' => 'test',
+            'website' => '',
+        ])->assertRedirect(route('feedback.create'))
+            ->assertSessionHasErrors([
+                'message' => 'Açıklama en az 10 karakter olmalıdır.',
+            ]);
+
+        $this->assertDatabaseCount('feedback_reports', 0);
+    }
+
     public function test_authorized_staff_can_review_feedback(): void
     {
         $role = Role::query()->create(['name' => 'Talep Sorumlusu', 'slug' => 'talep-sorumlusu']);

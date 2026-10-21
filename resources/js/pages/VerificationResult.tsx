@@ -1,4 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
+import PublicFooter from '@/components/PublicFooter';
 import { useState } from 'react';
 
 type Props = {
@@ -21,7 +22,7 @@ export default function VerificationResult({ verified, expired = false, message,
     const awaitingConfirmation = !verified && !expired && Boolean(confirmUrl);
 
     return (
-        <main className="result-page">
+        <main className="result-page public-page-shell">
             <Head title={verified ? 'E-posta Doğrulandı' : 'Doğrulama Başarısız'} />
             <section className="result-card">
                 <div className={`result-symbol ${verified ? 'success' : awaitingConfirmation ? '' : 'error'}`} aria-hidden="true">
@@ -36,6 +37,7 @@ export default function VerificationResult({ verified, expired = false, message,
                     <Link className="booking-secondary" href="/">Ana sayfaya dön</Link>
                 </div>
             </section>
+            <PublicFooter />
         </main>
     );
 }

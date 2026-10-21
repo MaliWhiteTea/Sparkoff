@@ -1,4 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
+import PublicFooter from '@/components/PublicFooter';
 import { useState } from 'react';
 
 type HistoryItem = {
@@ -33,7 +34,7 @@ export default function TrackAppointment({ appointment, cancelUrl }: { appointme
     }
 
     return (
-        <main className="tracking-page">
+        <main className="tracking-page public-page-shell">
             <Head title="Randevu Takibi" />
             <header className="tracking-header">
                 <Link href="/" className="tracking-brand">
@@ -82,6 +83,7 @@ export default function TrackAppointment({ appointment, cancelUrl }: { appointme
                     <p className="tracking-security">Bu sayfanın bağlantısı randevunuza özel ve gizlidir. Başkalarıyla paylaşmayın.</p>
                 </aside>
             </div>
+            <PublicFooter />
         </main>
     );
 }

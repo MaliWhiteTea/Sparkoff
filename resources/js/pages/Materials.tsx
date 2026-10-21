@@ -1,4 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
+import PublicFooter from '@/components/PublicFooter';
 import { FormEvent, useState } from 'react';
 
 type Item = { id: number; name: string; sku: string | null; category: string; location: string | null; type: 'consumable' | 'loanable' | 'fixed_asset'; unit: string; description: string | null; technicalSpecs: Record<string, string | number>; availability: 'available' | 'out'; quantity: string | null };
@@ -11,7 +12,7 @@ export default function Materials({ items, filters, categories }: Props) {
     const apply = (changes: Partial<Props['filters']>) => router.get('/malzemeler', { ...filters, search, ...changes }, { preserveState: true, replace: true });
     const submit = (event: FormEvent) => { event.preventDefault(); apply({ search }); };
 
-    return <main className="materials-page"><Head title="Atölye Malzemeleri" />
+    return <main className="materials-page public-page-shell"><Head title="Atölye Malzemeleri" />
         <header className="filaments-header"><Link className="booking-brand" href="/"><img src="/logo.jpg" alt="Sparkoff logosu" /><span><strong>Sparkoff</strong><small>Proje Atölyesi</small></span></Link><Link className="booking-primary" href="/">Ana sayfa</Link></header>
         <section className="materials-hero"><span>ATÖLYE ENVANTERİ</span><h1>Malzemeler</h1><p>Atölyedeki ekipmanların güncel stok ve kullanım durumunu inceleyin.</p></section>
         <section className="materials-content">
@@ -20,6 +21,6 @@ export default function Materials({ items, filters, categories }: Props) {
             {items.data.length > 0 ? <div className="materials-table-wrap"><table className="materials-table"><thead><tr><th>Malzeme</th><th>Kategori</th><th>Tür</th><th>Konum</th><th>Stok</th></tr></thead><tbody>{items.data.map((item) => <tr key={item.id}><td data-label="Malzeme"><strong>{item.name}</strong>{item.sku && <small>Kod: {item.sku}</small>}{item.description && <p>{item.description}</p>}{Object.keys(item.technicalSpecs).length > 0 && <details><summary>Teknik özellikler</summary><dl>{Object.entries(item.technicalSpecs).map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{value}</dd></div>)}</dl></details>}</td><td data-label="Kategori">{item.category}</td><td data-label="Tür">{typeLabels[item.type]}</td><td data-label="Konum">{item.location ?? '—'}</td><td data-label="Stok"><div className="material-stock-cell"><span className={`material-stock ${item.availability}`}>{item.availability === 'available' ? 'Stokta var' : 'Stokta yok'}</span>{item.quantity !== null ? <strong className="material-quantity">{Number(item.quantity).toLocaleString('tr-TR')} {item.unit}</strong> : <small>Miktar belirtilmiyor</small>}</div></td></tr>)}</tbody></table></div> : <div className="materials-empty"><h2>Malzeme bulunamadı</h2><p>Arama veya filtreleri değiştirerek tekrar deneyin.</p></div>}
             {items.links.length > 3 && <nav className="materials-pagination" aria-label="Sayfalar">{items.links.map((link, index) => link.url ? <Link href={link.url} className={link.active ? 'active' : ''} key={index} dangerouslySetInnerHTML={{ __html: link.label }} /> : <span key={index} dangerouslySetInnerHTML={{ __html: link.label }} />)}</nav>}
         </section>
-        <footer><div className="footer-brand"><img src="/logo.jpg" alt="" width={44} height={44} /><div><strong>Sparkoff</strong><span>Proje Atölyesi</span></div></div><Link className="footer-feedback" href="/geri-bildirim">Öneri, şikâyet veya hata bildir</Link><span>© 2026 Sparkoff</span></footer>
+        <PublicFooter />
     </main>;
 }

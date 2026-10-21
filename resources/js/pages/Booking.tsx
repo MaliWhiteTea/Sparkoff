@@ -1,4 +1,5 @@
 import { Head, Link, router } from "@inertiajs/react";
+import PublicFooter from "@/components/PublicFooter";
 import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import {
   calculateEndTime,
@@ -203,7 +204,7 @@ export default function BookingForm({ settings, filaments }: BookingProps) {
 
   if (submitted) {
     return (
-      <main className="booking-page success-page">
+      <main className="booking-page success-page public-page-shell">
         <Head title="E-posta Doğrulaması" />
         <div className="success-card">
           <div className="success-icon"><CheckIcon /></div>
@@ -213,12 +214,13 @@ export default function BookingForm({ settings, filaments }: BookingProps) {
           <div className="success-summary"><span>{data.date} · {data.startTime}</span><span>{formatDuration(data.duration)}</span></div>
           <Link className="booking-primary" href="/">Ana sayfaya dön</Link>
         </div>
+        <PublicFooter />
       </main>
     );
   }
 
   return (
-    <main className="booking-page">
+    <main className="booking-page public-page-shell">
       <Head title="Randevu Oluştur" />
       <header className="booking-header">
         <Link className="booking-brand" href="/">
@@ -315,6 +317,7 @@ export default function BookingForm({ settings, filaments }: BookingProps) {
           </div>
         </form>
       </div>
+      <PublicFooter />
     </main>
   );
 }

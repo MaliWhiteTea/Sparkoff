@@ -1,4 +1,5 @@
 import '../css/app.css';
+import '../css/admin-shell.css';
 
 import { createInertiaApp } from '@inertiajs/react';
 import type { ComponentType } from 'react';

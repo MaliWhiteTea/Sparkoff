@@ -1,8 +1,106 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link } from "@inertiajs/react";
+import PublicFooter from "@/components/PublicFooter";
 
-type Option = { id: number; color: string; brand: string | null; isAvailable: boolean; unavailableReason: string | null; diameterMm: string; spoolWeightGrams: number | null; nozzleTemperature: string | null; bedTemperature: string | null; technicalNotes: string | null };
-type Material = { material: string; isAvailable: boolean; unavailableReason: string | null; options: Option[] };
+type Option = {
+  id: number;
+  color: string;
+  brand: string | null;
+  isAvailable: boolean;
+  unavailableReason: string | null;
+  diameterMm: string;
+  spoolWeightGrams: number | null;
+  nozzleTemperature: string | null;
+  bedTemperature: string | null;
+  technicalNotes: string | null;
+};
+type Material = {
+  material: string;
+  isAvailable: boolean;
+  unavailableReason: string | null;
+  options: Option[];
+};
 
 export default function Filaments({ materials }: { materials: Material[] }) {
-    return <main className="filaments-page"><Head title="Mevcut Filamentler" /><header className="filaments-header"><Link className="booking-brand" href="/"><img src="/logo.jpg" alt="Sparkoff logosu" /><span><strong>Sparkoff</strong><small>Proje Atölyesi</small></span></Link><Link className="booking-primary" href="/3d-yazicilar">3D Yazıcılar</Link></header><section className="filaments-hero"><h1>Mevcut filamentler</h1><p>Malzeme, renk ve baskı ayarları.</p></section><section className="material-catalog">{materials.map((material) => <article className={`material-group ${!material.isAvailable ? 'unavailable' : ''}`} key={material.material}><header><div><span>MALZEME</span><h2>{material.material}</h2></div><strong>{material.isAvailable ? 'Kullanılabilir' : 'Geçici olarak kullanılamıyor'}</strong></header>{!material.isAvailable && <div className="material-warning">{material.unavailableReason ?? 'Bu malzeme şu anda baskıya uygun değil.'}</div>}<div className="filament-public-grid">{material.options.map((option) => <section key={option.id}><div className="filament-color-mark" /><h3>{option.color}</h3><p>{option.brand ?? 'Marka belirtilmedi'}</p><dl><div><dt>Çap</dt><dd>{option.diameterMm} mm</dd></div><div><dt>Makara</dt><dd>{option.spoolWeightGrams ? `${option.spoolWeightGrams} g` : '—'}</dd></div><div><dt>Nozzle</dt><dd>{option.nozzleTemperature ?? '—'}</dd></div><div><dt>Tabla</dt><dd>{option.bedTemperature ?? '—'}</dd></div></dl>{option.technicalNotes && <small>{option.technicalNotes}</small>}</section>)}</div></article>)}</section><footer><div className="footer-brand"><img src="/logo.jpg" alt="" width={44} height={44} /><div><strong>Sparkoff</strong><span>Proje Atölyesi</span></div></div><Link className="footer-feedback" href="/geri-bildirim">Öneri, şikâyet veya hata bildir</Link><span>© 2026 Sparkoff</span></footer></main>;
+  return (
+    <main className="filaments-page public-page-shell">
+      <Head title="Mevcut Filamentler" />
+      <header className="filaments-header">
+        <Link className="booking-brand" href="/">
+          <img src="/logo.jpg" alt="Sparkoff logosu" />
+          <span>
+            <strong>Sparkoff</strong>
+            <small>Proje Atölyesi</small>
+          </span>
+        </Link>
+        <Link className="booking-primary" href="/3d-yazicilar">
+          3D Yazıcılar
+        </Link>
+      </header>
+      <section className="filaments-hero">
+        <h1>Mevcut filamentler</h1>
+        <p>Malzeme, renk ve baskı ayarları.</p>
+      </section>
+      <section className="material-catalog">
+        {materials.map((material) => (
+          <article
+            className={`material-group ${!material.isAvailable ? "unavailable" : ""}`}
+            key={material.material}
+          >
+            <header>
+              <div>
+                <span>MALZEME</span>
+                <h2>{material.material}</h2>
+              </div>
+              <strong>
+                {material.isAvailable
+                  ? "Kullanılabilir"
+                  : "Geçici olarak kullanılamıyor"}
+              </strong>
+            </header>
+            {!material.isAvailable && (
+              <div className="material-warning">
+                {material.unavailableReason ??
+                  "Bu malzeme şu anda baskıya uygun değil."}
+              </div>
+            )}
+            <div className="filament-public-grid">
+              {material.options.map((option) => (
+                <section key={option.id}>
+                  <div className="filament-color-mark" />
+                  <h3>{option.color}</h3>
+                  <p>{option.brand ?? "Marka belirtilmedi"}</p>
+                  <dl>
+                    <div>
+                      <dt>Çap</dt>
+                      <dd>{option.diameterMm} mm</dd>
+                    </div>
+                    <div>
+                      <dt>Makara</dt>
+                      <dd>
+                        {option.spoolWeightGrams
+                          ? `${option.spoolWeightGrams} g`
+                          : "—"}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Nozzle</dt>
+                      <dd>{option.nozzleTemperature ?? "—"}</dd>
+                    </div>
+                    <div>
+                      <dt>Tabla</dt>
+                      <dd>{option.bedTemperature ?? "—"}</dd>
+                    </div>
+                  </dl>
+                  {option.technicalNotes && (
+                    <small>{option.technicalNotes}</small>
+                  )}
+                </section>
+              ))}
+            </div>
+          </article>
+        ))}
+      </section>
+      <PublicFooter />
+    </main>
+  );
 }
