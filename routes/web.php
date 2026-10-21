@@ -44,6 +44,7 @@ Route::middleware('booking.enabled')->group(function () {
 });
 
 Route::prefix('yonetim')->name('admin.')->group(function () {
+    Route::get('/', [AdminAuthController::class, 'create'])->name('index');
     Route::get('/giris', [AdminAuthController::class, 'create'])->name('login');
     Route::post('/giris', [AdminAuthController::class, 'store'])->middleware('throttle:5,1')->name('login.store');
 

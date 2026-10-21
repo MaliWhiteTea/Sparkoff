@@ -25,6 +25,15 @@ class AdminPanelTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_management_root_shows_login_to_guests_and_redirects_authenticated_staff(): void
+    {
+        $this->get(route('admin.index'))->assertOk()->assertInertia(fn (Assert $page) => $page->component('Admin/Login'));
+
+        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+
+        $this->actingAs($admin)->get(route('admin.index'))->assertRedirect(route('admin.appointments.index'));
+    }
+
     protected function setUp(): void
     {
         parent::setUp();

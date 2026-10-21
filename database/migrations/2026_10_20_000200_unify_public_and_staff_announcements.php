@@ -32,6 +32,9 @@ return new class extends Migration
         Schema::dropIfExists('announcement_user');
         Schema::dropIfExists('announcement_role');
         Schema::table('announcements', function (Blueprint $table) {
+            $table->dropIndex(['audience']);
+        });
+        Schema::table('announcements', function (Blueprint $table) {
             $table->dropColumn(['audience', 'is_pinned', 'requires_acknowledgement']);
         });
     }
