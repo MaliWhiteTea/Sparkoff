@@ -1,4 +1,5 @@
 import AdminLayout from '@/components/AdminLayout';
+import StatusBadge from '@/components/StatusBadge';
 import { Head, Link, router } from '@inertiajs/react';
 
 type CalendarAppointment = {
@@ -10,7 +11,7 @@ type Props = { view: 'week' | 'day'; referenceDate: string; rangeLabel: string; 
 
 export default function AdminCalendar({ view, referenceDate, rangeLabel, previousDate, nextDate, today, days }: Props) {
     function navigate(date: string, nextView = view) {
-        router.get('/yonetim/takvim', { date, view: nextView }, { preserveState: true, replace: true });
+        router.get('/yonetim/takvim', { date, view: nextView }, { preserveState: true, preserveScroll: true, replace: true });
     }
 
     return (
@@ -23,7 +24,7 @@ export default function AdminCalendar({ view, referenceDate, rangeLabel, previou
                     <header><span>{day.weekday}</span><strong>{day.dayLabel}</strong>{day.isToday && <small>BUGÜN</small>}</header>
                     <div className="calendar-day-body">
                         {day.appointments.map((appointment, index) => {
-                            const content = <><div><strong>{appointment.startTime}–{appointment.endTime}</strong><span className={`admin-status status-${appointment.status}`}>{appointment.statusLabel}</span></div><h2>{appointment.name}</h2><p>{appointment.printer}</p>{(appointment.continuesFromPrevious || appointment.continuesNext) && <small>{appointment.continuesFromPrevious ? 'Önceki günden devam ediyor' : 'Sonraki güne devam ediyor'}</small>}</>;
+                            const content = <><div><strong>{appointment.startTime}–{appointment.endTime}</strong><StatusBadge status={appointment.status} label={appointment.statusLabel} /></div><h2>{appointment.name}</h2><p>{appointment.printer}</p>{(appointment.continuesFromPrevious || appointment.continuesNext) && <small>{appointment.continuesFromPrevious ? 'Önceki günden devam ediyor' : 'Sonraki güne devam ediyor'}</small>}</>;
                             return appointment.publicId
                                 ? <Link className={`calendar-event status-${appointment.status}`} href={`/yonetim/randevular/${appointment.publicId}`} key={`${day.date}-${appointment.publicId}`}>{content}</Link>
                                 : <article className={`calendar-event status-${appointment.status}`} key={`${day.date}-${index}`}>{content}</article>;

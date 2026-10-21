@@ -1,5 +1,7 @@
 import AdminLayout from '@/components/AdminLayout';
-import { Head, Link, router } from '@inertiajs/react';
+import StatusBadge from '@/components/StatusBadge';
+import { useRememberListUrl } from '@/hooks/useListReturnUrl';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { FormEvent, useState } from 'react';
 
 type Appointment = { publicId: string; name: string; email: string | null; status: string; statusLabel: string; printer: string; startsAt: string; durationMinutes: number };
@@ -13,14 +15,15 @@ type Props = {
 
 export default function AppointmentIndex({ appointments, filters, statusOptions, counts }: Props) {
     const [search, setSearch] = useState(filters.search);
+    useRememberListUrl('appointments', usePage().url);
 
     function filter(event: FormEvent) {
         event.preventDefault();
-        router.get('/yonetim/randevular', { search, status: filters.status }, { preserveState: true, replace: true });
+        router.get('/yonetim/randevular', { search, status: filters.status }, { preserveState: true, preserveScroll: true, replace: true });
     }
 
     function changeStatus(status: string) {
-        router.get('/yonetim/randevular', { search, status }, { preserveState: true, replace: true });
+        router.get('/yonetim/randevular', { search, status }, { preserveState: true, preserveScroll: true, replace: true });
     }
 
     return (
@@ -38,10 +41,10 @@ export default function AppointmentIndex({ appointments, filters, statusOptions,
                     <select value={filters.status} onChange={(event) => changeStatus(event.target.value)}><option value="">Tüm durumlar</option>{statusOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select>
                 </div>
                 <div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>Kullanıcı</th><th>Başlangıç</th><th>Yazıcı</th><th>Durum</th><th /></tr></thead><tbody>
-                    {appointments.data.map((appointment) => <tr key={appointment.publicId}><td><strong>{appointment.name}</strong>{appointment.email && <small>{appointment.email}</small>}</td><td><strong>{appointment.startsAt}</strong><small>{appointment.durationMinutes} dakika</small></td><td>{appointment.printer}</td><td><span className={`admin-status status-${appointment.status}`}>{appointment.statusLabel}</span></td><td><Link href={`/yonetim/randevular/${appointment.publicId}`}>İncele →</Link></td></tr>)}
+                    {appointments.data.map((appointment) => <tr key={appointment.publicId}><td><strong>{appointment.name}</strong>{appointment.email && <small>{appointment.email}</small>}</td><td><strong>{appointment.startsAt}</strong><small>{appointment.durationMinutes} dakika</small></td><td>{appointment.printer}</td><td><StatusBadge status={appointment.status} label={appointment.statusLabel} /></td><td><Link href={`/yonetim/randevular/${appointment.publicId}`}>İncele →</Link></td></tr>)}
                     {appointments.data.length === 0 && <tr><td colSpan={5} className="admin-empty">Bu filtrelerle eşleşen randevu bulunamadı.</td></tr>}
                 </tbody></table></div>
-                {appointments.links.length > 3 && <div className="admin-pagination">{appointments.links.map((link, index) => link.url ? <Link key={index} className={link.active ? 'active' : ''} href={link.url} dangerouslySetInnerHTML={{ __html: link.label }} /> : <span key={index} dangerouslySetInnerHTML={{ __html: link.label }} />)}</div>}
+                {appointments.links.length > 3 && <div className="admin-pagination">{appointments.links.map((link, index) => link.url ? <Link key={index} className={link.active ? 'active' : ''} href={link.url} preserveScroll preserveState dangerouslySetInnerHTML={{ __html: link.label }} /> : <span key={index} dangerouslySetInnerHTML={{ __html: link.label }} />)}</div>}
             </section>
         </AdminLayout>
     );

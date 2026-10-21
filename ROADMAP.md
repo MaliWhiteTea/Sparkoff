@@ -211,13 +211,13 @@ Sparkoff Proje Atölyesi
 
 ### L. Yönetim arayüzü temeli — birinci uygulama paketi
 
-- [ ] Durum renkleri, rozetleri ve metinlerini bütün modüllerde standartlaştır (seçim 19)
+- [x] Durum renkleri, rozetleri ve metinlerini bütün modüllerde standartlaştır (seçim 19)
 - [x] Mobil yönetim menüsünü ekran üzerinden açılır/kapanır hâle getir (seçim 20)
 - [x] Sol menü sınırını fare ve klavyeyle yeniden boyutlandır; minimum/maksimum sınır ve çift tıklamayla sıfırlama ekle (seçim 1)
 - [x] Sol menünün geniş/dar durumunu değiştir ve tercihi yerel olarak sakla (seçim 2)
 - [x] Rahat, normal ve sıkışık tablo yoğunluklarını ortak bileşen olarak ekle (seçim 7)
-- [ ] Filtre, sıralama, sayfa ve kaydırma konumunu dönüşlerde koru (seçim 17)
-- [ ] Masaüstü, tablet, mobil ve klavye erişilebilirlik testlerini ekle
+- [x] Filtre, sıralama, sayfa ve kaydırma konumunu dönüşlerde koru (seçim 17)
+- [x] Masaüstü, tablet, mobil ve klavye erişilebilirlik testlerini ekle
 
 ### M. Tablo ve liste verimliliği — ikinci uygulama paketi
 
@@ -297,4 +297,4 @@ Bu sıra ortak bileşenleri önce kurarak aynı özelliğin farklı sayfalarda t
 
 ## Sıradaki teknik adım
 
-L paketinden başlamak: önce ortak durum dili ve mobil yönetim kabuğunu, ardından sürüklenebilir/daraltılabilir sol menüyü kurmak. Sonraki paketlere geçmeden önce masaüstü, mobil ve klavye erişilebilirlik testlerini tamamlamak.
+L paketinin son adımı olarak masaüstü, tablet, mobil ve klavye erişilebilirlik kabul testlerini tamamlamak. Ardından cPanel beta paketi hazırlanabilir; sonraki geliştirme M paketindeki tablo sıralama ve kişisel görünüm tercihleridir.

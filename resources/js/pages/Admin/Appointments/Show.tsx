@@ -1,4 +1,6 @@
 import AdminLayout from '@/components/AdminLayout';
+import StatusBadge from '@/components/StatusBadge';
+import { useListReturnUrl } from '@/hooks/useListReturnUrl';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 
@@ -14,6 +16,7 @@ export default function AppointmentShow({ appointment }: { appointment: Appointm
     const [note, setNote] = useState('');
     const [processing, setProcessing] = useState(false);
     const [error, setError] = useState('');
+    const appointmentsUrl = useListReturnUrl('appointments', '/yonetim/randevular');
 
     function updateStatus(action: Appointment['actions'][number]) {
         if (action.requiresNote && !note.trim()) return setError(`${action.label} işlemi için yönetici notu yazmalısınız.`);
@@ -30,8 +33,8 @@ export default function AppointmentShow({ appointment }: { appointment: Appointm
     return (
         <AdminLayout>
             <Head title={`Randevu · ${appointment.name}`} />
-            <Link className="admin-back" href="/yonetim/randevular">← Randevulara dön</Link>
-            <header className="admin-title detail"><div><span className="booking-kicker">{appointment.publicId.slice(0, 8).toUpperCase()}</span><h1>{appointment.name}</h1>{appointment.email && <p>{appointment.email}</p>}</div><span className={`admin-status status-${appointment.status}`}>{appointment.statusLabel}</span></header>
+            <Link className="admin-back" href={appointmentsUrl} preserveScroll preserveState>← Randevulara dön</Link>
+            <header className="admin-title detail"><div><span className="booking-kicker">{appointment.publicId.slice(0, 8).toUpperCase()}</span><h1>{appointment.name}</h1>{appointment.email && <p>{appointment.email}</p>}</div><StatusBadge status={appointment.status} label={appointment.statusLabel} /></header>
             <div className="admin-detail-grid">
                 <section className="admin-panel admin-detail-card"><h2>Baskı ayrıntıları</h2><dl>
                     <div><dt>Başlangıç</dt><dd>{appointment.startsAt}</dd></div><div><dt>Tahmini bitiş</dt><dd>{appointment.endsAt}</dd></div><div><dt>Süre</dt><dd>{appointment.durationMinutes} dakika</dd></div><div><dt>Yazıcı</dt><dd>{appointment.printer}</dd></div><div><dt>Filament</dt><dd>{appointment.filament}</dd></div>
