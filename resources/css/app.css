@@ -443,6 +443,21 @@ svg { width: 1.15em; fill: none; stroke: currentColor; stroke-width: 1.7; stroke
 .public-theme-dark .material-group.unavailable>header>strong { background: #352b1d; color: var(--warning); }
 .public-theme-dark .feedback-privacy-note span { color: #ebc58f; }
 .public-theme-dark .booking-secondary { background: var(--surface); color: var(--navy); border-color: var(--border); }
+.public-theme-dark .schedule-printer-tabs button,
+.public-theme-dark .schedule-day-grid > article,
+.public-theme-dark .printer-info-grid > article { background: var(--surface); color: var(--text); border-color: var(--border); }
+.public-theme-dark .schedule-printer-tabs button.active { background: #213746; }
+.public-theme-dark .schedule-day-grid > article > header { border-color: var(--border); }
+.public-theme-dark .status.maintenance { background: #352b1d; color: #ebc58f; }
+.public-theme-dark .printer-contact-card { background: #1d2b36; color: var(--text); border-color: var(--border); }
+.public-theme-dark .printer-contact-card .contact-icon { background: #213f50; color: var(--navy); }
+.public-theme-dark .printer-contact-card .eyebrow { color: var(--burgundy); }
+.public-theme-dark .printer-contact-card p { color: var(--muted); }
+.public-theme-dark .printer-contact-card .button.primary { background: var(--navy); color: #10202c; }
+.public-theme-dark .format-pills span { background: #213746; color: var(--navy); border: 1px solid #36566a; }
+
+/* Keep multiple printers in one horizontal row; narrow screens may scroll it. */
+.public-printer-grid { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(250px, 1fr); overflow-x: auto; padding-bottom: 6px; }
 
 html.theme-transitioning *,html.theme-transitioning *::before,html.theme-transitioning *::after{transition:background-color .22s ease,color .22s ease,border-color .22s ease,box-shadow .22s ease!important}
 @media(prefers-reduced-motion:reduce){html.theme-transitioning *,html.theme-transitioning *::before,html.theme-transitioning *::after{transition-duration:.01ms!important}}

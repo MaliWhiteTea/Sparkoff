@@ -12,6 +12,11 @@ const PhoneIcon = () => (
     <path d="M6 3h4l2 5-3 2a15 15 0 0 0 5 5l2-3 5 2v4c0 1.7-1.3 3-3 3C9.7 21 3 14.3 3 6c0-1.7 1.3-3 3-3Z" />
   </svg>
 );
+const CalendarIcon = () => (
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M5 5h14v15H5zM8 3v4M16 3v4M5 10h14M9 14h2M13 14h2M9 17h2" />
+  </svg>
+);
 
 type Printer = {
   code: string;
@@ -274,15 +279,15 @@ export default function Printers({
       <section className="filament-module-callout">
         <div>
           <span className="eyebrow">ATÖLYE FİLAMENTLERİ</span>
-          <h2>{filamentSummary.availableOptions} kullanılabilir seçenek</h2>
+          <h2>{filamentSummary.availableOptions} filament seçeneği</h2>
           <p>
             {filamentSummary.materials.length
-              ? `${filamentSummary.materials.join(", ")} türlerindeki renk ve teknik özellikleri inceleyin.`
+              ? `${filamentSummary.materials.join(", ")} filamentlerinin renklerini ve baskı özelliklerini inceleyin.`
               : "Şu anda kullanılabilir atölye filamenti bulunmuyor."}
           </p>
         </div>
         <Link className="button secondary" href="/filamentler">
-          Filament kataloğu <ArrowIcon />
+          Filamentleri incele <ArrowIcon />
         </Link>
       </section>
 
@@ -292,19 +297,19 @@ export default function Printers({
         contact.email) && (
         <section className="printer-contact-card">
           <div className="contact-icon">
-            <PhoneIcon />
+            {features.onlineBooking ? <CalendarIcon /> : <PhoneIcon />}
           </div>
           <div>
             <span className="eyebrow">
-              {features.onlineBooking ? "RANDEVU" : "İLETİŞİM"}
+              {features.onlineBooking ? "3D YAZICI RANDEVUSU" : "İLETİŞİM"}
             </span>
-            <h2>Yazıcı kullanımı</h2>
-            {contact.hours && <p>{contact.hours}</p>}
+            <h2>{features.onlineBooking ? "Yazıcı için randevu oluşturun" : "Atölyeyle iletişime geçin"}</h2>
+            <p>{contact.hours || (features.onlineBooking ? "Uygun tarih ve saati seçerek talebinizi atölye sorumlusuna iletin." : "Sorularınız için aşağıdaki iletişim kanallarını kullanın.")}</p>
           </div>
           <div className="contact-actions">
             {features.onlineBooking && (
               <Link className="button primary" href="/randevu">
-                Randevu oluştur
+                Randevu formuna git
               </Link>
             )}
             {!features.onlineBooking && contact.phone && (
