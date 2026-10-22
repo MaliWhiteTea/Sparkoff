@@ -361,7 +361,7 @@ export default function Transactions({
       {transactions.links.length > 3 && (
         <nav className="admin-pagination">
           {transactions.links.map((x, i) =>
-            x.url ? (
+            !x.url && (i === 0 || i === transactions.links.length - 1) ? null : x.url ? (
               <Link
                 key={i}
                 className={x.active ? "active" : ""}

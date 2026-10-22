@@ -976,7 +976,7 @@ export default function Inventory({
       {items.links.length > 3 && (
         <nav className="admin-pagination">
           {items.links.map((x, i) =>
-            x.url ? (
+            !x.url && (i === 0 || i === items.links.length - 1) ? null : x.url ? (
               <Link
                 key={i}
                 className={x.active ? "active" : ""}
