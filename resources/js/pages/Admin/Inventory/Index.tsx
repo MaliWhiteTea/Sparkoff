@@ -1,6 +1,7 @@
 import AdminLayout from "@/components/AdminLayout";
 import StatusBadge from "@/components/StatusBadge";
 import ListSort from "@/components/ListSort";
+import TableColumns, { ColumnDefinition, initialTableColumns } from "@/components/TableColumns";
 import usePermissions from "@/hooks/usePermissions";
 import { Head, Link, router, usePage } from "@inertiajs/react";
 import { FormEvent, useState } from "react";
@@ -249,11 +250,13 @@ function ItemCard({
   categories,
   locations,
   canPurge,
+  columns,
 }: {
   item: Item;
   categories: Option[];
   locations: Location[];
   canPurge: boolean;
+  columns: string[];
 }) {
   const can = usePermissions();
   const [editing, setEditing] = useState(false);
@@ -326,14 +329,13 @@ function ItemCard({
     >
       <div className="inventory-item-main">
         <div>
-          <span>{item.sku || typeLabels[item.itemType]}</span>
-          <h3>{item.name}</h3>
-          <p>
-            {[item.category, item.location].filter(Boolean).join(" · ") ||
-              "Kategori ve konum belirtilmedi"}
-          </p>
+          {columns.includes("name") && <><span>{item.sku || typeLabels[item.itemType]}</span><h3>{item.name}</h3></>}
+          {(columns.includes("category") || columns.includes("location")) && <p>{[
+            columns.includes("category") ? item.category : null,
+            columns.includes("location") ? item.location : null,
+          ].filter(Boolean).join(" · ") || "Kategori veya konum belirtilmedi"}</p>}
         </div>
-        <div className="inventory-quantity">
+        {columns.includes("quantity") && <div className="inventory-quantity">
           <strong>
             {Number(item.quantity).toLocaleString("tr-TR")}{" "}
             <small>{item.unit}</small>
@@ -342,7 +344,7 @@ function ItemCard({
             status={Number(item.quantity) <= 0 ? "out" : item.isLow ? "low" : "available"}
             label={Number(item.quantity) <= 0 ? "Tükendi" : item.isLow ? "Kritik stok" : "Stokta"}
           />
-        </div>
+        </div>}
       </div>
       {error && <div className="form-error">{error}</div>}
       {stocking && (
@@ -384,7 +386,7 @@ function ItemCard({
       <footer>
         <div>
           <span>{typeLabels[item.itemType]}</span>
-          <span>{visibilityLabels[item.publicVisibility]}</span>
+          {columns.includes("visibility") && <span>{visibilityLabels[item.publicVisibility]}</span>}
         </div>
         <div>
           {can("inventory.adjust_stock") && !item.isArchived && (
@@ -816,7 +818,16 @@ export default function Inventory({
   recentMovements: Movement[];
 }) {
   const can = usePermissions();
-  const isSystemAdministrator = usePage<{ auth: { user: { isSystemAdministrator: boolean } } }>().props.auth.user.isSystemAdministrator;
+  const page = usePage<{ auth: { user: { isSystemAdministrator: boolean; tablePreferences: Record<string, string[]> } } }>();
+  const isSystemAdministrator = page.props.auth.user.isSystemAdministrator;
+  const columnDefinitions: ColumnDefinition[] = [
+    { key: "name", label: "Malzeme adı" },
+    { key: "category", label: "Kategori" },
+    { key: "location", label: "Konum" },
+    { key: "quantity", label: "Stok miktarı" },
+    { key: "visibility", label: "Katalog görünürlüğü" },
+  ];
+  const [columns, setColumns] = useState(() => initialTableColumns(page.props.auth.user.tablePreferences.inventory, columnDefinitions));
   const [creating, setCreating] = useState(false);
   const [data, setData] = useState<ItemForm>(emptyItem);
   const [error, setError] = useState("");
@@ -957,6 +968,7 @@ export default function Inventory({
         <button>Ara</button>
       </form>
       <ListSort sort={filters.sort} direction={filters.direction} options={[{ value: 'name', label: 'Malzeme adı' }, { value: 'quantity', label: 'Stok miktarı' }, { value: 'minimum_stock', label: 'Kritik stok eşiği' }, { value: 'updated_at', label: 'Son güncelleme' }]} />
+      <TableColumns table="inventory" definitions={columnDefinitions} active={columns} setActive={setColumns} />
       <section className="inventory-list">
         {items.data.map((x) => (
           <ItemCard
@@ -964,6 +976,7 @@ export default function Inventory({
             categories={categories}
             locations={locations}
             canPurge={isSystemAdministrator}
+            columns={columns}
             key={x.id}
           />
         ))}
