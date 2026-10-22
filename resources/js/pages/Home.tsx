@@ -1,5 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
 import PublicFooter from '@/components/PublicFooter';
+import PublicHeader from '@/components/PublicHeader';
 
 const ArrowIcon = () => <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h12M11 5l5 5-5 5" /></svg>;
 const CubeIcon = () => <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z" /><path d="m4 7.5 8 4.5 8-4.5M12 12v9" /></svg>;
@@ -16,11 +17,7 @@ export default function Home({ workshop, printers, contact, announcements, featu
 
     return <main id="ust" className="portal-home public-page-shell"><a className="skip-link" href="#icerik">İçeriğe geç</a>
         <Head title="Sparkoff Proje Atölyesi" />
-        <header className="site-header"><div className="header-inner">
-            <a className="brand" href="#ust" aria-label="Sparkoff Proje Atölyesi ana sayfa"><img src="/logo.jpg" alt="Sparkoff logosu" width={56} height={56} /><span><strong>Sparkoff</strong><small>Proje Atölyesi</small></span></a>
-            <nav className="desktop-nav" aria-label="Ana menü"><a href="#icerik">Atölye</a><a href="#hizmetler">Hizmetler</a><Link href="/3d-yazicilar">3D Yazıcılar</Link><Link href="/malzemeler">Malzemeler</Link><Link href="/geri-bildirim">Geri bildirim</Link>{(contact.phone || contact.whatsapp || contact.email) && <a href="#iletisim">İletişim</a>}</nav>
-            <Link className="header-button" href="/3d-yazicilar">Yazıcı durumları <ArrowIcon /></Link>
-        </div></header>
+        <PublicHeader isHome hasContact={Boolean(contact.phone || contact.whatsapp || contact.email)} />
 
         <section className="portal-hero" id="icerik">
             <div className="portal-hero-copy"><h1>Sparkoff Proje Atölyesi</h1><div className="hero-actions"><Link className="button primary" href="/3d-yazicilar">3D yazıcılar <ArrowIcon /></Link><Link className="button secondary" href="/malzemeler">Malzemeler <ArrowIcon /></Link></div></div>

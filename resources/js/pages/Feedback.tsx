@@ -1,5 +1,6 @@
-import { Head, Link, useForm, usePage } from "@inertiajs/react";
+import { Head, useForm, usePage } from "@inertiajs/react";
 import PublicFooter from "@/components/PublicFooter";
+import PublicHeader from "@/components/PublicHeader";
 import { FormEvent } from "react";
 
 type PageProps = { flash: { success?: string } };
@@ -19,18 +20,7 @@ export default function Feedback() {
   return (
     <main className="feedback-page public-page-shell">
       <Head title="Geri Bildirim" />
-      <header className="filaments-header">
-        <Link className="booking-brand" href="/">
-          <img src="/logo.jpg" alt="Sparkoff logosu" />
-          <span>
-            <strong>Sparkoff</strong>
-            <small>Proje Atölyesi</small>
-          </span>
-        </Link>
-        <Link className="module-home-link" href="/">
-          Ana sayfaya dön
-        </Link>
-      </header>
+      <PublicHeader />
       <section className="feedback-shell">
         <div className="feedback-intro">
           <span className="eyebrow">GERİ BİLDİRİM</span>

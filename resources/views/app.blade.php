@@ -9,7 +9,7 @@
             if (!window.location.pathname.startsWith('/yonetim')) {
                 try {
                     const theme = localStorage.getItem('sparkoff.public.theme');
-                    const dark = theme === 'dark' || (!theme && matchMedia('(prefers-color-scheme: dark)').matches);
+                    const dark = theme !== 'light';
                     document.documentElement.classList.toggle('public-theme-dark', dark);
                     document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
                 } catch (_) {}

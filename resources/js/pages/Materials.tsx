@@ -1,5 +1,6 @@
 import { Head, Link, router } from '@inertiajs/react';
 import PublicFooter from '@/components/PublicFooter';
+import PublicHeader from '@/components/PublicHeader';
 import { FormEvent, useState } from 'react';
 
 type Medium = { id: number; type: 'image' | 'video' | 'link'; url: string; title: string | null; altText: string | null; isCover: boolean };
@@ -25,7 +26,7 @@ export default function Materials({ items, filters, categories }: Props) {
     const submit = (event: FormEvent) => { event.preventDefault(); apply({ search }); };
 
     return <main className="materials-page public-page-shell"><Head title="Atölye Malzemeleri" />
-        <header className="filaments-header"><Link className="booking-brand" href="/"><img src="/logo.jpg" alt="Sparkoff logosu" /><span><strong>Sparkoff</strong><small>Proje Atölyesi</small></span></Link><Link className="booking-primary" href="/">Ana sayfa</Link></header>
+        <PublicHeader />
         <section className="materials-hero"><span>ATÖLYE ENVANTERİ</span><h1>Malzemeler</h1><p>Atölyedeki ekipmanların güncel stok ve kullanım durumunu inceleyin.</p></section>
         <section className="materials-content">
             <form className="materials-filters" onSubmit={submit}><label><span>Ara</span><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Arduino, sensör, motor…" /></label><label><span>Kategori</span><select value={filters.category} onChange={(event) => apply({ category: event.target.value })}><option value="">Tüm kategoriler</option>{categories.map((category) => <option value={category.id} key={category.id}>{category.name}</option>)}</select></label><label><span>Stok durumu</span><select value={filters.stock} onChange={(event) => apply({ stock: event.target.value })}><option value="all">Tümü</option><option value="available">Stokta var</option><option value="out">Stokta yok</option></select></label><button>Ara</button></form>

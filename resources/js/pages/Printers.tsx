@@ -1,5 +1,6 @@
 import { Head, Link } from "@inertiajs/react";
 import PublicFooter from "@/components/PublicFooter";
+import PublicHeader from "@/components/PublicHeader";
 import { useState } from "react";
 
 const ArrowIcon = () => (
@@ -107,18 +108,9 @@ export default function Printers({
         İçeriğe geç
       </a>
       <Head title="3D Yazıcılar" />
-      <header className="filaments-header">
-        <Link className="booking-brand" href="/">
-          <img src="/logo.jpg" alt="Sparkoff logosu" />
-          <span>
-            <strong>Sparkoff</strong>
-            <small>Proje Atölyesi</small>
-          </span>
-        </Link>
-        <Link className="module-home-link" href="/">
-          Ana sayfaya dön
-        </Link>
-      </header>
+      <PublicHeader
+        hasContact={Boolean(contact.phone || contact.whatsapp || contact.email)}
+      />
       <section className="printer-module-hero" id="icerik">
         <div>
           <h1>3D Yazıcılar</h1>
