@@ -116,7 +116,7 @@ export default function Printers({
           </span>
         </Link>
         <Link className="module-home-link" href="/">
-          ← Atölye ana sayfası
+          Ana sayfaya dön
         </Link>
       </header>
       <section className="printer-module-hero" id="icerik">
