@@ -42,12 +42,25 @@ export default function AdminLayout({ children }: PropsWithChildren) {
     const [mobileOpen, setMobileOpen] = useState(false);
     const [resizing, setResizing] = useState(false);
     const widthRef = useRef(DEFAULT_WIDTH);
+    const previousTheme = useRef(preferences.theme);
+    const themeTimer = useRef<number | null>(null);
 
     useEffect(() => {
         const storedWidth = Number.parseInt(localStorage.getItem(WIDTH_KEY) ?? '', 10);
         if (Number.isFinite(storedWidth)) { widthRef.current = clamp(storedWidth); setSidebarWidth(widthRef.current); }
     }, []);
     useEffect(() => { setCollapsed(preferences.sidebar === 'narrow'); }, [preferences.sidebar]);
+    useEffect(() => {
+        if (previousTheme.current === preferences.theme) return;
+        previousTheme.current = preferences.theme;
+        document.documentElement.classList.add('theme-transitioning');
+        if (themeTimer.current !== null) window.clearTimeout(themeTimer.current);
+        themeTimer.current = window.setTimeout(() => document.documentElement.classList.remove('theme-transitioning'), 240);
+    }, [preferences.theme]);
+    useEffect(() => () => {
+        if (themeTimer.current !== null) window.clearTimeout(themeTimer.current);
+        document.documentElement.classList.remove('theme-transitioning');
+    }, []);
     useEffect(() => {
         document.documentElement.dataset.adminScale = preferences.scale;
         return () => { delete document.documentElement.dataset.adminScale; };

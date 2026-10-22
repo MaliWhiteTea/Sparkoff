@@ -417,3 +417,6 @@ svg { width: 1.15em; fill: none; stroke: currentColor; stroke-width: 1.7; stroke
 .public-theme-dark .materials-table summary,.public-theme-dark .materials-result-heading a { color: var(--navy); }
 .public-theme-dark .button.secondary:hover { background: #213746; }
 @media(max-width:700px){.public-theme-dark .materials-table tr{background:var(--surface);border-color:var(--border)}}
+
+html.theme-transitioning *,html.theme-transitioning *::before,html.theme-transitioning *::after{transition:background-color .22s ease,color .22s ease,border-color .22s ease,box-shadow .22s ease!important}
+@media(prefers-reduced-motion:reduce){html.theme-transitioning *,html.theme-transitioning *::before,html.theme-transitioning *::after{transition-duration:.01ms!important}}
