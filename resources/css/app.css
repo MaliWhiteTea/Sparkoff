@@ -161,7 +161,7 @@ svg { width: 1.15em; fill: none; stroke: currentColor; stroke-width: 1.7; stroke
 .booking-page { min-height: 100vh; background: #f5f8fa; }
 .booking-header { height: 74px; padding: 0 max(24px, calc((100vw - 1180px) / 2)); display: flex; align-items: center; justify-content: space-between; background: var(--surface); border-bottom: 1px solid var(--border); }
 .booking-brand { display: flex; align-items: center; gap: 10px; }
-.booking-brand img { width: 48px; height: 48px; object-fit: cover; }
+.booking-brand img { width: 48px; height: 48px; object-fit: cover; border: 1px solid var(--border); border-radius: 8px; }
 .booking-brand > span { display: flex; flex-direction: column; line-height: 1.05; }
 .booking-brand strong { color: var(--burgundy); font-size: 1rem; }.booking-brand small { color: var(--navy); font-size: .62rem; font-weight: 700; }
 .close-booking { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: .73rem; font-weight: 700; }
@@ -442,6 +442,11 @@ svg { width: 1.15em; fill: none; stroke: currentColor; stroke-width: 1.7; stroke
 .public-theme-dark .filament-public-grid>section { background: #1d2b36; color: var(--text); border-color: var(--border); }
 .public-theme-dark .material-group>header>strong { background: #18352c; color: var(--success); }
 .public-theme-dark .material-group.unavailable>header>strong { background: #352b1d; color: var(--warning); }
+.public-theme-dark .material-stock.available { background: #18352c; color: var(--success); }
+.public-theme-dark .material-stock.out { background: #38212a; color: #f2a8ba; }
+.public-theme-dark .materials-pagination a,
+.public-theme-dark .materials-pagination span { background: var(--surface); color: var(--navy); border-color: var(--border); }
+.public-theme-dark .materials-pagination a.active { background: var(--navy); color: #10202c; border-color: var(--navy); }
 .public-theme-dark .feedback-privacy-note span { color: #ebc58f; }
 .public-theme-dark .booking-secondary { background: var(--surface); color: var(--navy); border-color: var(--border); }
 .public-theme-dark .schedule-printer-tabs button,
