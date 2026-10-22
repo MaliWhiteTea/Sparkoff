@@ -27,6 +27,7 @@ class HandleInertiaRequests extends Middleware
                     'name' => $user->name,
                     'email' => $user->email,
                     'role' => $user->role,
+                    'isSystemAdministrator' => $user->isSystemAdministrator(),
                     'roles' => $user->roles()->pluck('name'),
                     'permissions' => $user->role === 'admin' || $user->isSystemAdministrator()
                         ? collect(config('permissions'))->flatMap(fn ($permissions) => array_keys($permissions))->values()

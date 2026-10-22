@@ -2,7 +2,7 @@ import AdminLayout from "@/components/AdminLayout";
 import StatusBadge from "@/components/StatusBadge";
 import ListSort from "@/components/ListSort";
 import usePermissions from "@/hooks/usePermissions";
-import { Head, Link, router } from "@inertiajs/react";
+import { Head, Link, router, usePage } from "@inertiajs/react";
 import { FormEvent, useState } from "react";
 
 type Media = { id: number; type: 'image' | 'video' | 'link'; url: string; title: string | null; altText: string | null; sortOrder: number; isCover: boolean };
@@ -248,10 +248,12 @@ function ItemCard({
   item,
   categories,
   locations,
+  canPurge,
 }: {
   item: Item;
   categories: Option[];
   locations: Location[];
+  canPurge: boolean;
 }) {
   const can = usePermissions();
   const [editing, setEditing] = useState(false);
@@ -414,6 +416,21 @@ function ItemCard({
               }
             >
               Arşivle
+            </button>
+          )}
+          {canPurge && (
+            <button
+              type="button"
+              className="danger"
+              onClick={() =>
+                window.confirm(`${item.name} kalıcı olarak silinsin mi? Bu işlem geri alınamaz.`) &&
+                router.delete(`/yonetim/envanter/${item.id}`, {
+                  data: { confirmation: String(item.id) },
+                  preserveScroll: true,
+                })
+              }
+            >
+              Kalıcı sil
             </button>
           )}
         </div>
@@ -799,6 +816,7 @@ export default function Inventory({
   recentMovements: Movement[];
 }) {
   const can = usePermissions();
+  const isSystemAdministrator = usePage<{ auth: { user: { isSystemAdministrator: boolean } } }>().props.auth.user.isSystemAdministrator;
   const [creating, setCreating] = useState(false);
   const [data, setData] = useState<ItemForm>(emptyItem);
   const [error, setError] = useState("");
@@ -945,6 +963,7 @@ export default function Inventory({
             item={x}
             categories={categories}
             locations={locations}
+            canPurge={isSystemAdministrator}
             key={x.id}
           />
         ))}

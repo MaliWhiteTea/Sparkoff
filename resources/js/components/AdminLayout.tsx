@@ -3,7 +3,7 @@ import { CSSProperties, KeyboardEvent as ReactKeyboardEvent, PointerEvent, Props
 
 type Preferences = { theme: 'light' | 'dark' | 'system'; scale: 'small' | 'normal' | 'large'; density: 'comfortable' | 'normal' | 'compact'; sidebar: 'wide' | 'narrow' };
 type SharedProps = {
-    auth: { user: { name: string; email: string; role: string; roles: string[]; permissions: string[]; interfacePreferences: Preferences } };
+    auth: { user: { name: string; email: string; role: string; roles: string[]; permissions: string[]; isSystemAdministrator: boolean; interfacePreferences: Preferences } };
     flash: { success?: string; warning?: string };
     features: { onlineBooking: boolean };
     staffAnnouncements: { id: number; title: string; body: string; type: string; isPinned: boolean; requiresAcknowledgement: boolean; isRead: boolean }[];

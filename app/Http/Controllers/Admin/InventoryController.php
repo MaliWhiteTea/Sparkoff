@@ -6,14 +6,18 @@ use App\Enums\InventoryItemType;
 use App\Enums\InventoryVisibility;
 use App\Enums\StockMovementType;
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
 use App\Models\InventoryCategory;
 use App\Models\InventoryItem;
 use App\Models\InventoryLocation;
+use App\Models\InventoryMedia;
+use App\Models\InventoryTransaction;
 use App\Models\StockMovement;
 use App\Services\InventoryStockService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -140,6 +144,33 @@ class InventoryController extends Controller
         }
 
         return back()->with('success', 'Malzeme arşivlendi; hareket geçmişi korundu.');
+    }
+
+    public function testTools(): Response
+    {
+        return Inertia::render('Admin/Settings/TestTools', [
+            'inventoryCount' => InventoryItem::query()->count(),
+        ]);
+    }
+
+    public function destroy(Request $request, InventoryItem $item): RedirectResponse
+    {
+        $request->validate(['confirmation' => ['required', 'string', Rule::in([(string) $item->id])]]);
+        $name = $item->name;
+        $this->purgeItems(collect([$item]), $request);
+
+        return back()->with('success', "{$name} ve ilişkili test kayıtları kalıcı olarak silindi.");
+    }
+
+    public function destroyAll(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'confirmation' => ['required', 'string', Rule::in(['TÜM MALZEMELERİ SİL'])],
+        ]);
+        $count = InventoryItem::query()->count();
+        $this->purgeItems(InventoryItem::query()->get(), $request);
+
+        return back()->with('success', "{$count} malzeme ve ilişkili test kayıtları kalıcı olarak silindi.");
     }
 
     public function adjustStock(Request $request, InventoryItem $item, InventoryStockService $stock): RedirectResponse
@@ -294,6 +325,38 @@ class InventoryController extends Controller
         }
 
         return $slug;
+    }
+
+    private function purgeItems($items, Request $request): void
+    {
+        $ids = $items->pluck('id');
+        if ($ids->isEmpty()) {
+            return;
+        }
+
+        $paths = InventoryMedia::query()->whereIn('inventory_item_id', $ids)->whereNotNull('file_path')->pluck('file_path');
+        $legacyPaths = $items->pluck('image_path')->filter();
+        $itemCount = $ids->count();
+        $transactionCount = InventoryTransaction::query()->whereIn('inventory_item_id', $ids)->count();
+        $movementCount = StockMovement::query()->whereIn('inventory_item_id', $ids)->count();
+
+        DB::transaction(function () use ($ids, $request, $itemCount, $transactionCount, $movementCount) {
+            InventoryTransaction::query()->whereIn('inventory_item_id', $ids)->delete();
+            StockMovement::query()->whereIn('inventory_item_id', $ids)->delete();
+            InventoryMedia::query()->whereIn('inventory_item_id', $ids)->delete();
+            InventoryItem::query()->whereIn('id', $ids)->delete();
+            ActivityLog::query()->create([
+                'user_id' => $request->user()->id,
+                'action' => 'inventory_test_data_purged',
+                'subject_type' => InventoryItem::class,
+                'subject_id' => null,
+                'changed_fields' => ["items:{$itemCount}", "transactions:{$transactionCount}", "movements:{$movementCount}"],
+                'created_at' => now(),
+            ]);
+        });
+
+        Storage::disk('public')->delete($paths->merge($legacyPaths)->all());
+        $ids->each(fn (int $id) => Storage::disk('public')->deleteDirectory("inventory-media/{$id}"));
     }
 
     private function itemData(InventoryItem $item): array

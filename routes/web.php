@@ -64,6 +64,7 @@ Route::prefix('yonetim')->name('admin.')->group(function () {
         Route::delete('/envanter-ice-aktar', [AdminInventoryImportController::class, 'cancel'])->middleware('permission:inventory.import')->name('inventory.import.cancel');
         Route::post('/envanter', [AdminInventoryController::class, 'store'])->middleware('permission:inventory.create')->name('inventory.store');
         Route::put('/envanter/{item}', [AdminInventoryController::class, 'update'])->middleware('permission:inventory.update')->name('inventory.update');
+        Route::delete('/envanter/{item}', [AdminInventoryController::class, 'destroy'])->middleware('system.admin')->name('inventory.destroy');
         Route::post('/envanter/{item}/medya', [AdminInventoryMediaController::class, 'store'])->middleware('permission:inventory.manage_media')->name('inventory.media.store');
         Route::patch('/envanter/{item}/medya/{medium}', [AdminInventoryMediaController::class, 'update'])->middleware('permission:inventory.manage_media')->name('inventory.media.update');
         Route::delete('/envanter/{item}/medya/{medium}', [AdminInventoryMediaController::class, 'destroy'])->middleware('permission:inventory.manage_media')->name('inventory.media.destroy');
@@ -102,6 +103,8 @@ Route::prefix('yonetim')->name('admin.')->group(function () {
             Route::put('/kisisel', [AdminPersonalSettingsController::class, 'update'])->name('personal.update');
             Route::delete('/kisisel', [AdminPersonalSettingsController::class, 'destroy'])->name('personal.destroy');
             Route::put('/kisisel/tablo', [AdminPersonalSettingsController::class, 'updateTable'])->name('personal.table.update');
+            Route::get('/test-araclari', [AdminInventoryController::class, 'testTools'])->middleware('system.admin')->name('test-tools.index');
+            Route::delete('/test-araclari/malzemeler', [AdminInventoryController::class, 'destroyAll'])->middleware('system.admin')->name('test-tools.inventory.destroy-all');
             Route::middleware('booking.enabled')->group(function () {
                 Route::get('/randevu-kurallari', [AdminBookingSettingsController::class, 'edit'])->middleware('permission.any:system_settings.update,printers.manage_hours')->name('booking.edit');
                 Route::put('/randevu-kurallari', [AdminBookingSettingsController::class, 'update'])->middleware('permission.any:system_settings.update,printers.manage_hours')->name('booking.update');
