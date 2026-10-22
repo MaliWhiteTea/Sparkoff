@@ -418,5 +418,31 @@ svg { width: 1.15em; fill: none; stroke: currentColor; stroke-width: 1.7; stroke
 .public-theme-dark .button.secondary:hover { background: #213746; }
 @media(max-width:700px){.public-theme-dark .materials-table tr{background:var(--surface);border-color:var(--border)}}
 
+/* Public component contrast in dark mode. */
+.public-theme-dark :where(.portal-services,.process) { background: var(--background); color: var(--text); border-color: var(--border); }
+.public-theme-dark :where(.portal-status-row,.booking-whatsapp-callout,.next-slot,.time-info,.upload-area,.security-note,.rules-check,.filament-inline-detail,.success-summary,.format-pills span) { background: #1d2b36; color: var(--text); border-color: var(--border); }
+.public-theme-dark :where(.service-card,.step,.public-printer-card,.printer-info-grid>article,.filament-module-callout,.schedule-printer-tabs button,.schedule-day-grid>article,.success-card) { background: var(--surface); color: var(--text); border-color: var(--border); }
+.public-theme-dark .field input,.public-theme-dark .field select,.public-theme-dark .field textarea { background: var(--surface); color: var(--text); border-color: var(--border); }
+.public-theme-dark .field :where(input,select,textarea):disabled { background: #1d2b36; color: var(--muted); opacity: 1; cursor: not-allowed; }
+.public-theme-dark :where(input,textarea)::placeholder { color: #7f909f; opacity: 1; }
+.public-theme-dark .upload-area:hover,.public-theme-dark .upload-area.has-file,.public-theme-dark .choice-grid label.selected,.public-theme-dark .schedule-printer-tabs button.active { background: #213746; }
+.public-theme-dark .form-actions { background: var(--surface); border-color: var(--border); }
+.public-theme-dark :where(.public-announcements article,.schedule-block) { background: #1c3240; color: var(--text); border-color: #36566a; }
+.public-theme-dark :where(.public-announcements article.announcement-warning,.schedule-block.kind-maintenance,.upload-limit-warning,.feedback-privacy-note,.legal-draft) { background: #352b1d; color: #ebc58f; border-color: #695333; }
+.public-theme-dark :where(.public-announcements article.announcement-maintenance,.public-announcements article.announcement-urgent,.schedule-block.kind-closed,.form-error) { background: #38212a; color: #f2a8ba; border-color: #744153; }
+.public-theme-dark :where(.privacy-chip,.current-status,.success-icon) { background: #18352c; border-color: #356652; }
+.public-theme-dark :where(.material-group>header>strong,.material-stock.available,.open-badge,.status.active) { background: #18352c; }
+.public-theme-dark :where(.material-group.unavailable>header>strong,.status.maintenance) { background: #352b1d; }
+.public-theme-dark :where(.material-warning,.feedback-privacy-note span,.legal-draft) { color: #ebc58f; }
+.public-theme-dark .timeline-dot { border-color: var(--background); }
+.public-theme-dark .legal-document h2 { color: var(--navy); }
+.public-theme-dark .legal-document section p,.public-theme-dark .legal-document section li { color: var(--muted); }
+.public-theme-dark .desktop-nav a { color: var(--muted); }
+.public-theme-dark .filament-public-grid>section { background: #1d2b36; color: var(--text); border-color: var(--border); }
+.public-theme-dark .material-group>header>strong { background: #18352c; color: var(--success); }
+.public-theme-dark .material-group.unavailable>header>strong { background: #352b1d; color: var(--warning); }
+.public-theme-dark .feedback-privacy-note span { color: #ebc58f; }
+.public-theme-dark .booking-secondary { background: var(--surface); color: var(--navy); border-color: var(--border); }
+
 html.theme-transitioning *,html.theme-transitioning *::before,html.theme-transitioning *::after{transition:background-color .22s ease,color .22s ease,border-color .22s ease,box-shadow .22s ease!important}
 @media(prefers-reduced-motion:reduce){html.theme-transitioning *,html.theme-transitioning *::before,html.theme-transitioning *::after{transition-duration:.01ms!important}}
