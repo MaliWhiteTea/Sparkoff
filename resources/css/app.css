@@ -108,8 +108,9 @@ svg { width: 1.15em; fill: none; stroke: currentColor; stroke-width: 1.7; stroke
 .printers { display: grid; grid-template-columns: .8fr 1.2fr; gap: clamp(50px, 8vw, 100px); align-items: start; }
 .section-title.compact { margin: 0; text-align: left; }
 .section-title.compact h2 { font-size: clamp(2rem, 3.4vw, 3rem); }
-.printer-list { border-top: 1px solid #aebbc7; }
-.printer-row { min-height: 105px; display: grid; grid-template-columns: 58px 1fr auto; align-items: center; gap: 20px; border-bottom: 1px solid var(--border); }
+.printer-list { overflow: hidden; border: 1px solid var(--border); border-radius: 12px; background: white; }
+.printer-row { min-height: 105px; padding: 0 20px; display: grid; grid-template-columns: 58px 1fr auto; align-items: center; gap: 20px; border-bottom: 1px solid var(--border); }
+.printer-row:last-child { border-bottom: 0; }
 .printer-code { color: var(--navy); font: 700 .72rem monospace; }
 .printer-row > div { display: flex; flex-direction: column; gap: 6px; }
 .printer-row strong { font-size: .91rem; }.printer-row > div span { color: var(--muted); font-size: .73rem; }
@@ -146,7 +147,7 @@ svg { width: 1.15em; fill: none; stroke: currentColor; stroke-width: 1.7; stroke
   .card-heading { grid-template-columns: auto 1fr; }.open-badge { grid-column: 2; justify-self: start; }.hours-row > svg { margin: 0; }
   .next-slot { margin: 16px; padding: 19px; }.card-note { padding: 0 16px 19px; }
   .section { padding: 72px 18px; }.section-title { text-align: left; margin-bottom: 34px; }.steps { grid-template-columns: 1fr; }.step { min-height: 225px; }.step-icon { margin-bottom: 32px; }
-  .printer-row { grid-template-columns: 48px 1fr; padding: 19px 0; }.status { grid-column: 2; justify-self: start; }
+  .printer-row { grid-template-columns: 48px 1fr; padding: 19px 16px; }.status { grid-column: 2; justify-self: start; }
   .help { margin: 0 18px 72px; padding: 29px 23px; grid-template-columns: 1fr; gap: 22px; }.help .button { width: 100%; }
   .public-footer { align-items: flex-start; flex-direction: column; padding: 28px 18px; }
   .mobile-booking { position: fixed; z-index: 30; left: 12px; right: 12px; bottom: 10px; height: 52px; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 12px; background: var(--navy); color: white; box-shadow: 0 10px 30px rgba(11,44,72,.3); font-size: .83rem; font-weight: 800; }
