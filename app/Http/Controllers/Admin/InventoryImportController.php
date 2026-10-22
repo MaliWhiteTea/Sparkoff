@@ -49,7 +49,7 @@ class InventoryImportController extends Controller
 
     public function upload(Request $request): RedirectResponse
     {
-        $data = $request->validate(['file' => ['required', 'file', 'mimes:csv,txt', 'max:2048']]);
+        $data = $request->validate(['file' => ['required', 'file', 'extensions:csv,txt', 'mimetypes:text/csv,text/plain,application/csv,application/vnd.ms-excel,application/octet-stream', 'max:2048']]);
         $this->clearState($request);
         $path = $data['file']->storeAs('inventory-imports', Str::uuid().'.csv', 'local');
         try {

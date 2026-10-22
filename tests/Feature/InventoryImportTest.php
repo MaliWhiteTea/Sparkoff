@@ -93,6 +93,24 @@ class InventoryImportTest extends TestCase
         $this->post(route('admin.inventory.import.preview'), ['mapping' => ['A' => 'name']])->assertSessionHasErrors('file');
     }
 
+    public function test_exported_inventory_csv_can_be_uploaded_with_automatic_mapping(): void
+    {
+        $importer = $this->userWithPermissions(['inventory.import']);
+        $csv = "Stok kodu,Malzeme,Tür,Kategori,Konum kodu,Konum,Miktar,Birim,Kritik stok,Durum,Katalog görünürlüğü,Açıklama\r\n".
+            ",Arduino UNO,Ödünç,Elektronik,A-1,A Rafı,8,adet,2,Aktif,Kesin,Test açıklaması\r\n";
+
+        $this->actingAs($importer)->post(route('admin.inventory.import.upload'), [
+            'file' => UploadedFile::fake()->createWithContent('sparkoff-envanter.csv', $csv),
+        ])->assertSessionHas('success');
+
+        $this->get(route('admin.inventory.import.index'))->assertInertia(fn (Assert $page) => $page
+            ->where('upload.mapping.Stok kodu', 'sku')
+            ->where('upload.mapping.Malzeme', 'name')
+            ->where('upload.mapping.Tür', 'type')
+            ->where('upload.mapping.Konum kodu', '')
+            ->where('upload.mapping.Miktar', 'quantity'));
+    }
+
     private function userWithPermissions(array $permissions): User
     {
         $role = Role::query()->create(['name' => 'İçe Aktarım '.uniqid(), 'slug' => 'import-'.uniqid()]);
