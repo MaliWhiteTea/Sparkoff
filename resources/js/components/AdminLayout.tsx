@@ -16,6 +16,11 @@ const MIN_WIDTH = 210;
 const MAX_WIDTH = 380;
 const WIDTH_KEY = 'sparkoff.admin.sidebar.width';
 const clamp = (width: number) => Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, width));
+const storedSidebarWidth = () => {
+    if (typeof window === 'undefined') return DEFAULT_WIDTH;
+    const storedWidth = Number.parseInt(localStorage.getItem(WIDTH_KEY) ?? '', 10);
+    return Number.isFinite(storedWidth) ? clamp(storedWidth) : DEFAULT_WIDTH;
+};
 
 function MenuIcon({ name }: { name: string }) {
     const paths: Record<string, ReactElement> = {
@@ -37,18 +42,14 @@ export default function AdminLayout({ children }: PropsWithChildren) {
     const path = page.url.split('?')[0];
     const can = (permission: string) => auth.user.permissions.includes(permission);
     const preferences = auth.user.interfacePreferences;
-    const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_WIDTH);
+    const [sidebarWidth, setSidebarWidth] = useState(storedSidebarWidth);
     const [collapsed, setCollapsed] = useState(preferences.sidebar === 'narrow');
     const [mobileOpen, setMobileOpen] = useState(false);
     const [resizing, setResizing] = useState(false);
-    const widthRef = useRef(DEFAULT_WIDTH);
+    const widthRef = useRef(sidebarWidth);
     const previousTheme = useRef(preferences.theme);
     const themeTimer = useRef<number | null>(null);
 
-    useEffect(() => {
-        const storedWidth = Number.parseInt(localStorage.getItem(WIDTH_KEY) ?? '', 10);
-        if (Number.isFinite(storedWidth)) { widthRef.current = clamp(storedWidth); setSidebarWidth(widthRef.current); }
-    }, []);
     useEffect(() => { setCollapsed(preferences.sidebar === 'narrow'); }, [preferences.sidebar]);
     useEffect(() => {
         if (previousTheme.current === preferences.theme) return;

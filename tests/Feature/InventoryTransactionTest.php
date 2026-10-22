@@ -159,6 +159,25 @@ class InventoryTransactionTest extends TestCase
         $this->assertSame('0.000', $transaction->fresh()->quantity_returned);
     }
 
+    public function test_return_cannot_exceed_quantity_remaining_after_a_partial_return(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+        $item = $this->item(InventoryItemType::Loanable, 5);
+        $this->actingAs($admin)->post(route('admin.loans.store'), [
+            'inventory_item_id' => $item->id, 'recipient_name' => 'Test Kullanıcı', 'quantity' => 2,
+            'due_at' => now()->addDay()->format('Y-m-d\TH:i'),
+        ]);
+        $transaction = InventoryTransaction::query()->firstOrFail();
+
+        $this->actingAs($admin)->post(route('admin.loans.return', $transaction), ['quantity' => 1])->assertSessionHas('success');
+        $this->actingAs($admin)->post(route('admin.loans.return', $transaction), ['quantity' => 1.001])
+            ->assertSessionHasErrors(['quantity' => 'İade miktarı kalan miktarı aşamaz. En fazla 1 iade edilebilir.']);
+
+        $this->assertSame('4.000', $item->fresh()->quantity);
+        $this->assertSame('1.000', $transaction->fresh()->quantity_returned);
+        $this->assertSame(InventoryTransactionStatus::Active, $transaction->fresh()->status);
+    }
+
     public function test_damage_reporter_cannot_mark_an_item_as_lost(): void
     {
         $reporter = $this->userWithPermissions(['loans.report_damage']);

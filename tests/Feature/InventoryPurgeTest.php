@@ -76,6 +76,11 @@ class InventoryPurgeTest extends TestCase
         $this->assertDatabaseCount('inventory_items', 0);
         $this->assertDatabaseCount('inventory_categories', 1);
         $this->assertDatabaseCount('inventory_locations', 1);
+        $this->actingAs($admin)->get(route('admin.activity-logs'))->assertInertia(fn (Assert $page) => $page
+            ->where('logs.0.action', 'Test malzemelerini kalıcı olarak temizledi')
+            ->where('logs.0.subject', 'InventoryItem')
+            ->where('logs.0.subjectId', null)
+            ->where('logs.0.fields', ['Silinen malzeme: 2', 'Silinen teslim kaydı: 0', 'Silinen stok hareketi: 0']));
     }
 
     private function systemAdministrator(): User

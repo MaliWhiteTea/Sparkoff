@@ -89,7 +89,11 @@ class InventoryTransactionController extends Controller
 
     public function receiveReturn(Request $request, InventoryTransaction $transaction, InventoryTransactionService $service): RedirectResponse
     {
-        $data = $request->validate(['quantity' => ['required', 'numeric', 'min:0.001'], 'note' => ['nullable', 'string', 'max:1000']]);
+        $remaining = $transaction->remainingQuantity();
+        $data = $request->validate(
+            ['quantity' => ['required', 'numeric', 'min:0.001', "max:{$remaining}"], 'note' => ['nullable', 'string', 'max:1000']],
+            ['quantity.max' => 'İade miktarı kalan miktarı aşamaz. En fazla :max iade edilebilir.'],
+        );
         try {
             $service->receiveReturn($transaction, $request->user(), (float) $data['quantity'], $data['note'] ?? null);
         } catch (LogicException $exception) {

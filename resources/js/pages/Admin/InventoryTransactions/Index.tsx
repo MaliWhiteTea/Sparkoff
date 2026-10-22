@@ -53,21 +53,45 @@ function TransactionCard({ transaction }: { transaction: Transaction }) {
   const [quantity, setQuantity] = useState(transaction.remaining);
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
+  const [processing, setProcessing] = useState(false);
+  const remaining = Number(transaction.remaining);
+  const openMode = (nextMode: "return" | "damaged" | "lost") => {
+    setMode(nextMode);
+    setQuantity(transaction.remaining);
+    setNote("");
+    setError("");
+  };
+  const changeReturnQuantity = (value: string) => {
+    if (value === "") {
+      setQuantity(value);
+      return;
+    }
+    const numeric = Number(value);
+    setQuantity(Number.isFinite(numeric) && numeric > remaining ? transaction.remaining : value);
+  };
   const submit = (e: FormEvent) => {
     e.preventDefault();
     setError("");
-    if (mode === "return")
+    if (mode === "return") {
+      const numericQuantity = Number(quantity);
+      if (!Number.isFinite(numericQuantity) || numericQuantity <= 0 || numericQuantity > remaining) {
+        setError(`İade miktarı 0’dan büyük ve en fazla ${remaining.toLocaleString("tr-TR")} ${transaction.unit} olmalıdır.`);
+        return;
+      }
+      setProcessing(true);
       router.post(
         `/yonetim/teslimler/${transaction.id}/iade`,
-        { quantity, note },
+        { quantity: numericQuantity, note },
         {
           preserveScroll: true,
           onSuccess: () => setMode(null),
           onError: (e) =>
             setError(Object.values(e)[0] ?? "İade kaydedilemedi."),
+          onFinish: () => setProcessing(false),
         },
       );
-    else
+    } else {
+      setProcessing(true);
       router.patch(
         `/yonetim/teslimler/${transaction.id}/kapat`,
         { status: mode, note },
@@ -76,8 +100,10 @@ function TransactionCard({ transaction }: { transaction: Transaction }) {
           onSuccess: () => setMode(null),
           onError: (e) =>
             setError(Object.values(e)[0] ?? "Kayıt kapatılamadı."),
+          onFinish: () => setProcessing(false),
         },
       );
+    }
   };
   return (
     <article
@@ -139,9 +165,11 @@ function TransactionCard({ transaction }: { transaction: Transaction }) {
                 max={transaction.remaining}
                 step="0.001"
                 value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
+                inputMode="decimal"
+                onChange={(e) => changeReturnQuantity(e.target.value)}
                 required
               />
+              <small>En fazla {remaining.toLocaleString("tr-TR")} {transaction.unit}</small>
             </label>
           )}
           <label className="field">
@@ -154,8 +182,8 @@ function TransactionCard({ transaction }: { transaction: Transaction }) {
               onChange={(e) => setNote(e.target.value)}
             />
           </label>
-          <button>Kaydet</button>
-          <button type="button" onClick={() => setMode(null)}>
+          <button disabled={processing}>{processing ? "Kaydediliyor…" : "Kaydet"}</button>
+          <button type="button" disabled={processing} onClick={() => setMode(null)}>
             Vazgeç
           </button>
         </form>
@@ -163,17 +191,17 @@ function TransactionCard({ transaction }: { transaction: Transaction }) {
       {transaction.status === "active" && (
         <footer>
           {can("loans.receive_return") && (
-            <button onClick={() => setMode("return")}>
+            <button onClick={() => openMode("return")}>
               {transaction.itemType === "fixed_asset"
                 ? "Kullanımı bitir"
                 : "İade al"}
             </button>
           )}
           {can("loans.report_damage") && (
-            <button onClick={() => setMode("damaged")}>Hasarlı</button>
+            <button onClick={() => openMode("damaged")}>Hasarlı</button>
           )}
           {can("loans.report_lost") && (
-            <button className="danger" onClick={() => setMode("lost")}>
+            <button className="danger" onClick={() => openMode("lost")}>
               Kayıp
             </button>
           )}
