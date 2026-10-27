@@ -1,8 +1,9 @@
 import AdminLayout from "@/components/AdminLayout";
 import StatusBadge from "@/components/StatusBadge";
 import ListSort from "@/components/ListSort";
+import TableColumns, { ColumnDefinition, initialTableColumns } from "@/components/TableColumns";
 import usePermissions from "@/hooks/usePermissions";
-import { Head, Link, router } from "@inertiajs/react";
+import { Head, Link, router, usePage } from "@inertiajs/react";
 import { FormEvent, useMemo, useState } from "react";
 
 type Item = {
@@ -47,7 +48,7 @@ const statusLabels: Record<string, string> = {
   lost: "Kayıp",
 };
 
-function TransactionCard({ transaction }: { transaction: Transaction }) {
+function TransactionCard({ transaction, columns }: { transaction: Transaction; columns: string[] }) {
   const can = usePermissions();
   const [mode, setMode] = useState<"return" | "damaged" | "lost" | null>(null);
   const [quantity, setQuantity] = useState(transaction.remaining);
@@ -111,39 +112,39 @@ function TransactionCard({ transaction }: { transaction: Transaction }) {
     >
       <header>
         <div>
-          <span>
-            {typeLabels[transaction.itemType]} · {transaction.issuedAt}
-          </span>
-          <h3>{transaction.item}</h3>
-          <p>
+          {(columns.includes("item") || columns.includes("issued_at")) && <span>
+            {columns.includes("item") ? typeLabels[transaction.itemType] : ""}{columns.includes("item") && columns.includes("issued_at") ? " · " : ""}{columns.includes("issued_at") ? transaction.issuedAt : ""}
+          </span>}
+          {columns.includes("item") && <h3>{transaction.item}</h3>}
+          {columns.includes("recipient") && <p>
             {transaction.recipientName}
             {transaction.recipientEmail && <> · {transaction.recipientEmail}</>}
-          </p>
+          </p>}
         </div>
-        <StatusBadge
+        {columns.includes("status") && <StatusBadge
           status={transaction.isOverdue ? "overdue" : transaction.status}
           label={transaction.isOverdue ? "Gecikmiş" : statusLabels[transaction.status]}
-        />
+        />}
       </header>
       <dl>
-        <div>
+        {columns.includes("quantity") && <div>
           <dt>Verilen</dt>
           <dd>
             {Number(transaction.quantity).toLocaleString("tr-TR")}{" "}
             {transaction.unit}
           </dd>
-        </div>
-        <div>
+        </div>}
+        {columns.includes("quantity") && <div>
           <dt>Kalan</dt>
           <dd>
             {Number(transaction.remaining).toLocaleString("tr-TR")}{" "}
             {transaction.unit}
           </dd>
-        </div>
-        <div>
+        </div>}
+        {columns.includes("due_at") && <div>
           <dt>Beklenen iade</dt>
           <dd>{transaction.dueAt ?? "—"}</dd>
-        </div>
+        </div>}
         <div>
           <dt>Kaydeden</dt>
           <dd>{transaction.issuer}</dd>
@@ -225,6 +226,17 @@ export default function Transactions({
   sorting: { sort: string; direction: string };
 }) {
   const can = usePermissions();
+  const page = usePage<{ auth: { user: { permissions: string[]; tablePreferences: Record<string, string[]> } } }>();
+  const canSeeRecipient = page.props.auth.user.permissions.includes("loans.view_personal_data");
+  const columnDefinitions: ColumnDefinition[] = [
+    { key: "item", label: "Malzeme" },
+    ...(canSeeRecipient ? [{ key: "recipient", label: "Teslim alan" }] : []),
+    { key: "quantity", label: "Miktar" },
+    { key: "issued_at", label: "Teslim zamanı" },
+    { key: "due_at", label: "Beklenen iade" },
+    { key: "status", label: "Durum" },
+  ];
+  const [columns, setColumns] = useState(() => initialTableColumns(page.props.auth.user.tablePreferences.loans, columnDefinitions));
   const [data, setData] = useState({
     inventory_item_id: "",
     recipient_name: "",
@@ -378,9 +390,10 @@ export default function Transactions({
         ))}
       </nav>
       <ListSort sort={sorting.sort} direction={sorting.direction} options={[{ value: 'issued_at', label: 'Teslim zamanı' }, { value: 'due_at', label: 'Beklenen iade' }, { value: 'quantity', label: 'Miktar' }, { value: 'status', label: 'Durum' }]} />
+      <TableColumns table="loans" definitions={columnDefinitions} active={columns} setActive={setColumns} reorderable={false} />
       <section className="loan-list">
         {transactions.data.map((x) => (
-          <TransactionCard transaction={x} key={x.id} />
+          <TransactionCard transaction={x} columns={columns} key={x.id} />
         ))}
         {!transactions.data.length && (
           <div className="admin-empty">Bu durumda teslim kaydı bulunmuyor.</div>

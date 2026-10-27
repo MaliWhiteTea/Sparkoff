@@ -968,7 +968,7 @@ export default function Inventory({
         <button>Ara</button>
       </form>
       <ListSort sort={filters.sort} direction={filters.direction} options={[{ value: 'name', label: 'Malzeme adı' }, { value: 'quantity', label: 'Stok miktarı' }, { value: 'minimum_stock', label: 'Kritik stok eşiği' }, { value: 'updated_at', label: 'Son güncelleme' }]} />
-      <TableColumns table="inventory" definitions={columnDefinitions} active={columns} setActive={setColumns} />
+      <TableColumns table="inventory" definitions={columnDefinitions} active={columns} setActive={setColumns} reorderable={false} />
       <section className="inventory-list">
         {items.data.map((x) => (
           <ItemCard

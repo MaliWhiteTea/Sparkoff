@@ -139,6 +139,23 @@ class SettingsNavigationTest extends TestCase
         ])->assertSessionHas('success');
     }
 
+    public function test_loan_recipient_column_requires_personal_data_permission(): void
+    {
+        $role = Role::query()->create(['name' => 'Teslim Görüntüleyici', 'slug' => 'teslim-goruntuleyici']);
+        $role->permissions()->attach(Permission::query()->where('key', 'loans.view')->value('id'));
+        $user = User::factory()->create(['role' => 'operator', 'is_active' => true]);
+        $user->roles()->attach($role);
+
+        $this->actingAs($user)->put(route('admin.settings.personal.table.update'), [
+            'table' => 'loans', 'columns' => ['item', 'recipient'],
+        ])->assertSessionHasErrors('columns.1');
+        $this->assertNull($user->fresh()->table_preferences);
+
+        $this->actingAs($user)->put(route('admin.settings.personal.table.update'), [
+            'table' => 'loans', 'columns' => ['item', 'status'],
+        ])->assertSessionHas('success');
+    }
+
     public function test_table_preferences_reject_unknown_tables_columns_and_duplicates(): void
     {
         $user = User::factory()->create(['role' => 'admin', 'is_active' => true]);
