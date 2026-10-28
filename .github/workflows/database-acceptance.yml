@@ -71,8 +71,20 @@ jobs:
           extensions: ctype, fileinfo, intl, mbstring, openssl, pdo_mysql, tokenizer, xml
           coverage: none
 
+      - name: Node.js'i hazırla
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
       - name: PHP bağımlılıklarını kur
         run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Ön yüzü derle
+        run: |
+          npm ci
+          npm exec tsc -- --noEmit
+          npm run build
 
       - name: Test ortamını hazırla
         run: |
