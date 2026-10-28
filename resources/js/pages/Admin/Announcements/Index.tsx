@@ -1,5 +1,6 @@
 import AdminLayout from '@/components/AdminLayout';
 import { hasFormChanged, useUnsavedChanges } from '@/components/UnsavedChangesGuard';
+import { useSafeDraft } from '@/hooks/useSafeDraft';
 import { Head, router } from '@inertiajs/react';
 import { FormEvent, useState } from 'react';
 
@@ -11,6 +12,7 @@ type Props = { announcements: Announcement[]; roles: Role[]; capabilities: { cre
 const empty: Values = { title: '', body: '', type: 'info', placement: 'all', audience: 'public', is_published: true, is_pinned: false, requires_acknowledgement: false, starts_at: '', ends_at: '', role_ids: [] };
 const audienceLabels = { public: 'Ziyaretçiler', staff: 'Yönetim paneli', both: 'Ziyaretçiler ve yönetim paneli' };
 const typeLabels: Record<string, string> = { info: 'Bilgi', warning: 'Önemli', maintenance: 'Bakım', urgent: 'Acil' };
+const draftFields = ['title', 'body', 'type', 'placement', 'audience', 'is_published', 'is_pinned', 'requires_acknowledgement', 'starts_at', 'ends_at', 'role_ids'] as const;
 
 function Fields({ values, setValues, roles, capabilities }: { values: Values; setValues: (values: Values) => void; roles: Role[]; capabilities: Props['capabilities'] }) {
     const toggleRole = (id: number) => setValues({ ...values, role_ids: values.role_ids.includes(id) ? values.role_ids.filter((roleId) => roleId !== id) : [...values.role_ids, id] });
@@ -29,7 +31,9 @@ function AnnouncementCard({ announcement, roles, capabilities }: { announcement:
     const [editing, setEditing] = useState(false);
     const [processing, setProcessing] = useState(false);
     const [values, setValues] = useState<Values>(initialValues);
-    useUnsavedChanges(editing && hasFormChanged(initialValues, values));
+    const changed = editing && hasFormChanged(initialValues, values);
+    useUnsavedChanges(changed);
+    useSafeDraft({ key: `announcements.edit.${announcement.id}`, source: values, fields: draftFields, enabled: changed });
     const save = (event: FormEvent) => { event.preventDefault(); setProcessing(true); router.patch(`/yonetim/duyurular/${announcement.id}`, values, { preserveScroll: true, onSuccess: () => setEditing(false), onFinish: () => setProcessing(false) }); };
     if (editing) return <form className="admin-panel announcement-form" onSubmit={save}><Fields values={values} setValues={setValues} roles={roles} capabilities={capabilities} /><div className="schedule-edit-actions"><button type="button" onClick={() => setEditing(false)}>Vazgeç</button><button disabled={processing}>Kaydet</button></div></form>;
 
@@ -42,7 +46,9 @@ export default function Announcements({ announcements, roles, capabilities }: Pr
     const [values, setValues] = useState<Values>(initialValues);
     const [processing, setProcessing] = useState(false);
     const [error, setError] = useState('');
-    useUnsavedChanges(hasFormChanged(initialValues, values));
+    const changed = hasFormChanged(initialValues, values);
+    useUnsavedChanges(changed);
+    useSafeDraft({ key: 'announcements.create', source: values, fields: draftFields, enabled: changed });
     const submit = (event: FormEvent) => { event.preventDefault(); setProcessing(true); setError(''); router.post('/yonetim/duyurular', values, { preserveScroll: true, onSuccess: () => setValues({ ...empty, audience: initialAudience }), onError: (errors) => setError(Object.values(errors)[0] ?? 'Duyuru kaydedilemedi.'), onFinish: () => setProcessing(false) }); };
 
     return <AdminLayout><Head title="Duyurular" /><header className="admin-title"><div><span className="booking-kicker">İÇERİK VE EKİP İLETİŞİMİ</span><h1>Duyurular</h1><p>Ziyaretçilere veya yönetim ekibine yönelik duyuruları tek yerden yönetin.</p></div></header>{error && <div className="form-error settings-error">{error}</div>}{(capabilities.createPublic || capabilities.createStaff) && <form className="admin-panel announcement-form" onSubmit={submit}><h2>Yeni duyuru</h2><Fields values={values} setValues={setValues} roles={roles} capabilities={capabilities} /><button className="settings-submit" disabled={processing}>{processing ? 'Kaydediliyor…' : 'Duyuru oluştur'}</button></form>}<section className="announcement-admin-list">{announcements.map((announcement) => <AnnouncementCard announcement={announcement} roles={roles} capabilities={capabilities} key={announcement.id} />)}{announcements.length === 0 && <div className="admin-panel settings-empty">Henüz görüntüleyebileceğiniz bir duyuru yok.</div>}</section></AdminLayout>;

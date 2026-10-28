@@ -3,6 +3,7 @@ import { FieldError, FormErrors, FormErrorSummary } from "@/components/FormError
 import SettingsTabs from "@/components/SettingsTabs";
 import StatusBadge from "@/components/StatusBadge";
 import { hasFormChanged, useUnsavedChanges } from "@/components/UnsavedChangesGuard";
+import { useSafeDraft } from "@/hooks/useSafeDraft";
 import usePermissions from "@/hooks/usePermissions";
 import { Head, router } from "@inertiajs/react";
 import { FormEvent, useState } from "react";
@@ -35,6 +36,9 @@ type Props = {
   statusOptions: StatusOption[];
   scheduleKinds: StatusOption[];
 };
+const printerDraftFields = ["name", "status", "description"] as const;
+const scheduleDraftFields = ["printer_id", "kind", "is_all_day", "starts_at", "ends_at", "reason"] as const;
+const newPrinterDraftFields = ["code", "name", "status", "description"] as const;
 
 function PrinterCard({
   printer,
@@ -52,10 +56,12 @@ function PrinterCard({
   const [description, setDescription] = useState(printer.description ?? "");
   const [processing, setProcessing] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
-  useUnsavedChanges(hasFormChanged(
+  const changed = hasFormChanged(
     { name: printer.name, status: printer.status, description: printer.description ?? "" },
     { name, status, description },
-  ));
+  );
+  useUnsavedChanges(changed);
+  useSafeDraft({ key: `settings.printers.edit.${printer.id}`, source: { name, status, description }, fields: printerDraftFields, enabled: changed });
 
   function save(event: FormEvent) {
     event.preventDefault();
@@ -156,7 +162,9 @@ function ScheduleItem({
   const [editing, setEditing] = useState(false);
   const [values, setValues] = useState(initialValues);
   const [processing, setProcessing] = useState(false);
-  useUnsavedChanges(editing && hasFormChanged(initialValues, values));
+  const changed = editing && hasFormChanged(initialValues, values);
+  useUnsavedChanges(changed);
+  useSafeDraft({ key: `settings.schedule.edit.${item.id}`, source: values, fields: scheduleDraftFields, enabled: changed });
 
   function save(event: FormEvent) {
     event.preventDefault();
@@ -318,8 +326,12 @@ export default function PrinterSettings({
   const [blackout, setBlackout] = useState(emptyBlackout);
   const [error, setError] = useState("");
   const [processing, setProcessing] = useState(false);
-  useUnsavedChanges(hasFormChanged(emptyPrinter, newPrinter));
-  useUnsavedChanges(hasFormChanged(emptyBlackout, blackout));
+  const newPrinterChanged = hasFormChanged(emptyPrinter, newPrinter);
+  const blackoutChanged = hasFormChanged(emptyBlackout, blackout);
+  useUnsavedChanges(newPrinterChanged);
+  useUnsavedChanges(blackoutChanged);
+  useSafeDraft({ key: "settings.printers.create", source: newPrinter, fields: newPrinterDraftFields, enabled: newPrinterChanged });
+  useSafeDraft({ key: "settings.schedule.create", source: blackout, fields: scheduleDraftFields, enabled: blackoutChanged });
 
   function submitPrinter(event: FormEvent) {
     event.preventDefault();

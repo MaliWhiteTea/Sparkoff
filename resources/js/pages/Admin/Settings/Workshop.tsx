@@ -1,6 +1,7 @@
 import AdminLayout from '@/components/AdminLayout';
 import SettingsTabs from '@/components/SettingsTabs';
 import { hasFormChanged, useUnsavedChanges } from '@/components/UnsavedChangesGuard';
+import { useSafeDraft } from '@/hooks/useSafeDraft';
 import { Head, router } from '@inertiajs/react';
 import { FormEvent, useState } from 'react';
 
@@ -14,6 +15,12 @@ export default function WorkshopSettings({ contact: initialContact, hours: initi
     const [error, setError] = useState('');
     const [processing, setProcessing] = useState(false);
     useUnsavedChanges(hasFormChanged({ contact: initialContact, hours: initialHours }, { contact, hours }));
+    useSafeDraft({
+        key: 'settings.workshop-hours',
+        source: { hours },
+        fields: ['hours'] as const,
+        enabled: hasFormChanged(initialHours, hours),
+    });
 
     function updateDay(index: number, changes: Partial<Day>) {
         setHours((current) => current.map((day, dayIndex) => dayIndex === index ? { ...day, ...changes } : day));

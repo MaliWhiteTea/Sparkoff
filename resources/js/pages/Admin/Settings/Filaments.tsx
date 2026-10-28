@@ -3,6 +3,7 @@ import { FieldError, FormErrors, FormErrorSummary } from "@/components/FormError
 import SettingsTabs from "@/components/SettingsTabs";
 import StatusBadge from "@/components/StatusBadge";
 import { hasFormChanged, useUnsavedChanges } from "@/components/UnsavedChangesGuard";
+import { useSafeDraft } from "@/hooks/useSafeDraft";
 import { Head, router } from "@inertiajs/react";
 import { FormEvent, useState } from "react";
 
@@ -41,12 +42,15 @@ const empty = {
   is_available: true,
   unavailable_reason: "",
 };
+const filamentDraftFields = ["material", "color", "brand", "diameter_mm", "spool_weight_grams", "nozzle_temp_min", "nozzle_temp_max", "bed_temp_min", "bed_temp_max", "technical_notes"] as const;
 
 function FilamentCard({ filament }: { filament: Filament }) {
   const [data, setData] = useState({ ...filament });
   const [errors, setErrors] = useState<FormErrors>({});
   const [processing, setProcessing] = useState(false);
-  useUnsavedChanges(hasFormChanged(filament, data));
+  const changed = hasFormChanged(filament, data);
+  useUnsavedChanges(changed);
+  useSafeDraft({ key: `settings.filaments.edit.${filament.id}`, source: data, fields: filamentDraftFields, enabled: changed });
   return (
     <form
       className="filament-admin-card"
@@ -190,7 +194,9 @@ export default function FilamentSettings({
 }) {
   const [data, setData] = useState(empty);
   const [error, setError] = useState("");
-  useUnsavedChanges(hasFormChanged(empty, data));
+  const changed = hasFormChanged(empty, data);
+  useUnsavedChanges(changed);
+  useSafeDraft({ key: "settings.filaments.create", source: data, fields: filamentDraftFields, enabled: changed });
   function submit(event: FormEvent) {
     event.preventDefault();
     router.post("/yonetim/ayarlar/filamentler", data, {

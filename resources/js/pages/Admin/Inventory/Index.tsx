@@ -7,6 +7,7 @@ import SavedFilters from "@/components/SavedFilters";
 import TableColumns, { ColumnDefinition, initialTableColumns } from "@/components/TableColumns";
 import { hasFormChanged, useUnsavedChanges } from "@/components/UnsavedChangesGuard";
 import usePermissions from "@/hooks/usePermissions";
+import { useSafeDraft } from "@/hooks/useSafeDraft";
 import { Head, Link, router, usePage } from "@inertiajs/react";
 import { FormEvent, useState } from "react";
 
@@ -85,6 +86,7 @@ const emptyItem: ItemForm = {
   description: "",
   is_active: true,
 };
+const itemDraftFields = ["name", "sku", "category_id", "location_id", "item_type", "unit", "quantity", "minimum_stock", "public_visibility", "description", "is_active"] as const;
 const typeLabels: Record<string, string> = {
   consumable: "Sarf malzemesi",
   loanable: "Ödünç verilebilir",
@@ -404,7 +406,9 @@ function ItemCard({
   const [error, setError] = useState("");
   const [stock, setStock] = useState({ quantity_change: "", reason: "" });
   const [data, setData] = useState<ItemForm>(initialData);
-  useUnsavedChanges(editing && hasFormChanged(initialData, data));
+  const itemChanged = editing && hasFormChanged(initialData, data);
+  useUnsavedChanges(itemChanged);
+  useSafeDraft({ key: `inventory.edit.${item.id}`, source: data, fields: itemDraftFields, enabled: itemChanged });
   useUnsavedChanges(stocking && hasFormChanged({ quantity_change: "", reason: "" }, stock));
   const save = (e: FormEvent) => {
     e.preventDefault();
@@ -978,7 +982,9 @@ export default function Inventory({
   const [data, setData] = useState<ItemForm>(emptyItem);
   const [error, setError] = useState("");
   const [search, setSearch] = useState(filters.search);
-  useUnsavedChanges(creating && hasFormChanged(emptyItem, data));
+  const createChanged = creating && hasFormChanged(emptyItem, data);
+  useUnsavedChanges(createChanged);
+  useSafeDraft({ key: "inventory.create", source: data, fields: itemDraftFields, enabled: createChanged });
   const canUseBulk = can("inventory.update") || can("inventory.archive");
   const selectableItems = items.data.filter((item) => !item.isArchived);
   const selection = usePageSelection(canUseBulk ? selectableItems.map((item) => item.id) : []);

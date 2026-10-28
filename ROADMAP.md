@@ -243,7 +243,7 @@ Sparkoff Proje Atölyesi
 ### N. Form güvenliği ve taslaklar — üçüncü uygulama paketi
 
 - [x] Kaydedilmemiş değişiklikle sayfadan veya sekmeden ayrılma uyarısı ekle (seçim 12)
-- [ ] Duyuru, malzeme ve sistem ayarı formlarında hassas olmayan yerel taslak saklama ekle (seçim 13)
+- [x] Duyuru, malzeme ve sistem ayarı formlarında hassas olmayan yerel taslak saklama ekle (seçim 13)
 - [ ] Taslağı geri yükle, reddet ve temizle akışlarını oluştur
 - [ ] Parola, kişi bilgisi, e-posta, model dosyası ve teslim verilerinin tarayıcı taslağına yazılmadığını test et
 
@@ -322,4 +322,4 @@ Bu sıra ortak bileşenleri önce kurarak aynı özelliğin farklı sayfalarda t
 
 ## Sıradaki teknik adım
 
-N paketinde sıradaki adım, duyuru, malzeme ve sistem ayarı formlarında hassas olmayan yerel taslak saklama altyapısını kurmaktır.
+N paketinde sıradaki adım, bulunan yerel taslağı geri yükleme, reddetme ve temizleme akışlarını oluşturmaktır.

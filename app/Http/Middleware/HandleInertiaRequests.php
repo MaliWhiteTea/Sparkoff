@@ -35,6 +35,7 @@ class HandleInertiaRequests extends Middleware
                     'interfacePreferences' => $user->interfacePreferences(),
                     'tablePreferences' => $user->table_preferences ?? [],
                     'savedFilters' => $user->saved_filters ?? [],
+                    'draftScope' => hash_hmac('sha256', (string) $user->getAuthIdentifier(), (string) config('app.key')),
                 ] : null,
             ],
             'staffAnnouncements' => $staffAnnouncements,
