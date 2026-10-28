@@ -25,6 +25,7 @@ class ActivityLogPresenterTest extends TestCase
             'Silinen model dosyası',
             'Kayıtlı filtreler',
             'Etkilenen malzeme: 2',
+            'Atlanan kayıt: 1',
             'Arşivlenme zamanı',
         ], $presenter->fields([
             'permissions',
@@ -35,6 +36,7 @@ class ActivityLogPresenterTest extends TestCase
             'files_deleted',
             'saved_filters',
             'item_count:2',
+            'failure_count:1',
             'archived_at',
         ]));
     }

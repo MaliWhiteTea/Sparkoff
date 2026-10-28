@@ -41,6 +41,7 @@ class ActivityLogPresenter
         'closed_by' => 'Kapatan kullanıcı', 'completed_at' => 'Tamamlanma zamanı',
         'created_count' => 'Eklenen malzeme', 'description' => 'Açıklama', 'due_at' => 'Beklenen iade',
         'email' => 'E-posta', 'id' => 'Kayıt numarası', 'interface_preferences' => 'Arayüz tercihleri',
+        'failure_count' => 'Atlanan kayıt',
         'inventory_item_id' => 'Malzeme', 'is_active' => 'Aktiflik', 'is_pinned' => 'Sabitleme',
         'item_count' => 'Etkilenen malzeme',
         'is_published' => 'Yayın durumu', 'issued_at' => 'Teslim zamanı', 'issued_by' => 'Teslim eden',

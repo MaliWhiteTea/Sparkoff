@@ -12,6 +12,7 @@ use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class InventoryBulkUpdateTest extends TestCase
@@ -55,7 +56,7 @@ class InventoryBulkUpdateTest extends TestCase
             'inventory_bulk_location_updated',
             'inventory_bulk_visibility_updated',
         ], $logs->pluck('action')->all());
-        $this->assertTrue($logs->every(fn (ActivityLog $log) => $log->changed_fields[0] === 'item_count:2'));
+        $this->assertTrue($logs->every(fn (ActivityLog $log) => array_slice($log->changed_fields, 0, 2) === ['item_count:2', 'failure_count:0']));
     }
 
     public function test_archiver_can_bulk_archive_without_deleting_history(): void
@@ -75,7 +76,7 @@ class InventoryBulkUpdateTest extends TestCase
             'subject_id' => null,
         ]);
         $this->assertSame(
-            ['item_count:2', 'is_active', 'archived_at'],
+            ['item_count:2', 'failure_count:0', 'is_active', 'archived_at'],
             ActivityLog::query()->where('action', 'inventory_bulk_archive_updated')->sole()->changed_fields,
         );
     }
@@ -97,23 +98,48 @@ class InventoryBulkUpdateTest extends TestCase
         $this->assertDatabaseCount('activity_logs', 0);
     }
 
-    public function test_bulk_update_is_confirmed_validated_and_all_or_nothing_for_archived_items(): void
+    public function test_bulk_update_is_confirmed_and_reports_partial_failures(): void
     {
-        $editor = $this->userWithPermissions(['inventory.update']);
+        $editor = $this->userWithPermissions(['inventory.update', 'inventory.view']);
         $active = $this->item('Aktif');
         $archived = $this->item('Arşivli', ['is_active' => false, 'archived_at' => now()]);
 
         $this->actingAs($editor)->patch(route('admin.inventory.bulk-update'), [
             'operation' => 'visibility', 'item_ids' => [$active->id], 'public_visibility' => 'hidden',
         ])->assertSessionHasErrors('confirmed');
+        $missingId = max($active->id, $archived->id) + 100;
         $this->patch(route('admin.inventory.bulk-update'), [
-            'operation' => 'visibility', 'item_ids' => [$active->id, $archived->id],
+            'operation' => 'visibility', 'item_ids' => [$active->id, $archived->id, $missingId],
             'public_visibility' => 'hidden', 'confirmed' => true,
-        ])->assertSessionHasErrors('item_ids');
+        ])->assertSessionHas('warning')
+            ->assertSessionHas('bulk_result', fn (array $result) => $result['successCount'] === 1
+                && $result['failureCount'] === 2
+                && $result['failures'][0]['name'] === 'Arşivli'
+                && $result['failures'][1]['id'] === $missingId);
 
-        $this->assertSame(InventoryVisibility::Status, $active->fresh()->public_visibility);
+        $this->assertSame(InventoryVisibility::Hidden, $active->fresh()->public_visibility);
         $this->assertSame(InventoryVisibility::Status, $archived->fresh()->public_visibility);
-        $this->assertDatabaseCount('activity_logs', 0);
+        $this->assertSame(
+            ['item_count:1', 'failure_count:2', 'public_visibility'],
+            ActivityLog::query()->sole()->changed_fields,
+        );
+        $this->get(route('admin.inventory.index'))->assertInertia(fn (Assert $page) => $page
+            ->where('flash.bulkResult.successCount', 1)
+            ->where('flash.bulkResult.failureCount', 2)
+            ->where('flash.bulkResult.failures.0.name', 'Arşivli'));
+    }
+
+    public function test_partial_failure_report_hides_item_names_without_inventory_view_permission(): void
+    {
+        $editor = $this->userWithPermissions(['inventory.update']);
+        $archived = $this->item('Gizli arşiv adı', ['is_active' => false, 'archived_at' => now()]);
+
+        $this->actingAs($editor)->patch(route('admin.inventory.bulk-update'), [
+            'operation' => 'visibility', 'item_ids' => [$archived->id],
+            'public_visibility' => 'hidden', 'confirmed' => true,
+        ])->assertSessionHas('bulk_result', fn (array $result) => $result['successCount'] === 0
+            && $result['failureCount'] === 1
+            && $result['failures'][0]['name'] === "Kayıt #{$archived->id}");
     }
 
     private function userWithPermissions(array $permissions): User

@@ -238,7 +238,7 @@ Sparkoff Proje Atölyesi
 - [x] Yetkiliye özel kayıtlı filtreler ve varsayılana dönme işlemi ekle (seçim 9)
 - [x] Seçim kutuları ve ortak toplu işlem çubuğu altyapısını kur (seçim 10)
 - [x] Envanterde toplu kategori, konum, görünürlük ve arşiv işlemlerini yetki/onay/denetim kaydıyla ekle
-- [ ] Toplu işlemlerde etkilenecek kayıt özetini ve kısmi hata raporunu göster
+- [x] Toplu işlemlerde etkilenecek kayıt özetini ve kısmi hata raporunu göster
 
 ### N. Form güvenliği ve taslaklar — üçüncü uygulama paketi
 
@@ -322,4 +322,4 @@ Bu sıra ortak bileşenleri önce kurarak aynı özelliğin farklı sayfalarda t
 
 ## Sıradaki teknik adım
 
-M paketinde sıradaki adım, toplu işlemlerde etkilenecek kayıt özetini ve kısmi hata raporunu göstermektir.
+N paketinde sıradaki adım, kaydedilmemiş değişiklikle sayfadan veya sekmeden ayrılma uyarısını ortak ve erişilebilir bir altyapıyla eklemektir.

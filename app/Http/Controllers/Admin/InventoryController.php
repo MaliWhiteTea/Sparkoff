@@ -160,7 +160,7 @@ class InventoryController extends Controller
 
         $data = $request->validate([
             'item_ids' => ['required', 'array', 'min:1', 'max:100'],
-            'item_ids.*' => ['required', 'integer', 'distinct', 'exists:inventory_items,id'],
+            'item_ids.*' => ['required', 'integer', 'distinct'],
             'confirmed' => ['required', 'accepted'],
         ]);
         $data['operation'] = $operation;
@@ -179,17 +179,36 @@ class InventoryController extends Controller
         };
         $ids = collect($data['item_ids'])->map(fn ($id) => (int) $id)->sort()->values();
 
-        DB::transaction(function () use ($ids, $changes, $data, $request) {
-            $items = InventoryItem::query()->whereIn('id', $ids)->orderBy('id')->lockForUpdate()->get();
-            if ($items->contains(fn (InventoryItem $item) => $item->archived_at !== null)) {
-                throw ValidationException::withMessages([
-                    'item_ids' => $data['operation'] === 'archive'
-                        ? 'Seçimde zaten arşivlenmiş bir malzeme bulunuyor.'
-                        : 'Arşivlenmiş malzemeler toplu olarak düzenlenemez.',
-                ]);
+        $result = DB::transaction(function () use ($ids, $changes, $data, $request) {
+            $items = InventoryItem::query()->whereIn('id', $ids)->orderBy('id')->lockForUpdate()->get()->keyBy('id');
+            $canSeeNames = $request->user()->hasPermissionTo('inventory.view');
+            $failures = collect();
+            $eligibleIds = collect();
+
+            foreach ($ids as $id) {
+                $item = $items->get($id);
+                if (! $item) {
+                    $failures->push(['id' => $id, 'name' => "Kayıt #{$id}", 'reason' => 'Malzeme artık bulunamadı.']);
+
+                    continue;
+                }
+                if ($item->archived_at !== null) {
+                    $failures->push([
+                        'id' => $id,
+                        'name' => $canSeeNames ? $item->name : "Kayıt #{$id}",
+                        'reason' => $data['operation'] === 'archive'
+                            ? 'Malzeme zaten arşivlenmiş.'
+                            : 'Arşivlenmiş malzeme düzenlenemez.',
+                    ]);
+
+                    continue;
+                }
+                $eligibleIds->push($id);
             }
 
-            InventoryItem::query()->whereIn('id', $ids)->update($changes);
+            if ($eligibleIds->isNotEmpty()) {
+                InventoryItem::query()->whereIn('id', $eligibleIds)->update($changes);
+            }
             $fields = match ($data['operation']) {
                 'category' => ['category_id'],
                 'location' => ['location_id'],
@@ -201,9 +220,16 @@ class InventoryController extends Controller
                 'action' => "inventory_bulk_{$data['operation']}_updated",
                 'subject_type' => InventoryItem::class,
                 'subject_id' => null,
-                'changed_fields' => ["item_count:{$items->count()}", ...$fields],
+                'changed_fields' => ["item_count:{$eligibleIds->count()}", "failure_count:{$failures->count()}", ...$fields],
                 'created_at' => now(),
             ]);
+
+            return [
+                'operation' => $data['operation'],
+                'successCount' => $eligibleIds->count(),
+                'failureCount' => $failures->count(),
+                'failures' => $failures->values()->all(),
+            ];
         }, 3);
 
         $message = match ($data['operation']) {
@@ -213,7 +239,15 @@ class InventoryController extends Controller
             'archive' => 'Seçili malzemeler arşivlendi; hareket geçmişleri korundu.',
         };
 
-        return back()->with('success', $message);
+        $response = back()->with('bulk_result', $result);
+        if ($result['failureCount'] === 0) {
+            return $response->with('success', $message);
+        }
+        if ($result['successCount'] === 0) {
+            return $response->with('warning', 'Toplu işlem uygulanamadı. Atlanan kayıtların nedenlerini inceleyin.');
+        }
+
+        return $response->with('warning', "{$result['successCount']} malzeme güncellendi, {$result['failureCount']} kayıt atlandı.");
     }
 
     public function archive(InventoryItem $item): RedirectResponse

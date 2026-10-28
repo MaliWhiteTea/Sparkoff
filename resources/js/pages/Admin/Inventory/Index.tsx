@@ -52,6 +52,12 @@ type PageData = {
   data: Item[];
   links: { url: string | null; label: string; active: boolean }[];
 };
+type BulkResult = {
+  operation: "category" | "location" | "visibility" | "archive";
+  successCount: number;
+  failureCount: number;
+  failures: { id: number; name: string; reason: string }[];
+};
 type ItemForm = {
   name: string;
   sku: string;
@@ -99,20 +105,21 @@ const movementLabels: Record<string, string> = {
 type BulkOperation = "" | "category" | "location" | "visibility" | "archive";
 
 function InventoryBulkActions({
-  selectedIds,
+  selectedItems,
   categories,
   locations,
   canUpdate,
   canArchive,
   onSuccess,
 }: {
-  selectedIds: (number | string)[];
+  selectedItems: Item[];
   categories: Option[];
   locations: Location[];
   canUpdate: boolean;
   canArchive: boolean;
   onSuccess: () => void;
 }) {
+  const selectedIds = selectedItems.map((item) => item.id);
   const [operation, setOperation] = useState<BulkOperation>("");
   const [target, setTarget] = useState("");
   const [confirming, setConfirming] = useState(false);
@@ -192,6 +199,12 @@ function InventoryBulkActions({
       onClose={() => { if (!processing) { setConfirming(false); setError(""); } }}
       onConfirm={submit}
     >
+      <div className="bulk-confirm-summary">
+        <dl><div><dt>Seçili kayıt</dt><dd>{selectedItems.length} malzeme</dd></div><div><dt>Uygulanacak işlem</dt><dd>{operationLabel}</dd></div>{operation !== "archive" && <div><dt>Yeni değer</dt><dd>{targetLabel}</dd></div>}</dl>
+        <strong>Etkilenecek malzemeler</strong>
+        <ul>{selectedItems.slice(0, 8).map((item) => <li key={item.id}>{item.name}</li>)}</ul>
+        {selectedItems.length > 8 && <small>ve {selectedItems.length - 8} malzeme daha</small>}
+      </div>
       {error && <div className="form-error" role="alert">{error}</div>}
     </ConfirmDialog>
   </>;
@@ -935,7 +948,7 @@ export default function Inventory({
   recentMovements: Movement[];
 }) {
   const can = usePermissions();
-  const page = usePage<{ auth: { user: { isSystemAdministrator: boolean; tablePreferences: Record<string, string[]> } } }>();
+  const page = usePage<{ auth: { user: { isSystemAdministrator: boolean; tablePreferences: Record<string, string[]> } }; flash: { bulkResult?: BulkResult } }>();
   const isSystemAdministrator = page.props.auth.user.isSystemAdministrator;
   const columnDefinitions: ColumnDefinition[] = [
     { key: "name", label: "Malzeme adı" },
@@ -952,6 +965,8 @@ export default function Inventory({
   const canUseBulk = can("inventory.update") || can("inventory.archive");
   const selectableItems = items.data.filter((item) => !item.isArchived);
   const selection = usePageSelection(canUseBulk ? selectableItems.map((item) => item.id) : []);
+  const selectedItems = selectableItems.filter((item) => selection.selected.has(item.id));
+  const bulkResult = page.props.flash.bulkResult;
   const filter = (changes: Record<string, string>) =>
     router.get(
       "/yonetim/envanter",
@@ -1097,8 +1112,12 @@ export default function Inventory({
       <ListSort sort={filters.sort} direction={filters.direction} options={[{ value: 'name', label: 'Malzeme adı' }, { value: 'quantity', label: 'Stok miktarı' }, { value: 'minimum_stock', label: 'Kritik stok eşiği' }, { value: 'updated_at', label: 'Son güncelleme' }]} />
       <TableColumns table="inventory" definitions={columnDefinitions} active={columns} setActive={setColumns} reorderable={false} />
       {canUseBulk && selectableItems.length > 0 && <BulkSelection selectedCount={selection.selectedCount} pageCount={selection.pageCount} allSelected={selection.allSelected} partiallySelected={selection.partiallySelected} onTogglePage={selection.togglePage} onClear={selection.clear}>
-        <InventoryBulkActions selectedIds={selection.selectedIds} categories={categories} locations={locations} canUpdate={can("inventory.update")} canArchive={can("inventory.archive")} onSuccess={selection.clear} />
+        <InventoryBulkActions selectedItems={selectedItems} categories={categories} locations={locations} canUpdate={can("inventory.update")} canArchive={can("inventory.archive")} onSuccess={selection.clear} />
       </BulkSelection>}
+      {bulkResult && <section className={`bulk-result ${bulkResult.failureCount > 0 ? "has-failures" : "is-success"}`} role="status">
+        <header><div><strong>Toplu işlem sonucu</strong><span>{bulkResult.successCount} başarılı · {bulkResult.failureCount} atlandı</span></div></header>
+        {bulkResult.failureCount > 0 && <><p>Atlanan kayıtlar değiştirilmedi. Aşağıdaki nedenleri inceleyip gerekirse yeniden deneyin.</p><ul>{bulkResult.failures.map((failure) => <li key={failure.id}><strong>{failure.name}</strong><span>{failure.reason}</span></li>)}</ul></>}
+      </section>}
       <section className="inventory-list">
         {items.data.map((x) => (
           <ItemCard

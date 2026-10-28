@@ -43,6 +43,7 @@ class HandleInertiaRequests extends Middleware
                 'bookingSubmitted' => fn () => $request->session()->get('booking_submitted'),
                 'success' => fn () => $request->session()->get('success'),
                 'warning' => fn () => $request->session()->get('warning'),
+                'bulkResult' => fn () => $request->session()->get('bulk_result'),
             ],
         ];
     }
