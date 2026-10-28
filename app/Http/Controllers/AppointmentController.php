@@ -14,6 +14,7 @@ use App\Models\Filament;
 use App\Models\Printer;
 use App\Models\Setting;
 use App\Services\AppointmentAvailabilityService;
+use App\Services\ExpireUnverifiedAppointments;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -219,8 +220,11 @@ class AppointmentController extends Controller
         ]);
     }
 
-    public function showVerification(string $publicId, string $token): Response
-    {
+    public function showVerification(
+        string $publicId,
+        string $token,
+        ExpireUnverifiedAppointments $expiration,
+    ): Response {
         $appointment = Appointment::query()
             ->where('public_id', $publicId)
             ->firstOrFail();
@@ -233,21 +237,26 @@ class AppointmentController extends Controller
 
         abort_unless($appointment->status === AppointmentStatus::PendingVerification, 404);
 
+        $expired = $expiration->isDue($appointment, now());
+
         return Inertia::render('VerificationResult', [
             'verified' => false,
-            'expired' => $appointment->verification_expires_at?->isPast() ?? true,
-            'message' => $appointment->verification_expires_at?->isPast()
+            'expired' => $expired,
+            'message' => $expired
                 ? 'Doğrulama bağlantısının süresi dolmuş. Yeni bir randevu talebi oluşturabilirsiniz.'
                 : 'Randevu talebinizi yönetici incelemesine göndermek için doğrulamayı tamamlayın.',
             'confirmUrl' => route('booking.verify.confirm', compact('publicId', 'token')),
         ]);
     }
 
-    public function verify(string $publicId, string $token): Response
-    {
+    public function verify(
+        string $publicId,
+        string $token,
+        ExpireUnverifiedAppointments $expiration,
+    ): Response {
         $trackingToken = Str::random(64);
 
-        $result = DB::transaction(function () use ($publicId, $token, $trackingToken) {
+        $result = DB::transaction(function () use ($publicId, $token, $trackingToken, $expiration) {
             $lockedAppointment = Appointment::query()
                 ->where('public_id', $publicId)
                 ->lockForUpdate()
@@ -260,17 +269,7 @@ class AppointmentController extends Controller
                 404,
             );
 
-            if ($lockedAppointment->verification_expires_at?->isPast()) {
-                $lockedAppointment->update([
-                    'status' => AppointmentStatus::Expired,
-                    'verification_token_hash' => null,
-                ]);
-                $lockedAppointment->statusHistory()->create([
-                    'from_status' => AppointmentStatus::PendingVerification,
-                    'to_status' => AppointmentStatus::Expired,
-                    'note' => 'E-posta doğrulama süresi doldu.',
-                ]);
-
+            if ($expiration->expire($lockedAppointment, now())) {
                 return ['expired' => true, 'appointment' => $lockedAppointment];
             }
 

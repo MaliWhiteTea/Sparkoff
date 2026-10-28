@@ -4,6 +4,7 @@ use App\Models\InventoryTransaction;
 use App\Models\Role;
 use App\Models\Setting;
 use App\Models\User;
+use App\Services\ExpireUnverifiedAppointments;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -87,4 +88,12 @@ Artisan::command('loans:anonymize', function () {
     return self::SUCCESS;
 })->purpose('Saklama süresi dolan tamamlanmış teslim kayıtlarındaki kişisel verileri siler');
 
+Artisan::command('appointments:expire-verifications', function (ExpireUnverifiedAppointments $expiration) {
+    $count = $expiration->expireDue(now());
+    $this->info("{$count} doğrulama bekleyen randevunun süresi doldu.");
+
+    return self::SUCCESS;
+})->purpose('Süresi dolan e-posta doğrulama bekleyen randevuları sonlandırır');
+
 Schedule::command('loans:anonymize')->dailyAt('03:10')->withoutOverlapping();
+Schedule::command('appointments:expire-verifications')->everyMinute()->withoutOverlapping();

@@ -117,6 +117,21 @@ class AppointmentVerificationAndTrackingTest extends TestCase
         $this->assertSame(AppointmentStatus::Expired, $appointment->fresh()->status);
     }
 
+    public function test_a_pending_verification_without_a_deadline_is_not_presented_as_expired(): void
+    {
+        $token = Str::random(64);
+        $appointment = $this->createPendingAppointment($token);
+        $appointment->update(['verification_expires_at' => null]);
+
+        $this->get(route('booking.verify', [
+            'publicId' => $appointment->public_id,
+            'token' => $token,
+        ]))->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->component('VerificationResult')
+            ->where('verified', false)
+            ->where('expired', false));
+    }
+
     public function test_a_verification_token_cannot_be_used_twice(): void
     {
         Mail::fake();
