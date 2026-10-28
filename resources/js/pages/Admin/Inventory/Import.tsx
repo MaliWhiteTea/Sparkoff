@@ -5,9 +5,9 @@ import { FormEvent, useEffect, useState } from 'react';
 
 type Upload = { name: string; headers: string[]; rowCount: number; sample: Record<string, string>[]; mapping: Record<string, string>; unmappedHeaders: string[] };
 type AnalysisRow = { line: number; name: string; sku: string | null; category: string; location: string; type: string; unit: string; quantity: string; errors: string[] };
-type Props = { upload: Upload | null; fields: Record<string, string>; analysis: { totalCount: number; validCount: number; errorCount: number; rows: AnalysisRow[]; errorRows: AnalysisRow[] } | null };
+type Props = { upload: Upload | null; fields: Record<string, string>; analysis: { totalCount: number; validCount: number; errorCount: number; rows: AnalysisRow[]; errorRows: AnalysisRow[] } | null; canViewInventory: boolean };
 
-export default function InventoryImport({ upload, fields, analysis }: Props) {
+export default function InventoryImport({ upload, fields, analysis, canViewInventory }: Props) {
     const fileForm = useForm<{ file: File | null }>({ file: null });
     const mappingForm = useForm<{ mapping: Record<string, string>; file?: string }>({ mapping: upload?.mapping ?? {} });
     const confirmForm = useForm<{ import?: string; file?: string }>({});
@@ -16,7 +16,7 @@ export default function InventoryImport({ upload, fields, analysis }: Props) {
     const uploadFile = (event: FormEvent) => { event.preventDefault(); fileForm.post('/yonetim/envanter-ice-aktar', { forceFormData: true }); };
     const preview = (event: FormEvent) => { event.preventDefault(); mappingForm.post('/yonetim/envanter-ice-aktar/onizleme', { preserveScroll: true }); };
 
-    return <AdminLayout><Head title="Envanter İçe Aktarma" /><header className="admin-title inventory-title"><div><span className="booking-kicker">ATÖLYE ENVANTERİ</span><h1>CSV içe aktar</h1><p>Dosyanızı kontrol edin, sütunları eşleyin ve yalnızca geçerli satırları aktarın.</p></div><div><Link href="/yonetim/envanter">Envantere dön</Link></div></header>
+    return <AdminLayout><Head title="Envanter İçe Aktarma" /><header className="admin-title inventory-title"><div><span className="booking-kicker">ATÖLYE ENVANTERİ</span><h1>CSV içe aktar</h1><p>Dosyanızı kontrol edin, sütunları eşleyin ve yalnızca geçerli satırları aktarın.</p></div>{canViewInventory && <div><Link href="/yonetim/envanter">Envantere dön</Link></div>}</header>
         {!upload && <form className="admin-panel import-upload" onSubmit={uploadFile}><h2>1. CSV dosyasını yükleyin</h2><p>UTF-8 kodlamalı, virgül veya noktalı virgülle ayrılmış en fazla 2 MB dosya kullanın.</p><label className="field"><span>CSV dosyası</span><input type="file" accept=".csv,text/csv,text/plain" required onChange={(event) => fileForm.setData('file', event.target.files?.[0] ?? null)} /></label>{fileForm.errors.file && <div className="form-error">{fileForm.errors.file}</div>}<button className="settings-submit" disabled={fileForm.processing}>Dosyayı oku</button></form>}
         {upload && <><section className="admin-panel import-file"><div><span>YÜKLENEN DOSYA</span><strong>{upload.name}</strong><small>{upload.headers.length} sütun · {upload.rowCount} veri satırı · ilk {upload.sample.length} satır gösteriliyor</small></div><button type="button" onClick={() => router.delete('/yonetim/envanter-ice-aktar')}>Dosyayı kaldır</button></section>
             {(fileForm.errors.file || mappingForm.errors.file || confirmForm.errors.file) && <div className="form-error">{fileForm.errors.file || mappingForm.errors.file || confirmForm.errors.file}</div>}

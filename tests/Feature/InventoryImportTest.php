@@ -37,6 +37,10 @@ class InventoryImportTest extends TestCase
         $this->actingAs($viewer)->post(route('admin.inventory.import.upload'))->assertForbidden();
         $this->actingAs($viewer)->post(route('admin.inventory.import.preview'))->assertForbidden();
         $this->actingAs($viewer)->post(route('admin.inventory.import.confirm'))->assertForbidden();
+
+        $importerWithView = $this->userWithPermissions(['inventory.import', 'inventory.view']);
+        $this->actingAs($importerWithView)->get(route('admin.inventory.import.index'))->assertInertia(fn (Assert $page) => $page
+            ->where('canViewInventory', true));
     }
 
     public function test_csv_can_be_mapped_previewed_and_imported_with_initial_stock(): void
@@ -62,7 +66,14 @@ class InventoryImportTest extends TestCase
         $this->post(route('admin.inventory.import.preview'), ['mapping' => $mapping])->assertSessionHas('success');
         $this->get(route('admin.inventory.import.index'))->assertInertia(fn (Assert $page) => $page
             ->where('analysis.validCount', 2)->where('analysis.errorCount', 0));
-        $this->post(route('admin.inventory.import.confirm'))->assertRedirect(route('admin.inventory.index'));
+        $this->post(route('admin.inventory.import.confirm'))
+            ->assertRedirect(route('admin.inventory.import.index'))
+            ->assertSessionHas('success', '2 malzeme envantere aktarıldı.');
+        $this->get(route('admin.inventory.import.index'))->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->where('canViewInventory', false)
+            ->where('flash.success', '2 malzeme envantere aktarıldı.')
+            ->where('upload', null));
+        $this->get(route('admin.inventory.index'))->assertForbidden();
 
         $arduino = InventoryItem::query()->where('sku', 'ARD-01')->firstOrFail();
         $this->assertSame('30.000', $arduino->quantity);
@@ -169,7 +180,7 @@ class InventoryImportTest extends TestCase
         $this->get(route('admin.inventory.import.index'))->assertInertia(fn (Assert $page) => $page
             ->where('analysis.validCount', count($expected))
             ->where('analysis.errorCount', 0));
-        $this->post(route('admin.inventory.import.confirm'))->assertRedirect(route('admin.inventory.index'));
+        $this->post(route('admin.inventory.import.confirm'))->assertRedirect(route('admin.inventory.import.index'));
 
         $this->assertDatabaseCount('inventory_items', count($expected));
         foreach ($expected as $sku => $values) {
@@ -260,7 +271,7 @@ class InventoryImportTest extends TestCase
             ->where('analysis.rows.4.errors.0', 'Miktar 0 ile 9.999.999.999 arasında ve en fazla üç ondalık basamaklı olmalıdır.')
             ->where('analysis.rows.5.errors.0', 'Miktar 0 ile 9.999.999.999 arasında ve en fazla üç ondalık basamaklı olmalıdır.'));
 
-        $this->post(route('admin.inventory.import.confirm'))->assertRedirect(route('admin.inventory.index'));
+        $this->post(route('admin.inventory.import.confirm'))->assertRedirect(route('admin.inventory.import.index'));
         $this->assertSame('0.000', InventoryItem::query()->where('name', 'Sıfır')->firstOrFail()->quantity);
         $this->assertSame('0.001', InventoryItem::query()->where('name', 'En küçük')->firstOrFail()->quantity);
         $this->assertSame('1.250', InventoryItem::query()->where('name', 'Ondalık virgül')->firstOrFail()->quantity);

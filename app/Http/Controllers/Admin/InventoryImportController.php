@@ -58,6 +58,7 @@ class InventoryImportController extends Controller
             ] : null,
             'fields' => self::FIELDS,
             'analysis' => $analysis,
+            'canViewInventory' => $request->user()->hasPermissionTo('inventory.view'),
         ]);
     }
 
@@ -147,7 +148,7 @@ class InventoryImportController extends Controller
         $count = $analysis['validCount'];
         $this->clearState($request);
 
-        return redirect()->route('admin.inventory.index')->with('success', "{$count} malzeme envantere aktarıldı.");
+        return redirect()->route('admin.inventory.import.index')->with('success', "{$count} malzeme envantere aktarıldı.");
     }
 
     public function cancel(Request $request): RedirectResponse
