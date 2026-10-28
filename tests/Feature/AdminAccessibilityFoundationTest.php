@@ -99,6 +99,18 @@ class AdminAccessibilityFoundationTest extends TestCase
         $this->assertStringContainsString('body.public-menu-open', $styles);
     }
 
+    public function test_printer_page_constrains_horizontal_scrollers_without_clipping_the_document(): void
+    {
+        $page = file_get_contents(resource_path('js/pages/Printers.tsx'));
+        $styles = file_get_contents(resource_path('css/app.css'));
+
+        $this->assertStringContainsString('aria-label="Yazıcı durumları" tabIndex={0}', $page);
+        $this->assertStringContainsString('aria-label="Yedi günlük yazıcı takvimi" tabIndex={0}', $page);
+        $this->assertStringContainsString('.printer-portal,.printer-module-hero,.printer-module-section,.printer-info-grid { width: 100%; min-width: 0; }', $styles);
+        $this->assertStringContainsString('.public-printer-grid,.schedule-printer-tabs,.schedule-day-grid { width: 100%; max-width: 100%; min-width: 0;', $styles);
+        $this->assertStringNotContainsString('.printer-portal { overflow-x: hidden', $styles);
+    }
+
     public function test_inventory_media_keeps_accessibility_and_safe_link_contracts(): void
     {
         $catalog = file_get_contents(resource_path('js/pages/Materials.tsx'));

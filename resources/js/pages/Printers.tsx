@@ -140,7 +140,7 @@ export default function Printers({
             <h2>Anlık durum</h2>
           </div>
         </div>
-        <div className="public-printer-grid">
+        <div className="public-printer-grid" role="region" aria-label="Yazıcı durumları" tabIndex={0}>
           {printers.map((printer) => (
             <article
               key={printer.code}
@@ -189,7 +189,7 @@ export default function Printers({
             </button>
           ))}
         </div>
-        <div className="schedule-day-grid">
+        <div className="schedule-day-grid" role="region" aria-label="Yedi günlük yazıcı takvimi" tabIndex={0}>
           {days.map(({ date, blocks }, index) => (
             <article
               key={date.toISOString()}
