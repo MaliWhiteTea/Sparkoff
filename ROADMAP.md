@@ -245,7 +245,7 @@ Sparkoff Proje Atölyesi
 - [x] Kaydedilmemiş değişiklikle sayfadan veya sekmeden ayrılma uyarısı ekle (seçim 12)
 - [x] Duyuru, malzeme ve sistem ayarı formlarında hassas olmayan yerel taslak saklama ekle (seçim 13)
 - [x] Taslağı geri yükle, reddet ve temizle akışlarını oluştur
-- [ ] Parola, kişi bilgisi, e-posta, model dosyası ve teslim verilerinin tarayıcı taslağına yazılmadığını test et
+- [x] Parola, kişi bilgisi, e-posta, model dosyası ve teslim verilerinin tarayıcı taslağına yazılmadığını test et
 
 ### O. Yönetim çalışma alanı — dördüncü uygulama paketi
 
@@ -322,4 +322,4 @@ Bu sıra ortak bileşenleri önce kurarak aynı özelliğin farklı sayfalarda t
 
 ## Sıradaki teknik adım
 
-N paketinde sıradaki adım, parola, kişi bilgisi, e-posta, model dosyası ve teslim verilerinin tarayıcı taslağına yazılmadığını güvenlik testleriyle doğrulamaktır.
+N paketi tamamlandı. Sıradaki teknik adım, O paketinde yetkiye göre şekillenen yönetim genel bakış ekranını oluşturmaktır.

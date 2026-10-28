@@ -7,6 +7,7 @@ import ListSort from "@/components/ListSort";
 import SavedFilters from "@/components/SavedFilters";
 import TableColumns, { ColumnDefinition, initialTableColumns } from "@/components/TableColumns";
 import { hasFormChanged, useUnsavedChanges } from "@/components/UnsavedChangesGuard";
+import { safeDraftFields } from "@/config/safeDraftFields";
 import usePermissions from "@/hooks/usePermissions";
 import { useSafeDraft } from "@/hooks/useSafeDraft";
 import { Head, Link, router, usePage } from "@inertiajs/react";
@@ -87,7 +88,6 @@ const emptyItem: ItemForm = {
   description: "",
   is_active: true,
 };
-const itemDraftFields = ["name", "sku", "category_id", "location_id", "item_type", "unit", "quantity", "minimum_stock", "public_visibility", "description", "is_active"] as const;
 const typeLabels: Record<string, string> = {
   consumable: "Sarf malzemesi",
   loanable: "Ödünç verilebilir",
@@ -409,7 +409,7 @@ function ItemCard({
   const [data, setData] = useState<ItemForm>(initialData);
   const itemChanged = editing && hasFormChanged(initialData, data);
   useUnsavedChanges(itemChanged);
-  const { draft, clearDraft } = useSafeDraft({ key: `inventory.edit.${item.id}`, source: data, fields: itemDraftFields, enabled: itemChanged });
+  const { draft, clearDraft } = useSafeDraft({ key: `inventory.edit.${item.id}`, source: data, fields: safeDraftFields.inventoryItem, enabled: itemChanged });
   useUnsavedChanges(stocking && hasFormChanged({ quantity_change: "", reason: "" }, stock));
   const save = (e: FormEvent) => {
     e.preventDefault();
@@ -986,7 +986,7 @@ export default function Inventory({
   const [search, setSearch] = useState(filters.search);
   const createChanged = creating && hasFormChanged(emptyItem, data);
   useUnsavedChanges(createChanged);
-  const { draft, clearDraft } = useSafeDraft({ key: "inventory.create", source: data, fields: itemDraftFields, enabled: createChanged });
+  const { draft, clearDraft } = useSafeDraft({ key: "inventory.create", source: data, fields: safeDraftFields.inventoryItem, enabled: createChanged });
   const canUseBulk = can("inventory.update") || can("inventory.archive");
   const selectableItems = items.data.filter((item) => !item.isArchived);
   const selection = usePageSelection(canUseBulk ? selectableItems.map((item) => item.id) : []);

@@ -2,6 +2,7 @@ import AdminLayout from '@/components/AdminLayout';
 import DraftRecoveryNotice from '@/components/DraftRecoveryNotice';
 import SettingsTabs from '@/components/SettingsTabs';
 import { hasFormChanged, useUnsavedChanges } from '@/components/UnsavedChangesGuard';
+import { safeDraftFields } from '@/config/safeDraftFields';
 import { useSafeDraft } from '@/hooks/useSafeDraft';
 import usePermissions from '@/hooks/usePermissions';
 import { Head, router } from '@inertiajs/react';
@@ -24,7 +25,7 @@ export default function BookingRules({ hours: initialHours, settings, supportedE
     const [processing, setProcessing] = useState(false);
     const changed = hasFormChanged({ hours: initialHours, values: settings }, { hours, values });
     useUnsavedChanges(changed);
-    const { draft, clearDraft } = useSafeDraft({ key: 'settings.booking-rules', source: { hours, values }, fields: ['hours', 'values'] as const, enabled: changed });
+    const { draft, clearDraft } = useSafeDraft({ key: 'settings.booking-rules', source: { hours, values }, fields: safeDraftFields.bookingRules, enabled: changed });
 
     function updateDay(index: number, changes: Partial<Day>) {
         setHours((current) => current.map((day, dayIndex) => dayIndex === index ? { ...day, ...changes } : day));

@@ -2,6 +2,7 @@ import AdminLayout from '@/components/AdminLayout';
 import DraftRecoveryNotice from '@/components/DraftRecoveryNotice';
 import SettingsTabs from '@/components/SettingsTabs';
 import { hasFormChanged, useUnsavedChanges } from '@/components/UnsavedChangesGuard';
+import { safeDraftFields } from '@/config/safeDraftFields';
 import { useSafeDraft } from '@/hooks/useSafeDraft';
 import { Head, router } from '@inertiajs/react';
 import { FormEvent, useState } from 'react';
@@ -19,7 +20,7 @@ export default function WorkshopSettings({ contact: initialContact, hours: initi
     const { draft, clearDraft } = useSafeDraft({
         key: 'settings.workshop-hours',
         source: { hours },
-        fields: ['hours'] as const,
+        fields: safeDraftFields.workshopHours,
         enabled: hasFormChanged(initialHours, hours),
     });
 

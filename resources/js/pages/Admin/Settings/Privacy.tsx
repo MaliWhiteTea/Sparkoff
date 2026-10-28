@@ -2,6 +2,7 @@ import AdminLayout from '@/components/AdminLayout';
 import DraftRecoveryNotice from '@/components/DraftRecoveryNotice';
 import SettingsTabs from '@/components/SettingsTabs';
 import { hasFormChanged, useUnsavedChanges } from '@/components/UnsavedChangesGuard';
+import { safeDraftFields } from '@/config/safeDraftFields';
 import { useSafeDraft } from '@/hooks/useSafeDraft';
 import { Head, router } from '@inertiajs/react';
 import { FormEvent, useState } from 'react';
@@ -14,7 +15,7 @@ export default function PrivacySettings({ settings }: { settings: Values }) {
     const { draft, clearDraft } = useSafeDraft({
         key: 'settings.privacy-retention',
         source: values,
-        fields: ['appointmentRetentionMonths', 'fileRetentionDays', 'noticeVersion', 'isDraft'] as const,
+        fields: safeDraftFields.privacyRetention,
         enabled: hasFormChanged(
             { appointmentRetentionMonths: settings.appointmentRetentionMonths, fileRetentionDays: settings.fileRetentionDays, noticeVersion: settings.noticeVersion, isDraft: settings.isDraft },
             { appointmentRetentionMonths: values.appointmentRetentionMonths, fileRetentionDays: values.fileRetentionDays, noticeVersion: values.noticeVersion, isDraft: values.isDraft },
