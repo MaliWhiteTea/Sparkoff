@@ -1,4 +1,5 @@
 import AdminLayout from "@/components/AdminLayout";
+import BulkSelection, { SelectionCheckbox, usePageSelection } from "@/components/BulkSelection";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import StatusBadge from "@/components/StatusBadge";
 import ListSort from "@/components/ListSort";
@@ -253,12 +254,16 @@ function ItemCard({
   locations,
   canPurge,
   columns,
+  selected,
+  onSelectionChange,
 }: {
   item: Item;
   categories: Option[];
   locations: Location[];
   canPurge: boolean;
   columns: string[];
+  selected: boolean;
+  onSelectionChange: (checked: boolean) => void;
 }) {
   const can = usePermissions();
   const [editing, setEditing] = useState(false);
@@ -313,8 +318,8 @@ function ItemCard({
   };
   if (editing)
     return (
-      <form className="admin-panel inventory-edit" onSubmit={save}>
-        <h2>{item.name}</h2>
+      <form className={`admin-panel inventory-edit ${selected ? "is-selected" : ""}`} onSubmit={save}>
+        <div className="inventory-edit-heading"><SelectionCheckbox checked={selected} label={`${item.name} malzemesinin seçimini değiştir`} onChange={onSelectionChange} /><h2>{item.name}</h2></div>
         {error && <div className="form-error">{error}</div>}
         <Fields
           data={data}
@@ -338,10 +343,11 @@ function ItemCard({
     );
   return (
     <article
-      className={`admin-panel inventory-item ${item.isLow ? "low" : ""}`}
+      className={`admin-panel inventory-item ${item.isLow ? "low" : ""} ${selected ? "is-selected" : ""}`}
     >
       <div className="inventory-item-main">
-        <div>
+        <SelectionCheckbox checked={selected} label={`${item.name} malzemesini seç`} onChange={onSelectionChange} />
+        <div className="inventory-item-summary">
           {columns.includes("name") && <><span>{item.sku || typeLabels[item.itemType]}</span><h3>{item.name}</h3></>}
           {(columns.includes("category") || columns.includes("location")) && <p>{[
             columns.includes("category") ? item.category : null,
@@ -840,6 +846,7 @@ export default function Inventory({
   const [data, setData] = useState<ItemForm>(emptyItem);
   const [error, setError] = useState("");
   const [search, setSearch] = useState(filters.search);
+  const selection = usePageSelection(items.data.map((item) => item.id));
   const filter = (changes: Record<string, string>) =>
     router.get(
       "/yonetim/envanter",
@@ -984,6 +991,7 @@ export default function Inventory({
       <SavedFilters table="inventory" path="/yonetim/envanter" current={{ search: filters.search, category: filters.category, type: filters.type, status: filters.status }} />
       <ListSort sort={filters.sort} direction={filters.direction} options={[{ value: 'name', label: 'Malzeme adı' }, { value: 'quantity', label: 'Stok miktarı' }, { value: 'minimum_stock', label: 'Kritik stok eşiği' }, { value: 'updated_at', label: 'Son güncelleme' }]} />
       <TableColumns table="inventory" definitions={columnDefinitions} active={columns} setActive={setColumns} reorderable={false} />
+      <BulkSelection selectedCount={selection.selectedCount} pageCount={selection.pageCount} allSelected={selection.allSelected} partiallySelected={selection.partiallySelected} onTogglePage={selection.togglePage} onClear={selection.clear} />
       <section className="inventory-list">
         {items.data.map((x) => (
           <ItemCard
@@ -992,6 +1000,8 @@ export default function Inventory({
             locations={locations}
             canPurge={isSystemAdministrator}
             columns={columns}
+            selected={selection.selected.has(x.id)}
+            onSelectionChange={(checked) => selection.setSelected(x.id, checked)}
             key={x.id}
           />
         ))}
