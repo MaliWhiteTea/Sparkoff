@@ -195,10 +195,12 @@ export default function BookingForm({ settings, filaments }: BookingProps) {
     const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
     if (!settings.allowedFileExtensions.includes(extension)) {
       event.target.value = "";
+      setData((current) => ({ ...current, file: null }));
       return setError(`İzin verilen dosya türleri: ${settings.allowedFileExtensions.map((item) => item.toUpperCase()).join(", ")}.`);
     }
     if (file.size > settings.effectiveMaximumFileSizeMb * 1024 * 1024) {
       event.target.value = "";
+      setData((current) => ({ ...current, file: null }));
       return setError(`Dosya boyutu ${settings.effectiveMaximumFileSizeMb} MB sınırını aşamaz.`);
     }
     update("file", file);

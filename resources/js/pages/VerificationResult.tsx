@@ -20,16 +20,43 @@ export default function VerificationResult({ verified, expired = false, message,
     }
 
     const awaitingConfirmation = !verified && !expired && Boolean(confirmUrl);
+    const state = verified ? 'verified' : expired ? 'expired' : awaitingConfirmation ? 'pending' : 'invalid';
+    const content = {
+        verified: {
+            pageTitle: 'E-posta Doğrulandı',
+            heading: 'E-posta adresiniz doğrulandı',
+            symbol: '✓',
+            symbolClass: 'success',
+        },
+        pending: {
+            pageTitle: 'E-posta Doğrulaması Bekleniyor',
+            heading: 'E-posta adresinizi doğrulayın',
+            symbol: '@',
+            symbolClass: '',
+        },
+        expired: {
+            pageTitle: 'Doğrulama Bağlantısının Süresi Doldu',
+            heading: 'Doğrulama bağlantısının süresi doldu',
+            symbol: '!',
+            symbolClass: 'error',
+        },
+        invalid: {
+            pageTitle: 'Doğrulama Tamamlanamadı',
+            heading: 'Doğrulama tamamlanamadı',
+            symbol: '!',
+            symbolClass: 'error',
+        },
+    }[state];
 
     return (
         <main className="result-page public-page-shell">
-            <Head title={verified ? 'E-posta Doğrulandı' : 'Doğrulama Başarısız'} />
+            <Head title={content.pageTitle} />
             <section className="result-card">
-                <div className={`result-symbol ${verified ? 'success' : awaitingConfirmation ? '' : 'error'}`} aria-hidden="true">
-                    {verified ? '✓' : awaitingConfirmation ? '@' : '!'}
+                <div className={`result-symbol ${content.symbolClass}`} aria-hidden="true">
+                    {content.symbol}
                 </div>
                 <span className="booking-kicker">SPARKOFF PROJE ATÖLYESİ</span>
-                <h1>{verified ? 'E-posta adresiniz doğrulandı' : 'Doğrulama tamamlanamadı'}</h1>
+                <h1>{content.heading}</h1>
                 <p>{message}</p>
                 <div className="result-actions">
                     {awaitingConfirmation && <button className="booking-primary" type="button" disabled={confirming} onClick={confirmVerification}>{confirming ? 'Doğrulanıyor…' : 'E-postamı doğrula'}</button>}
