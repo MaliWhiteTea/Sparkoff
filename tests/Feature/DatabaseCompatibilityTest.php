@@ -38,10 +38,11 @@ class DatabaseCompatibilityTest extends TestCase
 
         $this->assertNotEmpty($tables);
         foreach ($tables as $table) {
+            $table = array_change_key_case((array) $table, CASE_LOWER);
             $this->assertStringStartsWith(
                 'utf8mb4_',
-                strtolower($table->table_collation),
-                "{$table->table_name} tablosu utf8mb4 collation kullanmıyor.",
+                strtolower($table['table_collation']),
+                "{$table['table_name']} tablosu utf8mb4 collation kullanmıyor.",
             );
         }
 
