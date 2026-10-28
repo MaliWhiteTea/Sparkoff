@@ -96,6 +96,107 @@ const movementLabels: Record<string, string> = {
   reversal: "Geri alma",
 };
 
+type BulkOperation = "" | "category" | "location" | "visibility" | "archive";
+
+function InventoryBulkActions({
+  selectedIds,
+  categories,
+  locations,
+  canUpdate,
+  canArchive,
+  onSuccess,
+}: {
+  selectedIds: (number | string)[];
+  categories: Option[];
+  locations: Location[];
+  canUpdate: boolean;
+  canArchive: boolean;
+  onSuccess: () => void;
+}) {
+  const [operation, setOperation] = useState<BulkOperation>("");
+  const [target, setTarget] = useState("");
+  const [confirming, setConfirming] = useState(false);
+  const [processing, setProcessing] = useState(false);
+  const [error, setError] = useState("");
+  const ready = selectedIds.length > 0 && operation !== "" && (operation === "archive" || target !== "");
+  const operationLabel = operation === "category" ? "Kategori değiştir"
+    : operation === "location" ? "Konum değiştir"
+      : operation === "visibility" ? "Katalog görünürlüğünü değiştir"
+        : operation === "archive" ? "Arşivle" : "Toplu işlem";
+  const targetLabel = operation === "category"
+    ? target === "none" ? "Kategorisiz" : categories.find((item) => target === `id:${item.id}`)?.name
+    : operation === "location"
+      ? target === "none" ? "Konumsuz" : locations.find((item) => target === `id:${item.id}`)?.name
+      : operation === "visibility" ? visibilityLabels[target] : null;
+
+  const changeOperation = (value: BulkOperation) => {
+    setOperation(value);
+    setTarget("");
+    setError("");
+  };
+  const submit = () => {
+    if (!ready) return;
+    const payload: {
+      operation: Exclude<BulkOperation, "">;
+      item_ids: (number | string)[];
+      confirmed: boolean;
+      category_id?: number | null;
+      location_id?: number | null;
+      public_visibility?: string;
+    } = {
+      operation,
+      item_ids: selectedIds,
+      confirmed: true,
+    };
+    if (operation === "category") payload.category_id = target === "none" ? null : Number(target.replace("id:", ""));
+    if (operation === "location") payload.location_id = target === "none" ? null : Number(target.replace("id:", ""));
+    if (operation === "visibility") payload.public_visibility = target;
+
+    setProcessing(true);
+    setError("");
+    router.patch("/yonetim/envanter/toplu", payload, {
+      preserveScroll: true,
+      errorBag: "inventoryBulk",
+      onSuccess: () => {
+        setConfirming(false);
+        setOperation("");
+        setTarget("");
+        onSuccess();
+      },
+      onError: (errors) => setError(Object.values(errors)[0] ?? "Toplu işlem tamamlanamadı."),
+      onFinish: () => setProcessing(false),
+    });
+  };
+
+  return <>
+    <select aria-label="Toplu işlem" value={operation} disabled={selectedIds.length === 0 || processing} onChange={(event) => changeOperation(event.target.value as BulkOperation)}>
+      <option value="">Toplu işlem seçin</option>
+      {canUpdate && <><option value="category">Kategori değiştir</option><option value="location">Konum değiştir</option><option value="visibility">Katalog görünürlüğünü değiştir</option></>}
+      {canArchive && <option value="archive">Arşivle</option>}
+    </select>
+    {operation === "category" && <select aria-label="Hedef kategori" value={target} disabled={processing} onChange={(event) => setTarget(event.target.value)}><option value="">Hedef kategori seçin</option><option value="none">Kategoriyi kaldır</option>{categories.filter((item) => item.isActive).map((item) => <option value={`id:${item.id}`} key={item.id}>{item.name}</option>)}</select>}
+    {operation === "location" && <select aria-label="Hedef konum" value={target} disabled={processing} onChange={(event) => setTarget(event.target.value)}><option value="">Hedef konum seçin</option><option value="none">Konumu kaldır</option>{locations.filter((item) => item.isActive).map((item) => <option value={`id:${item.id}`} key={item.id}>{item.code} · {item.name}</option>)}</select>}
+    {operation === "visibility" && <select aria-label="Katalog görünürlüğü" value={target} disabled={processing} onChange={(event) => setTarget(event.target.value)}><option value="">Görünürlük seçin</option>{Object.entries(visibilityLabels).map(([value, label]) => <option value={value} key={value}>{label}</option>)}</select>}
+    <button type="button" className={operation === "archive" ? "danger" : ""} disabled={!ready || processing} onClick={() => { setError(""); setConfirming(true); }}>Devam et</button>
+    <ConfirmDialog
+      open={confirming}
+      eyebrow="TOPLU ENVANTER İŞLEMİ"
+      title={`${selectedIds.length} malzeme için “${operationLabel}” işlemi uygulansın mı?`}
+      description={operation === "archive"
+        ? "Seçili malzemeler kullanımdan kaldırılıp arşivlenecek. Stok hareketleri ve teslim geçmişleri korunacak."
+        : <>Seçili malzemelerin yeni değeri <strong>{targetLabel}</strong> olacak.</>}
+      confirmLabel={operation === "archive" ? "Malzemeleri arşivle" : "Toplu değişikliği uygula"}
+      tone={operation === "archive" ? "danger" : "primary"}
+      processing={processing}
+      confirmDisabled={!ready}
+      onClose={() => { if (!processing) { setConfirming(false); setError(""); } }}
+      onConfirm={submit}
+    >
+      {error && <div className="form-error" role="alert">{error}</div>}
+    </ConfirmDialog>
+  </>;
+}
+
 function Fields({
   data,
   setData,
@@ -254,6 +355,7 @@ function ItemCard({
   locations,
   canPurge,
   columns,
+  selectable,
   selected,
   onSelectionChange,
 }: {
@@ -262,6 +364,7 @@ function ItemCard({
   locations: Location[];
   canPurge: boolean;
   columns: string[];
+  selectable: boolean;
   selected: boolean;
   onSelectionChange: (checked: boolean) => void;
 }) {
@@ -319,7 +422,7 @@ function ItemCard({
   if (editing)
     return (
       <form className={`admin-panel inventory-edit ${selected ? "is-selected" : ""}`} onSubmit={save}>
-        <div className="inventory-edit-heading"><SelectionCheckbox checked={selected} label={`${item.name} malzemesinin seçimini değiştir`} onChange={onSelectionChange} /><h2>{item.name}</h2></div>
+        <div className="inventory-edit-heading">{selectable && <SelectionCheckbox checked={selected} label={`${item.name} malzemesinin seçimini değiştir`} onChange={onSelectionChange} />}<h2>{item.name}</h2></div>
         {error && <div className="form-error">{error}</div>}
         <Fields
           data={data}
@@ -346,7 +449,7 @@ function ItemCard({
       className={`admin-panel inventory-item ${item.isLow ? "low" : ""} ${selected ? "is-selected" : ""}`}
     >
       <div className="inventory-item-main">
-        <SelectionCheckbox checked={selected} label={`${item.name} malzemesini seç`} onChange={onSelectionChange} />
+        {selectable && <SelectionCheckbox checked={selected} label={`${item.name} malzemesini seç`} onChange={onSelectionChange} />}
         <div className="inventory-item-summary">
           {columns.includes("name") && <><span>{item.sku || typeLabels[item.itemType]}</span><h3>{item.name}</h3></>}
           {(columns.includes("category") || columns.includes("location")) && <p>{[
@@ -846,7 +949,9 @@ export default function Inventory({
   const [data, setData] = useState<ItemForm>(emptyItem);
   const [error, setError] = useState("");
   const [search, setSearch] = useState(filters.search);
-  const selection = usePageSelection(items.data.map((item) => item.id));
+  const canUseBulk = can("inventory.update") || can("inventory.archive");
+  const selectableItems = items.data.filter((item) => !item.isArchived);
+  const selection = usePageSelection(canUseBulk ? selectableItems.map((item) => item.id) : []);
   const filter = (changes: Record<string, string>) =>
     router.get(
       "/yonetim/envanter",
@@ -991,7 +1096,9 @@ export default function Inventory({
       <SavedFilters table="inventory" path="/yonetim/envanter" current={{ search: filters.search, category: filters.category, type: filters.type, status: filters.status }} />
       <ListSort sort={filters.sort} direction={filters.direction} options={[{ value: 'name', label: 'Malzeme adı' }, { value: 'quantity', label: 'Stok miktarı' }, { value: 'minimum_stock', label: 'Kritik stok eşiği' }, { value: 'updated_at', label: 'Son güncelleme' }]} />
       <TableColumns table="inventory" definitions={columnDefinitions} active={columns} setActive={setColumns} reorderable={false} />
-      <BulkSelection selectedCount={selection.selectedCount} pageCount={selection.pageCount} allSelected={selection.allSelected} partiallySelected={selection.partiallySelected} onTogglePage={selection.togglePage} onClear={selection.clear} />
+      {canUseBulk && selectableItems.length > 0 && <BulkSelection selectedCount={selection.selectedCount} pageCount={selection.pageCount} allSelected={selection.allSelected} partiallySelected={selection.partiallySelected} onTogglePage={selection.togglePage} onClear={selection.clear}>
+        <InventoryBulkActions selectedIds={selection.selectedIds} categories={categories} locations={locations} canUpdate={can("inventory.update")} canArchive={can("inventory.archive")} onSuccess={selection.clear} />
+      </BulkSelection>}
       <section className="inventory-list">
         {items.data.map((x) => (
           <ItemCard
@@ -1000,6 +1107,7 @@ export default function Inventory({
             locations={locations}
             canPurge={isSystemAdministrator}
             columns={columns}
+            selectable={canUseBulk && !x.isArchived}
             selected={selection.selected.has(x.id)}
             onSelectionChange={(checked) => selection.setSelected(x.id, checked)}
             key={x.id}

@@ -14,6 +14,7 @@ class ActivityLogPresenterTest extends TestCase
 
         $this->assertSame('Okudu', $presenter->action('read'));
         $this->assertSame('Veri saklama politikasını uyguladı', $presenter->action('retention_applied'));
+        $this->assertSame('Malzemeleri toplu arşivledi', $presenter->action('inventory_bulk_archive_updated'));
         $this->assertSame('Duyuru', $presenter->subject(Announcement::class));
         $this->assertSame([
             'İzinler',
@@ -23,6 +24,8 @@ class ActivityLogPresenterTest extends TestCase
             'Silinen randevu',
             'Silinen model dosyası',
             'Kayıtlı filtreler',
+            'Etkilenen malzeme: 2',
+            'Arşivlenme zamanı',
         ], $presenter->fields([
             'permissions',
             'target_roles',
@@ -31,6 +34,8 @@ class ActivityLogPresenterTest extends TestCase
             'appointments_deleted',
             'files_deleted',
             'saved_filters',
+            'item_count:2',
+            'archived_at',
         ]));
     }
 

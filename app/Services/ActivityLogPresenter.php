@@ -12,6 +12,10 @@ class ActivityLogPresenter
         'acknowledged' => 'Okuduğunu onayladı',
         'inventory_imported' => 'Envanteri CSV dosyasından içe aktardı',
         'inventory_test_data_purged' => 'Test malzemelerini kalıcı olarak temizledi',
+        'inventory_bulk_category_updated' => 'Malzeme kategorilerini toplu güncelledi',
+        'inventory_bulk_location_updated' => 'Malzeme konumlarını toplu güncelledi',
+        'inventory_bulk_visibility_updated' => 'Katalog görünürlüğünü toplu güncelledi',
+        'inventory_bulk_archive_updated' => 'Malzemeleri toplu arşivledi',
         'retention_applied' => 'Veri saklama politikasını uyguladı',
     ];
 
@@ -33,11 +37,12 @@ class ActivityLogPresenter
     ];
 
     private const FIELDS = [
-        'audience' => 'Hedef kitle', 'body' => 'İçerik', 'category_id' => 'Kategori',
+        'archived_at' => 'Arşivlenme zamanı', 'audience' => 'Hedef kitle', 'body' => 'İçerik', 'category_id' => 'Kategori',
         'closed_by' => 'Kapatan kullanıcı', 'completed_at' => 'Tamamlanma zamanı',
         'created_count' => 'Eklenen malzeme', 'description' => 'Açıklama', 'due_at' => 'Beklenen iade',
         'email' => 'E-posta', 'id' => 'Kayıt numarası', 'interface_preferences' => 'Arayüz tercihleri',
         'inventory_item_id' => 'Malzeme', 'is_active' => 'Aktiflik', 'is_pinned' => 'Sabitleme',
+        'item_count' => 'Etkilenen malzeme',
         'is_published' => 'Yayın durumu', 'issued_at' => 'Teslim zamanı', 'issued_by' => 'Teslim eden',
         'item_type' => 'Malzeme türü', 'items' => 'Silinen malzeme', 'location_id' => 'Konum',
         'minimum_stock' => 'Minimum stok', 'movements' => 'Silinen stok hareketi', 'name' => 'Ad',

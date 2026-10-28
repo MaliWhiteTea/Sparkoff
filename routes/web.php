@@ -66,6 +66,7 @@ Route::prefix('yonetim')->name('admin.')->group(function () {
         Route::post('/envanter-ice-aktar/onayla', [AdminInventoryImportController::class, 'confirm'])->middleware('permission:inventory.import')->name('inventory.import.confirm');
         Route::delete('/envanter-ice-aktar', [AdminInventoryImportController::class, 'cancel'])->middleware('permission:inventory.import')->name('inventory.import.cancel');
         Route::post('/envanter', [AdminInventoryController::class, 'store'])->middleware('permission:inventory.create')->name('inventory.store');
+        Route::patch('/envanter/toplu', [AdminInventoryController::class, 'bulkUpdate'])->name('inventory.bulk-update');
         Route::put('/envanter/{item}', [AdminInventoryController::class, 'update'])->middleware('permission:inventory.update')->name('inventory.update');
         Route::delete('/envanter/{item}', [AdminInventoryController::class, 'destroy'])->middleware('system.admin')->name('inventory.destroy');
         Route::post('/envanter/{item}/medya', [AdminInventoryMediaController::class, 'store'])->middleware('permission:inventory.manage_media')->name('inventory.media.store');

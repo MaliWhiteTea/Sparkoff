@@ -237,7 +237,7 @@ Sparkoff Proje Atölyesi
 - [x] Görünür sütun ve sütun sırası tercihlerini yalnız ilgili yetkiliye özel sakla; hassas sütunları yetkiyle sınırla (seçim 6)
 - [x] Yetkiliye özel kayıtlı filtreler ve varsayılana dönme işlemi ekle (seçim 9)
 - [x] Seçim kutuları ve ortak toplu işlem çubuğu altyapısını kur (seçim 10)
-- [ ] Envanterde toplu kategori, konum, görünürlük ve arşiv işlemlerini yetki/onay/denetim kaydıyla ekle
+- [x] Envanterde toplu kategori, konum, görünürlük ve arşiv işlemlerini yetki/onay/denetim kaydıyla ekle
 - [ ] Toplu işlemlerde etkilenecek kayıt özetini ve kısmi hata raporunu göster
 
 ### N. Form güvenliği ve taslaklar — üçüncü uygulama paketi
@@ -322,4 +322,4 @@ Bu sıra ortak bileşenleri önce kurarak aynı özelliğin farklı sayfalarda t
 
 ## Sıradaki teknik adım
 
-M paketinde sıradaki adım, envanter toplu işlemlerini yetki, onay ve denetim kaydı sınırlarıyla ortak seçim altyapısına bağlamaktır.
+M paketinde sıradaki adım, toplu işlemlerde etkilenecek kayıt özetini ve kısmi hata raporunu göstermektir.

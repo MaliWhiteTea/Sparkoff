@@ -150,6 +150,72 @@ class InventoryController extends Controller
         return back()->with('success', 'Malzeme bilgileri güncellendi.');
     }
 
+    public function bulkUpdate(Request $request): RedirectResponse
+    {
+        $operation = $request->validate([
+            'operation' => ['required', Rule::in(['category', 'location', 'visibility', 'archive'])],
+        ])['operation'];
+        $permission = $operation === 'archive' ? 'inventory.archive' : 'inventory.update';
+        abort_unless($request->user()->hasPermissionTo($permission), 403);
+
+        $data = $request->validate([
+            'item_ids' => ['required', 'array', 'min:1', 'max:100'],
+            'item_ids.*' => ['required', 'integer', 'distinct', 'exists:inventory_items,id'],
+            'confirmed' => ['required', 'accepted'],
+        ]);
+        $data['operation'] = $operation;
+
+        $changes = match ($data['operation']) {
+            'category' => ['category_id' => $request->validate([
+                'category_id' => ['present', 'nullable', 'integer', 'exists:inventory_categories,id'],
+            ])['category_id']],
+            'location' => ['location_id' => $request->validate([
+                'location_id' => ['present', 'nullable', 'integer', 'exists:inventory_locations,id'],
+            ])['location_id']],
+            'visibility' => ['public_visibility' => $request->validate([
+                'public_visibility' => ['required', Rule::enum(InventoryVisibility::class)],
+            ])['public_visibility']],
+            'archive' => ['is_active' => false, 'archived_at' => now()],
+        };
+        $ids = collect($data['item_ids'])->map(fn ($id) => (int) $id)->sort()->values();
+
+        DB::transaction(function () use ($ids, $changes, $data, $request) {
+            $items = InventoryItem::query()->whereIn('id', $ids)->orderBy('id')->lockForUpdate()->get();
+            if ($items->contains(fn (InventoryItem $item) => $item->archived_at !== null)) {
+                throw ValidationException::withMessages([
+                    'item_ids' => $data['operation'] === 'archive'
+                        ? 'Seçimde zaten arşivlenmiş bir malzeme bulunuyor.'
+                        : 'Arşivlenmiş malzemeler toplu olarak düzenlenemez.',
+                ]);
+            }
+
+            InventoryItem::query()->whereIn('id', $ids)->update($changes);
+            $fields = match ($data['operation']) {
+                'category' => ['category_id'],
+                'location' => ['location_id'],
+                'visibility' => ['public_visibility'],
+                'archive' => ['is_active', 'archived_at'],
+            };
+            ActivityLog::query()->create([
+                'user_id' => $request->user()->id,
+                'action' => "inventory_bulk_{$data['operation']}_updated",
+                'subject_type' => InventoryItem::class,
+                'subject_id' => null,
+                'changed_fields' => ["item_count:{$items->count()}", ...$fields],
+                'created_at' => now(),
+            ]);
+        }, 3);
+
+        $message = match ($data['operation']) {
+            'category' => 'Seçili malzemelerin kategorisi güncellendi.',
+            'location' => 'Seçili malzemelerin konumu güncellendi.',
+            'visibility' => 'Seçili malzemelerin katalog görünürlüğü güncellendi.',
+            'archive' => 'Seçili malzemeler arşivlendi; hareket geçmişleri korundu.',
+        };
+
+        return back()->with('success', $message);
+    }
+
     public function archive(InventoryItem $item): RedirectResponse
     {
         if (! $item->archived_at) {
