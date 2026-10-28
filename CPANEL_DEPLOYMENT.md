@@ -101,6 +101,9 @@ canlıyla aynı PHP ve MySQL/MariaDB sürümlerini kullanan, yalnızca sentetik 
 içeren ayrı bir kabul veritabanı hazırlayın. `RefreshDatabase` kullanan testleri
 canlı veritabanına kesinlikle bağlamayın.
 
+28 Ekim 2026 tarihli son kabul sonucu ve açık maddeler:
+[DEPLOYMENT_ACCEPTANCE_2026-10-28.md](./DEPLOYMENT_ACCEPTANCE_2026-10-28.md)
+
 ### Veritabanı ve eşzamanlı işlemler
 
 - [ ] Kabul ortamında `DB_CONNECTION=mysql` veya `mariadb` kullanılıyor;
