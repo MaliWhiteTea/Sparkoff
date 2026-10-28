@@ -1,0 +1,88 @@
+name: Veritabanı kabulü
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  database-tests:
+    name: ${{ matrix.name }} / PHP 8.4
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: MySQL 8.4
+            image: mysql:8.4
+            connection: mysql
+          - name: MariaDB 10.11
+            image: mariadb:10.11
+            connection: mariadb
+
+    services:
+      database:
+        image: ${{ matrix.image }}
+        env:
+          MYSQL_DATABASE: sparkoff_testing
+          MYSQL_USER: sparkoff
+          MYSQL_PASSWORD: sparkoff_test_password
+          MYSQL_ROOT_PASSWORD: sparkoff_root_password
+          MARIADB_DATABASE: sparkoff_testing
+          MARIADB_USER: sparkoff
+          MARIADB_PASSWORD: sparkoff_test_password
+          MARIADB_ROOT_PASSWORD: sparkoff_root_password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -psparkoff_root_password --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    env:
+      APP_ENV: testing
+      APP_DEBUG: false
+      DB_CONNECTION: ${{ matrix.connection }}
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_DATABASE: sparkoff_testing
+      DB_USERNAME: sparkoff
+      DB_PASSWORD: sparkoff_test_password
+      DB_CHARSET: utf8mb4
+      DB_COLLATION: utf8mb4_unicode_ci
+      MAIL_MAILER: array
+      CACHE_STORE: array
+      SESSION_DRIVER: array
+      QUEUE_CONNECTION: sync
+      ONLINE_BOOKING_ENABLED: true
+
+    steps:
+      - name: Kaynak kodu al
+        uses: actions/checkout@v7
+
+      - name: PHP'yi hazırla
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          extensions: ctype, fileinfo, intl, mbstring, openssl, pdo_mysql, tokenizer, xml
+          coverage: none
+
+      - name: PHP bağımlılıklarını kur
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Test ortamını hazırla
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Migration ve seed işlemlerini doğrula
+        run: |
+          php artisan migrate:fresh --seed --force
+          php artisan migrate:status
+
+      - name: Uygulama testlerini çalıştır
+        run: php artisan test

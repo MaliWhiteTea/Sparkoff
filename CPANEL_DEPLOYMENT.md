@@ -110,9 +110,11 @@ canlı veritabanına kesinlikle bağlamayın.
   göstermiyor.
 - [ ] Veritabanı ve tablolar `utf8mb4` karakter setiyle Türkçe metinleri bozmadan
   saklıyor. Kullanılan collation adı ve sunucu sürümü yayın kaydına ekleniyor.
-- [ ] `phpunit.xml` içindeki SQLite zorlamasını kullanmayan ayrı bir kabul testi
-  yapılandırması ve yalnız kabul veritabanına yetkili kullanıcı hazırlanıyor;
-  tam test paketi bu MySQL/MariaDB yapılandırmasında geçiyor. Özellikle son sistem
+- [ ] GitHub Actions içindeki `Veritabanı kabulü` işi MySQL ve MariaDB için
+  geçiyor. Canlıya benzer ayrıca bir kabul ortamı kullanılıyorsa yalnız kabul
+  veritabanına yetkili kullanıcı hazırlanıyor ve tam test paketi burada da
+  geçiyor. `RefreshDatabase` kullanan bu iş canlı veritabanına bağlanmıyor.
+  Özellikle son sistem
   yöneticisini kaldırma, aynı zaman aralığını eşzamanlı ayırma, stok düşme ve
   kısmi iade senaryoları ayrıca iki tarayıcı oturumuyla deneniyor.
 - [ ] Başarısız eşzamanlı işlem HTTP 500 veya kısmi veri üretmiyor; kullanıcıya
