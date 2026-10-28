@@ -36,7 +36,7 @@ type Hours = {
   closesAt: string | null;
 };
 type ScheduleBlock = {
-  id: number;
+  id: string;
   printer: string;
   printerCode: string | null;
   kind: "busy" | "maintenance" | "closed";

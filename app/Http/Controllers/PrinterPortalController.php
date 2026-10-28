@@ -4,39 +4,34 @@ namespace App\Http\Controllers;
 
 use App\Enums\PrinterStatus;
 use App\Models\Announcement;
-use App\Models\BlackoutPeriod;
 use App\Models\Filament;
 use App\Models\OperatingHour;
 use App\Models\Printer;
 use App\Models\Setting;
+use App\Services\PublicPrinterScheduleService;
+use Carbon\CarbonImmutable;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class PrinterPortalController extends Controller
 {
-    public function __invoke(): Response
+    public function __invoke(PublicPrinterScheduleService $publicSchedule): Response
     {
-        $calendarStart = now()->startOfDay();
-        $calendarEnd = $calendarStart->copy()->addDays(7);
-        $now = now();
-        $currentBlocks = BlackoutPeriod::query()
-            ->where('starts_at', '<=', $now)
-            ->where('ends_at', '>', $now)
-            ->get();
-        $globalBlock = $currentBlocks->firstWhere('printer_id', null);
+        $now = CarbonImmutable::now(config('app.timezone'));
+        $calendarStart = $now->startOfDay();
+        $calendarEnd = $calendarStart->addDays(7);
+        $printers = Printer::query()->orderBy('sort_order')->get();
+        $availabilityByPrinter = $publicSchedule->currentAvailability($printers, $now);
 
         return Inertia::render('Printers', [
-            'printers' => Printer::query()->orderBy('sort_order')->get()->map(function (Printer $printer) use ($currentBlocks, $globalBlock) {
-                $block = $globalBlock ?? $currentBlocks->firstWhere('printer_id', $printer->id);
-
+            'printers' => $printers->map(function (Printer $printer) use ($availabilityByPrinter) {
                 return [
                     'code' => $printer->code,
                     'name' => $printer->name,
                     'description' => $printer->description,
                     'status' => $printer->status->value,
                     'statusLabel' => $this->statusLabel($printer->status),
-                    'availability' => $this->availability($printer->status, $block?->kind),
-                    'availabilityLabel' => $this->availabilityLabel($printer->status, $block?->kind),
+                    ...$availabilityByPrinter[$printer->id],
                 ];
             }),
             'hours' => OperatingHour::query()->orderBy('weekday')->get()->map(fn (OperatingHour $hours) => [
@@ -63,56 +58,8 @@ class PrinterPortalController extends Controller
                 'body' => $announcement->body,
                 'type' => $announcement->type,
             ]),
-            'schedule' => BlackoutPeriod::query()
-                ->with('printer:id,code,name')
-                ->where('ends_at', '>', $calendarStart)
-                ->where('starts_at', '<', $calendarEnd)
-                ->orderBy('starts_at')
-                ->get()
-                ->map(fn (BlackoutPeriod $block) => [
-                    'id' => $block->id,
-                    'printer' => $block->printer?->name ?? 'Tüm atölye',
-                    'printerCode' => $block->printer?->code,
-                    'kind' => $block->kind,
-                    'kindLabel' => $this->kindLabel($block->kind),
-                    'isAllDay' => $block->is_all_day,
-                    'startsAt' => $block->starts_at->toIso8601String(),
-                    'endsAt' => $block->ends_at->toIso8601String(),
-                    'note' => $block->reason,
-                ]),
+            'schedule' => $publicSchedule->schedule($calendarStart, $calendarEnd),
         ]);
-    }
-
-    private function availability(PrinterStatus $status, ?string $blockKind): string
-    {
-        if ($status !== PrinterStatus::Active) {
-            return $status->value;
-        }
-
-        return $blockKind ?? 'available';
-    }
-
-    private function availabilityLabel(PrinterStatus $status, ?string $blockKind): string
-    {
-        if ($status !== PrinterStatus::Active) {
-            return $this->statusLabel($status);
-        }
-
-        return match ($blockKind) {
-            'busy' => 'Şu anda dolu',
-            'maintenance' => 'Bakımda',
-            'closed' => 'Şu anda kapalı',
-            default => 'Şu anda boş',
-        };
-    }
-
-    private function kindLabel(string $kind): string
-    {
-        return match ($kind) {
-            'busy' => 'Dolu',
-            'maintenance' => 'Bakım',
-            default => 'Kapalı',
-        };
     }
 
     private function shortTime(?string $time): ?string

@@ -47,9 +47,15 @@ class Appointment extends Model
     {
         return $query
             ->when($printerId !== null, fn (Builder $query) => $query->where('printer_id', $printerId))
-            ->whereIn('status', AppointmentStatus::blockingValues())
+            ->blocking()
             ->where('starts_at', '<', $endsAt)
-            ->where('ends_at', '>', $startsAt)
+            ->where('ends_at', '>', $startsAt);
+    }
+
+    public function scopeBlocking(Builder $query): Builder
+    {
+        return $query
+            ->whereIn('status', AppointmentStatus::blockingValues())
             ->where(function (Builder $query) {
                 $query->where('status', '!=', AppointmentStatus::PendingVerification->value)
                     ->orWhereNull('verification_expires_at')
