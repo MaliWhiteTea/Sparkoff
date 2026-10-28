@@ -94,6 +94,81 @@ Bu değişmiyorsa dosyaları gelişigüzel `public_html` içine taşımayın; ho
 - [ ] `schedule:run` cron görevi dakikada bir çalışıyor.
 - [ ] Otomatik veritabanı yedeği etkin ve geri yükleme denendi.
 
+## 7. Üretime benzer kabul testi
+
+Bu bölüm gerçek canlı veritabanında otomatik test çalıştırmak için değildir. Önce
+canlıyla aynı PHP ve MySQL/MariaDB sürümlerini kullanan, yalnızca sentetik veri
+içeren ayrı bir kabul veritabanı hazırlayın. `RefreshDatabase` kullanan testleri
+canlı veritabanına kesinlikle bağlamayın.
+
+### Veritabanı ve eşzamanlı işlemler
+
+- [ ] Kabul ortamında `DB_CONNECTION=mysql` veya `mariadb` kullanılıyor;
+  `php artisan about --only=environment` bunu doğruluyor.
+- [ ] `php artisan migrate:fresh --seed --force` boş kabul veritabanında hatasız
+  tamamlanıyor; ardından `php artisan migrate:status` bekleyen migration
+  göstermiyor.
+- [ ] Veritabanı ve tablolar `utf8mb4` karakter setiyle Türkçe metinleri bozmadan
+  saklıyor. Kullanılan collation adı ve sunucu sürümü yayın kaydına ekleniyor.
+- [ ] `phpunit.xml` içindeki SQLite zorlamasını kullanmayan ayrı bir kabul testi
+  yapılandırması ve yalnız kabul veritabanına yetkili kullanıcı hazırlanıyor;
+  tam test paketi bu MySQL/MariaDB yapılandırmasında geçiyor. Özellikle son sistem
+  yöneticisini kaldırma, aynı zaman aralığını eşzamanlı ayırma, stok düşme ve
+  kısmi iade senaryoları ayrıca iki tarayıcı oturumuyla deneniyor.
+- [ ] Başarısız eşzamanlı işlem HTTP 500 veya kısmi veri üretmiyor; kullanıcıya
+  anlaşılır hata dönüyor ve stok/randevu kayıtları tutarlı kalıyor.
+
+### SMTP, SPF ve DKIM
+
+- [ ] `MAIL_MAILER=smtp`, gönderen adresi `randevu@sparkoff.tr` ve SMTP hesabı
+  aynı alan adına ait; parola hiçbir ekran görüntüsüne veya yayın kaydına
+  eklenmiyor.
+- [ ] Gerçek bir dış posta kutusuna randevu doğrulama ve durum e-postası ulaşıyor;
+  doğrulama bağlantısı yalnız bir kez çalışıyor ve takip bağlantısı doğru kaydı
+  açıyor.
+- [ ] Alınan iletinin ham başlıklarında SPF ve DKIM sonucu `pass`; alan adında
+  yayımlanan kayıtlar kullanılan göndericiyle eşleşiyor. Spam ve teslim süresi
+  sonucu yayın kaydına yazılıyor.
+- [ ] Geçersiz SMTP parolasıyla kontrollü kabul denemesi kullanıcıya güvenli hata
+  gösteriyor; doğrulama e-postası gönderilemeyen randevu ve dosya geride
+  kalmıyor.
+
+### Zamanlayıcı ve saklama görevleri
+
+- [ ] cPanel cron dakikada bir yalnız `php artisan schedule:run` çalıştırıyor.
+  `php artisan schedule:list` çıktısında `appointments:expire-verifications`,
+  `appointments:apply-retention` ve `loans:anonymize` görünüyor.
+- [ ] Kabul ortamında süresi geçmiş sentetik doğrulama kaydı bir dakika içinde
+  `expired` oluyor.
+- [ ] Saklama süreleri geçici olarak kısa ayarlanmış sentetik randevu ve model
+  dosyası temizleniyor; aktif kayıt ile geleceğe kadar saklama istisnası verilen
+  kayıt korunuyor. Aynı görev ikinci kez çalıştığında ek kayıt silmiyor.
+- [ ] Görev sonucu yönetim panelindeki işlem geçmişinde Türkçe ve sayısal
+  özetle görünüyor. Cronun son çalışma zamanı cPanel kaydından doğrulanıyor.
+
+### Yükleme ve depolama
+
+- [ ] cPanel PHP ayarlarında `upload_max_filesize`, uygulamadaki maksimum dosya
+  boyutuna eşit veya büyük; `post_max_size` bundan daha büyük. Web sunucusunun
+  ayrıca uyguladığı istek gövdesi sınırı da aynı denemeyle doğrulanıyor.
+- [ ] İzin verilen küçük bir model ve sınıra yakın bir model yüklenebiliyor;
+  sınırı aşan dosya anlaşılır doğrulama hatası alıyor.
+- [ ] `storage`, `storage/app/private` ve `bootstrap/cache` PHP kullanıcısı
+  tarafından yazılabilir. Model dosyası `storage/app/private` altında oluşuyor
+  ve doğrudan URL ile indirilemiyor; yalnız dosya indirme izni olan yönetici
+  indirebiliyor.
+- [ ] `public/storage` bağlantısı yalnız kamu medyasını sunuyor; özel randevu
+  dosyaları bu bağlantının hedefinde bulunmuyor.
+
+### Yayın kararı
+
+- [ ] SSL, `APP_ENV=production`, `APP_DEBUG=false`, güvenli oturum çerezi,
+  yedekleme ve geri yükleme denemesi doğrulandı.
+- [ ] Masaüstü ve mobilde ana sayfa, kataloglar, randevu, doğrulama, takip,
+  yönetici onayı, dosya indirme ve iptal akışı uçtan uca tamamlandı.
+- [ ] Yukarıdaki kanıtlar tarih, ortam/sürüm ve testi yapan kişiyle kaydedildi.
+  Açık madde varken `ONLINE_BOOKING_ENABLED=true` yapılmadı.
+
 ## Güncelleme
 
 ```bash

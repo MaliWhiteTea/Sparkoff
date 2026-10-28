@@ -194,7 +194,7 @@ Sparkoff Proje Atölyesi
 - [x] E-posta doğrulama ve yönetici onay kodu
 - [ ] `randevu@sparkoff.tr` SMTP yapılandırması
 - [ ] SPF/DKIM ve gerçek teslimat testi
-- [ ] Randevu/model dosyası temizleme komutu
+- [x] Randevu/model dosyası temizleme komutu
 - [ ] cPanel günlük cron görevi
 - [ ] Uçtan uca randevu testi
 - [ ] Canlıda `ONLINE_BOOKING_ENABLED=true`
