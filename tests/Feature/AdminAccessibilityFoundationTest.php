@@ -83,6 +83,22 @@ class AdminAccessibilityFoundationTest extends TestCase
         }
     }
 
+    public function test_public_mobile_navigation_keeps_keyboard_and_focus_contracts(): void
+    {
+        $header = file_get_contents(resource_path('js/components/PublicHeader.tsx'));
+        $styles = file_get_contents(resource_path('css/app.css'));
+
+        $this->assertStringContainsString('aria-expanded={mobileOpen}', $header);
+        $this->assertStringContainsString('aria-controls="public-navigation"', $header);
+        $this->assertStringContainsString("event.key === 'Escape'", $header);
+        $this->assertStringContainsString("event.key !== 'Tab'", $header);
+        $this->assertStringContainsString('toggleRef.current?.focus()', $header);
+        $this->assertStringContainsString("document.body.classList.add('public-menu-open')", $header);
+        $this->assertStringContainsString('public-menu-overlay', $header);
+        $this->assertStringContainsString('.desktop-nav.mobile-open', $styles);
+        $this->assertStringContainsString('body.public-menu-open', $styles);
+    }
+
     public function test_inventory_media_keeps_accessibility_and_safe_link_contracts(): void
     {
         $catalog = file_get_contents(resource_path('js/pages/Materials.tsx'));

@@ -57,6 +57,7 @@ svg { width: 1.15em; fill: none; stroke: currentColor; stroke-width: 1.7; stroke
 .desktop-nav { display: flex; align-items: center; gap: 38px; margin-left: auto; }
 .desktop-nav a { color: #4b5969; font-size: .84rem; font-weight: 600; transition: color .18s ease; }
 .desktop-nav a:hover { color: var(--navy); }
+.public-menu-toggle,.public-menu-overlay { display: none; }
 .header-button, .button { min-height: 45px; display: inline-flex; align-items: center; justify-content: center; gap: 11px; border-radius: 7px; padding: 0 18px; font-size: .82rem; font-weight: 700; transition: background .18s ease, border-color .18s ease, transform .18s ease; }
 .header-button, .button.primary { background: var(--navy); color: white; }
 .header-button:hover, .button.primary:hover { background: var(--navy-dark); transform: translateY(-1px); }
@@ -132,7 +133,15 @@ svg { width: 1.15em; fill: none; stroke: currentColor; stroke-width: 1.7; stroke
 .mobile-booking { display: none; }
 
 @media (max-width: 900px) {
-  .desktop-nav { display: none; }
+  body.public-menu-open { overflow: hidden; }
+  .site-header.menu-open { z-index: 80; }
+  .public-menu-toggle { width: 44px; height: 44px; margin-left: auto; padding: 0; display: grid; place-content: center; gap: 5px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); cursor: pointer; }
+  .public-menu-toggle span { width: 20px; height: 2px; display: block; border-radius: 2px; background: currentColor; }
+  .public-menu-overlay { position: fixed; inset: 78px 0 0; z-index: 1; display: block; border: 0; background: rgba(5,14,22,.56); backdrop-filter: blur(2px); }
+  .desktop-nav { width: min(340px, 88vw); margin: 0; padding: 18px; position: fixed; top: 78px; right: 0; bottom: 0; z-index: 2; display: flex; align-items: stretch; flex-direction: column; gap: 5px; overflow-y: auto; background: var(--surface); border-left: 1px solid var(--border); box-shadow: -16px 18px 35px rgba(6,16,25,.22); transform: translateX(105%); visibility: hidden; transition: transform .2s ease, visibility .2s; }
+  .desktop-nav.mobile-open { transform: translateX(0); visibility: visible; }
+  .desktop-nav a { padding: 14px 15px; border-radius: 7px; color: var(--text); font-size: .86rem; }
+  .desktop-nav a:hover,.desktop-nav a:focus-visible { background: var(--sky); color: var(--navy); }
   .hero { min-height: auto; grid-template-columns: 1fr; padding-top: 72px; gap: 55px; }
   .hero-copy { max-width: 720px; }.availability-card { max-width: 650px; width: 100%; }
   .printers { grid-template-columns: 1fr; }.help { margin-inline: 24px; grid-template-columns: 1fr 1fr; }.help .button { justify-self: start; }
@@ -141,6 +150,8 @@ svg { width: 1.15em; fill: none; stroke: currentColor; stroke-width: 1.7; stroke
 @media (max-width: 640px) {
   body { padding-bottom: 72px; }
   .header-inner { height: 68px; padding: 0 18px; }.brand img { width: 44px; height: 44px; }.brand strong { font-size: 1rem; }.brand small { font-size: .62rem; }
+  .public-menu-overlay { top: 68px; }
+  .desktop-nav { top: 68px; }
   .header-button { display: none; }
   .hero { padding: 58px 18px 68px; gap: 44px; }.hero h1 { font-size: clamp(2.7rem, 14vw, 4.3rem); }.hero-copy > p { font-size: .96rem; }
   .hero-actions { align-items: stretch; flex-direction: column; }.button { width: 100%; }.benefit-list { gap: 12px 18px; }
