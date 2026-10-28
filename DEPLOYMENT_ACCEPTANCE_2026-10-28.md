@@ -9,8 +9,9 @@ gerektiren kontroller tamamlanmış sayılmamıştır.
 - Yerel SQLite paketi: 212 test ve 1999 assertion geçti; Pint, TypeScript ve
   üretim derlemesi başarılı.
 - GitHub Actions kabul işi: MySQL 8.4 ve MariaDB 10.11 üzerinde boş veritabanı
-  migration/seed işlemleri, ön yüz derlemesi ve tam uygulama testi geçti.
-  Kanıt: <https://github.com/MaliWhiteTea/Sparkoff/actions/runs/40717273472>
+  migration/seed işlemleri, `utf8mb4` şema/tablo denetimi, Türkçe JSON veri
+  turu, ön yüz derlemesi ve tam uygulama testi geçti.
+  Kanıt: <https://github.com/MaliWhiteTea/Sparkoff/actions/runs/40718386473>
 - Yerel scheduler listesinde `appointments:expire-verifications`,
   `appointments:apply-retention` ve `loans:anonymize` kayıtlı.
 - Yerel `storage/app/private` ve `bootstrap/cache` dizinleri okunabilir/yazılabilir;
