@@ -25,6 +25,24 @@ class Announcement extends Model
             ->where(fn (Builder $scope) => $scope->whereNull('ends_at')->orWhere('ends_at', '>', now()));
     }
 
+    public function scopeVisibleToStaffReader(Builder $query, User $user): Builder
+    {
+        $query
+            ->where('is_published', true)
+            ->whereIn('audience', ['staff', 'both'])
+            ->where(fn (Builder $scope) => $scope->whereNull('starts_at')->orWhere('starts_at', '<=', now()))
+            ->where(fn (Builder $scope) => $scope->whereNull('ends_at')->orWhere('ends_at', '>', now()));
+
+        if (! $user->isSystemAdministrator()) {
+            $roleIds = $user->roles()->pluck('roles.id');
+            $query->where(fn (Builder $scope) => $scope
+                ->whereDoesntHave('targetRoles')
+                ->orWhereHas('targetRoles', fn (Builder $roles) => $roles->whereIn('roles.id', $roleIds)));
+        }
+
+        return $query;
+    }
+
     public function targetRoles(): BelongsToMany
     {
         return $this->belongsToMany(Role::class, 'announcement_role');

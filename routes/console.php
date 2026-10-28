@@ -47,7 +47,7 @@ Artisan::command('admin:create {email} {--name=} {--password=}', function () {
 
     $user = User::query()->updateOrCreate(
         ['email' => $data['email']],
-        ['name' => $data['name'], 'password' => $data['password'], 'role' => 'admin', 'is_active' => true],
+        ['name' => $data['name'], 'password' => $data['password'], 'role' => 'operator', 'is_active' => true],
     );
 
     $systemAdministrator = Role::query()->where('slug', 'system-administrator')->first();
@@ -63,10 +63,7 @@ Artisan::command('admin:create {email} {--name=} {--password=}', function () {
 Artisan::command('admin:check', function () {
     $hasActiveAdministrator = User::query()
         ->where('is_active', true)
-        ->where(function ($query) {
-            $query->where('role', 'admin')
-                ->orWhereHas('roles', fn ($roleQuery) => $roleQuery->where('slug', 'system-administrator'));
-        })
+        ->whereHas('roles', fn ($query) => $query->where('is_system', true))
         ->exists();
 
     if (! $hasActiveAdministrator) {

@@ -28,6 +28,10 @@ class InventoryPurgeTest extends TestCase
     public function test_only_system_administrator_can_access_purge_tools(): void
     {
         $legacyAdmin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+        $legacyAdmin->roles()->attach(Role::query()->create([
+            'name' => 'Yetkisiz Panel Rolü',
+            'slug' => 'yetkisiz-panel-rolu',
+        ]));
         $item = $this->item('Korunan malzeme');
 
         $this->actingAs($legacyAdmin)->get(route('admin.settings.test-tools.index'))->assertForbidden();

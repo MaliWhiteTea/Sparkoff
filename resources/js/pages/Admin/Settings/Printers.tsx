@@ -1,4 +1,5 @@
 import AdminLayout from "@/components/AdminLayout";
+import { FieldError, FormErrors, FormErrorSummary } from "@/components/FormErrorSummary";
 import SettingsTabs from "@/components/SettingsTabs";
 import StatusBadge from "@/components/StatusBadge";
 import usePermissions from "@/hooks/usePermissions";
@@ -49,6 +50,7 @@ function PrinterCard({
   const [status, setStatus] = useState(printer.status);
   const [description, setDescription] = useState(printer.description ?? "");
   const [processing, setProcessing] = useState(false);
+  const [errors, setErrors] = useState<FormErrors>({});
 
   function save(event: FormEvent) {
     event.preventDefault();
@@ -56,7 +58,13 @@ function PrinterCard({
     router.patch(
       `/yonetim/ayarlar/yazicilar/${printer.id}`,
       { name, status, description },
-      { preserveScroll: true, onFinish: () => setProcessing(false) },
+      {
+        preserveScroll: true,
+        errorBag: `printer-${printer.id}`,
+        onError: (nextErrors) => setErrors(nextErrors),
+        onSuccess: () => setErrors({}),
+        onFinish: () => setProcessing(false),
+      },
     );
   }
 
@@ -72,18 +80,22 @@ function PrinterCard({
           label={statusOptions.find((option) => option.value === status)?.label ?? status}
         />
       </header>
+      <FormErrorSummary errors={errors} />
       <label className="field">
         <span>Yazıcı adı</span>
         <input
+          aria-invalid={Boolean(errors.name)}
           disabled={!canUpdate}
           value={name}
           onChange={(event) => setName(event.target.value)}
           required
         />
+        <FieldError errors={errors} name="name" />
       </label>
       <label className="field">
         <span>Durum</span>
         <select
+          aria-invalid={Boolean(errors.status)}
           disabled={!canChangeStatus}
           value={status}
           onChange={(event) => setStatus(event.target.value)}
@@ -94,15 +106,18 @@ function PrinterCard({
             </option>
           ))}
         </select>
+        <FieldError errors={errors} name="status" />
       </label>
       <label className="field">
         <span>Açıklama</span>
         <textarea
+          aria-invalid={Boolean(errors.description)}
           disabled={!canUpdate}
           rows={3}
           value={description}
           onChange={(event) => setDescription(event.target.value)}
         />
+        <FieldError errors={errors} name="description" />
       </label>
       <div className="printer-card-actions">
         <small>{printer.appointmentCount} randevu kaydı</small>

@@ -13,7 +13,7 @@ class EnsureAnyPermission
         $user = $request->user();
 
         abort_unless(
-            $user && ($user->role === 'admin' || collect($permissions)->contains(fn ($permission) => $user->hasPermissionTo($permission))),
+            $user && collect($permissions)->contains(fn ($permission) => $user->hasPermissionTo($permission)),
             403,
         );
 

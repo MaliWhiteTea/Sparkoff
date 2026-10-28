@@ -23,7 +23,7 @@ class StaffAnnouncementTest extends TestCase
 
     public function test_admin_can_target_a_staff_announcement_to_selected_roles(): void
     {
-        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+        $admin = User::factory()->systemAdministrator()->create();
         $targetRole = $this->role('Atölye Ekibi', ['staff_announcements.view']);
         $otherRole = $this->role('Diğer Ekip', ['staff_announcements.view']);
         $target = $this->user($targetRole);
@@ -40,15 +40,19 @@ class StaffAnnouncementTest extends TestCase
         $this->assertEquals([$targetRole->id], $announcement->targetRoles()->pluck('roles.id')->all());
         $this->actingAs($target)->get(route('admin.announcements.index'))->assertInertia(fn (Assert $page) => $page
             ->has('staffAnnouncements', 1)->where('staffAnnouncementUnreadCount', 1)
+            ->has('announcements', 1)
             ->where('staffAnnouncements.0.title', 'Toplantı'));
-        $this->actingAs($other)->get(route('admin.announcements.index'))->assertInertia(fn (Assert $page) => $page
-            ->has('staffAnnouncements', 0)->where('staffAnnouncementUnreadCount', 0));
+        $otherResponse = $this->actingAs($other)->get(route('admin.announcements.index'));
+        $otherResponse->assertInertia(fn (Assert $page) => $page
+            ->has('staffAnnouncements', 0)->has('announcements', 0)
+            ->where('staffAnnouncementUnreadCount', 0));
+        $otherResponse->assertDontSee('Yarın saat 10.00’da toplantı yapılacaktır.');
         $this->get(route('home'))->assertInertia(fn (Assert $page) => $page->has('announcements', 0));
     }
 
     public function test_targeted_user_can_acknowledge_and_manager_sees_the_count(): void
     {
-        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+        $admin = User::factory()->systemAdministrator()->create();
         $role = $this->role('Moderatör', ['staff_announcements.view']);
         $user = $this->user($role);
         $announcement = Announcement::query()->create([
@@ -69,7 +73,7 @@ class StaffAnnouncementTest extends TestCase
 
     public function test_system_administrator_sees_all_targeted_announcements(): void
     {
-        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+        $admin = User::factory()->systemAdministrator()->create();
         $unrelatedRole = $this->role('Yalnız Belirli Ekip', ['staff_announcements.view']);
         $announcement = Announcement::query()->create([
             'title' => 'Hedefli bilgi', 'body' => 'Yalnız belirli role gönderildi.', 'type' => 'info',
@@ -78,7 +82,66 @@ class StaffAnnouncementTest extends TestCase
         $announcement->targetRoles()->attach($unrelatedRole);
 
         $this->actingAs($admin)->get(route('admin.announcements.index'))->assertInertia(fn (Assert $page) => $page
-            ->has('staffAnnouncements', 1)->where('staffAnnouncementUnreadCount', 1));
+            ->has('staffAnnouncements', 1)->has('announcements', 1)
+            ->where('announcements.0.title', 'Hedefli bilgi')
+            ->where('staffAnnouncementUnreadCount', 1));
+    }
+
+    public function test_staff_announcement_manager_can_see_announcements_targeted_to_other_roles(): void
+    {
+        $managerRole = $this->role('Duyuru Yöneticisi', ['staff_announcements.view', 'staff_announcements.update']);
+        $manager = $this->user($managerRole);
+        $targetRole = $this->role('Hedef Ekip', ['staff_announcements.view']);
+        $announcement = Announcement::query()->create([
+            'title' => 'Yönetilecek taslak', 'body' => 'Henüz hedef ekibe yayınlanmadı.', 'type' => 'info',
+            'placement' => 'all', 'audience' => 'staff', 'is_published' => false,
+        ]);
+        $announcement->targetRoles()->attach($targetRole);
+
+        $this->actingAs($manager)->get(route('admin.announcements.index'))->assertInertia(fn (Assert $page) => $page
+            ->has('staffAnnouncements', 0)
+            ->has('announcements', 1)
+            ->where('announcements.0.title', 'Yönetilecek taslak')
+            ->where('announcements.0.roleIds', [$targetRole->id]));
+    }
+
+    public function test_untargeted_staff_announcement_is_visible_to_every_staff_reader(): void
+    {
+        $first = $this->user($this->role('Birinci Ekip', ['staff_announcements.view']));
+        $second = $this->user($this->role('İkinci Ekip', ['staff_announcements.view']));
+        Announcement::query()->create([
+            'title' => 'Genel ekip duyurusu', 'body' => 'Bütün yetkili personele açıktır.', 'type' => 'info',
+            'placement' => 'all', 'audience' => 'staff', 'is_published' => true,
+        ]);
+
+        foreach ([$first, $second] as $reader) {
+            $this->actingAs($reader)->get(route('admin.announcements.index'))->assertInertia(fn (Assert $page) => $page
+                ->has('staffAnnouncements', 1)
+                ->has('announcements', 1)
+                ->where('announcements.0.title', 'Genel ekip duyurusu'));
+        }
+    }
+
+    public function test_staff_reader_does_not_receive_drafts_future_or_expired_announcements(): void
+    {
+        $reader = $this->user($this->role('Duyuru Okuyucusu', ['staff_announcements.view']));
+        foreach ([
+            ['title' => 'Taslak sır', 'is_published' => false],
+            ['title' => 'Gelecek sır', 'is_published' => true, 'starts_at' => now()->addHour()],
+            ['title' => 'Süresi dolmuş sır', 'is_published' => true, 'ends_at' => now()->subHour()],
+        ] as $attributes) {
+            Announcement::query()->create([
+                'body' => 'Okuyucunun yanıtına girmemeli.', 'type' => 'info', 'placement' => 'all',
+                'audience' => 'staff',
+                ...$attributes,
+            ]);
+        }
+
+        $response = $this->actingAs($reader)->get(route('admin.announcements.index'));
+        $response->assertInertia(fn (Assert $page) => $page
+            ->has('staffAnnouncements', 0)
+            ->has('announcements', 0));
+        $response->assertDontSee('Okuyucunun yanıtına girmemeli.');
     }
 
     public function test_future_or_expired_staff_announcement_cannot_be_acknowledged(): void
@@ -112,6 +175,8 @@ class StaffAnnouncementTest extends TestCase
         $this->actingAs($public)->post(route('admin.announcements.store'), $staffPayload)->assertForbidden();
         $this->actingAs($staff)->post(route('admin.announcements.store'), $staffPayload)->assertSessionHas('success');
         $announcement = Announcement::query()->sole();
+        $this->actingAs($public)->get(route('admin.announcements.index'))->assertInertia(fn (Assert $page) => $page
+            ->has('announcements', 0)->has('staffAnnouncements', 0));
         $this->actingAs($public)->patch(route('admin.announcements.update', $announcement), $publicPayload)->assertForbidden();
         $this->assertSame('İç', $announcement->fresh()->title);
     }
@@ -136,7 +201,7 @@ class StaffAnnouncementTest extends TestCase
 
     public function test_public_announcement_defaults_remain_backwards_compatible(): void
     {
-        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+        $admin = User::factory()->systemAdministrator()->create();
         $this->actingAs($admin)->post(route('admin.announcements.store'), [
             'title' => 'Genel bilgi', 'body' => 'Atölye bugün açıktır.', 'type' => 'info',
             'placement' => 'home', 'is_published' => true,

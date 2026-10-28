@@ -28,7 +28,7 @@ class InventoryTransactionTest extends TestCase
 
     public function test_loan_delivery_and_partial_returns_update_stock_atomically(): void
     {
-        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+        $admin = User::factory()->systemAdministrator()->create();
         $item = $this->item(InventoryItemType::Loanable, 5);
 
         $this->actingAs($admin)->post(route('admin.loans.store'), [
@@ -53,7 +53,7 @@ class InventoryTransactionTest extends TestCase
 
     public function test_consumable_delivery_is_completed_immediately_and_reduces_stock(): void
     {
-        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+        $admin = User::factory()->systemAdministrator()->create();
         $item = $this->item(InventoryItemType::Consumable, 10);
 
         $this->actingAs($admin)->post(route('admin.loans.store'), [
@@ -66,7 +66,7 @@ class InventoryTransactionTest extends TestCase
 
     public function test_fixed_asset_usage_does_not_change_stock_and_cannot_exceed_capacity(): void
     {
-        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+        $admin = User::factory()->systemAdministrator()->create();
         $item = $this->item(InventoryItemType::FixedAsset, 1);
         $payload = ['inventory_item_id' => $item->id, 'recipient_name' => 'Test Kullanıcı', 'quantity' => 1];
 
@@ -77,9 +77,62 @@ class InventoryTransactionTest extends TestCase
         $this->assertDatabaseCount('inventory_transactions', 1);
     }
 
+    public function test_item_type_cannot_change_while_an_active_delivery_exists(): void
+    {
+        $admin = User::factory()->systemAdministrator()->create();
+        $item = $this->item(InventoryItemType::FixedAsset, 1);
+        $delivery = ['inventory_item_id' => $item->id, 'recipient_name' => 'Birinci Kullanıcı', 'quantity' => 1];
+        $this->actingAs($admin)->post(route('admin.loans.store'), $delivery)->assertSessionHas('success');
+
+        $this->actingAs($admin)->put(route('admin.inventory.update', $item), [
+            'name' => $item->name,
+            'sku' => null,
+            'category_id' => null,
+            'location_id' => null,
+            'item_type' => InventoryItemType::Loanable->value,
+            'unit' => $item->unit,
+            'minimum_stock' => null,
+            'public_visibility' => InventoryVisibility::Status->value,
+            'description' => null,
+            'is_active' => true,
+        ])->assertSessionHasErrors('item_type');
+
+        $this->assertSame(InventoryItemType::FixedAsset, $item->fresh()->item_type);
+        $this->actingAs($admin)->post(route('admin.loans.store'), [
+            ...$delivery,
+            'recipient_name' => 'İkinci Kullanıcı',
+            'due_at' => now()->addDay()->format('Y-m-d\TH:i'),
+        ])->assertSessionHasErrors('quantity');
+        $this->assertDatabaseCount('inventory_transactions', 1);
+    }
+
+    public function test_fixed_asset_available_quantity_accounts_for_usage_and_partial_returns(): void
+    {
+        $admin = User::factory()->systemAdministrator()->create();
+        $item = $this->item(InventoryItemType::FixedAsset, 3);
+        $this->actingAs($admin)->post(route('admin.loans.store'), [
+            'inventory_item_id' => $item->id, 'recipient_name' => 'Test Kullanıcı', 'quantity' => 2,
+        ])->assertSessionHas('success');
+        $transaction = InventoryTransaction::query()->firstOrFail();
+
+        $this->assertSame('1.000', $item->fresh()->availableQuantity());
+        $this->actingAs($admin)->get(route('admin.loans.index'))->assertInertia(fn (Assert $page) => $page
+            ->where('items.0.id', $item->id)
+            ->where('items.0.quantity', '1.000'));
+
+        $this->actingAs($admin)->post(route('admin.loans.return', $transaction), [
+            'quantity' => 1,
+            'note' => 'Bir adedi iade edildi.',
+        ])->assertSessionHas('success');
+
+        $this->assertSame('2.000', $item->fresh()->availableQuantity());
+        $this->actingAs($admin)->get(route('admin.loans.index'))->assertInertia(fn (Assert $page) => $page
+            ->where('items.0.quantity', '2.000'));
+    }
+
     public function test_damaged_fixed_asset_is_removed_from_available_stock(): void
     {
-        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+        $admin = User::factory()->systemAdministrator()->create();
         $item = $this->item(InventoryItemType::FixedAsset, 2);
         $this->actingAs($admin)->post(route('admin.loans.store'), [
             'inventory_item_id' => $item->id, 'recipient_name' => 'Test Kullanıcı', 'quantity' => 1,
@@ -91,13 +144,14 @@ class InventoryTransactionTest extends TestCase
         ])->assertSessionHas('success');
 
         $this->assertSame('1.000', $item->fresh()->quantity);
+        $this->assertSame('1.000', $item->fresh()->availableQuantity());
         $this->assertSame(InventoryTransactionStatus::Damaged, $transaction->fresh()->status);
     }
 
     public function test_personal_data_is_masked_without_separate_permissions(): void
     {
         $viewer = $this->userWithPermissions(['loans.view']);
-        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+        $admin = User::factory()->systemAdministrator()->create();
         $item = $this->item(InventoryItemType::Consumable, 3);
         $this->actingAs($admin)->post(route('admin.loans.store'), ['inventory_item_id' => $item->id, 'recipient_name' => 'Gizli Kişi', 'recipient_email' => 'gizli@example.com', 'quantity' => 1]);
 
@@ -145,7 +199,7 @@ class InventoryTransactionTest extends TestCase
 
     public function test_return_cannot_exceed_remaining_quantity(): void
     {
-        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+        $admin = User::factory()->systemAdministrator()->create();
         $item = $this->item(InventoryItemType::Loanable, 5);
         $this->actingAs($admin)->post(route('admin.loans.store'), [
             'inventory_item_id' => $item->id, 'recipient_name' => 'Test Kullanıcı', 'quantity' => 2,
@@ -161,7 +215,7 @@ class InventoryTransactionTest extends TestCase
 
     public function test_return_cannot_exceed_quantity_remaining_after_a_partial_return(): void
     {
-        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+        $admin = User::factory()->systemAdministrator()->create();
         $item = $this->item(InventoryItemType::Loanable, 5);
         $this->actingAs($admin)->post(route('admin.loans.store'), [
             'inventory_item_id' => $item->id, 'recipient_name' => 'Test Kullanıcı', 'quantity' => 2,
@@ -193,7 +247,7 @@ class InventoryTransactionTest extends TestCase
 
     public function test_delivery_rejects_blank_name_and_loan_without_due_date(): void
     {
-        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+        $admin = User::factory()->systemAdministrator()->create();
         $item = $this->item(InventoryItemType::Loanable, 2);
 
         $this->actingAs($admin)->post(route('admin.loans.store'), [

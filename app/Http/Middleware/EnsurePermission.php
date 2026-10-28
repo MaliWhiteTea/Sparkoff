@@ -13,7 +13,7 @@ class EnsurePermission
         $user = $request->user();
 
         abort_unless(
-            $user && ($user->role === 'admin' || $user->hasPermissionTo($permission)),
+            $user?->hasPermissionTo($permission),
             403,
         );
 

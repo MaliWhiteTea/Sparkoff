@@ -27,7 +27,7 @@ class AdminListSortingTest extends TestCase
 
     public function test_inventory_feedback_users_and_loans_follow_requested_sorting(): void
     {
-        $admin = User::factory()->create(['name' => 'Yetkili', 'role' => 'admin', 'is_active' => true]);
+        $admin = User::factory()->systemAdministrator()->create(['name' => 'Yetkili']);
         $low = $this->item('Az stok', 2);
         $high = $this->item('Çok stok', 20);
 
@@ -59,7 +59,7 @@ class AdminListSortingTest extends TestCase
 
     public function test_all_management_lists_reject_unapproved_sort_columns_and_directions(): void
     {
-        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+        $admin = User::factory()->systemAdministrator()->create();
         $requests = [
             route('admin.inventory.index', ['sort' => 'name desc; drop table users', 'direction' => 'sideways']),
             route('admin.loans.index', ['sort' => 'recipient_name', 'direction' => 'sideways']),

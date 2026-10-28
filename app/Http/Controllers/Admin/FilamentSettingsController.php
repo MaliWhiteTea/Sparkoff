@@ -36,7 +36,7 @@ class FilamentSettingsController extends Controller
 
     public function update(Request $request, Filament $filament): RedirectResponse
     {
-        $filament->update($this->validateFilament($request, $filament));
+        $filament->update($this->validateFilament($request, $filament, false));
 
         return back()->with('success', 'Filament bilgileri güncellendi.');
     }
@@ -57,9 +57,9 @@ class FilamentSettingsController extends Controller
         return back()->with('success', "{$material} kullanılabilirliği güncellendi.");
     }
 
-    private function validateFilament(Request $request, ?Filament $filament = null): array
+    private function validateFilament(Request $request, ?Filament $filament = null, bool $includeAvailability = true): array
     {
-        return $request->validate([
+        $rules = [
             'material' => ['required', 'string', 'max:40'],
             'color' => [
                 'required', 'string', 'max:80',
@@ -73,8 +73,12 @@ class FilamentSettingsController extends Controller
             'bed_temp_min' => ['nullable', 'integer', 'between:0,200'],
             'bed_temp_max' => ['nullable', 'integer', 'between:0,200', 'gte:bed_temp_min'],
             'technical_notes' => ['nullable', 'string', 'max:2000'],
-            'is_available' => ['required', 'boolean'],
-            'unavailable_reason' => ['nullable', 'string', 'max:500', Rule::requiredIf(! $request->boolean('is_available'))],
-        ]);
+        ];
+        if ($includeAvailability) {
+            $rules['is_available'] = ['required', 'boolean'];
+            $rules['unavailable_reason'] = ['nullable', 'string', 'max:500', Rule::requiredIf(! $request->boolean('is_available'))];
+        }
+
+        return $request->validate($rules);
     }
 }

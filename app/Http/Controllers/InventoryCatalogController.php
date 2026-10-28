@@ -21,6 +21,7 @@ class InventoryCatalogController extends Controller
         $search = trim((string) ($filters['search'] ?? ''));
 
         $items = InventoryItem::query()
+            ->withAvailableQuantity()
             ->with(['category:id,name', 'location:id,name,is_public', 'media'])
             ->whereNull('archived_at')
             ->where('is_active', true)
@@ -36,28 +37,32 @@ class InventoryCatalogController extends Controller
                 }
             })
             ->when($filters['category'] ?? null, fn ($query, $category) => $query->where('category_id', $category))
-            ->when(($filters['stock'] ?? 'all') === 'available', fn ($query) => $query->where('quantity', '>', 0))
-            ->when(($filters['stock'] ?? 'all') === 'out', fn ($query) => $query->where('quantity', '<=', 0))
+            ->when(($filters['stock'] ?? 'all') === 'available', fn ($query) => $query->whereAvailable())
+            ->when(($filters['stock'] ?? 'all') === 'out', fn ($query) => $query->whereAvailable(false))
             ->orderBy('name')
             ->paginate(24)
             ->withQueryString()
-            ->through(fn (InventoryItem $item) => [
-                'id' => $item->id,
-                'name' => $item->name,
-                'sku' => $item->sku,
-                'category' => $item->category?->name ?? 'Diğer',
-                'location' => $item->location?->is_public ? $item->location->name : null,
-                'type' => $item->item_type->value,
-                'unit' => $item->unit,
-                'description' => $item->description,
-                'technicalSpecs' => $item->technical_specs ?? [],
-                'availability' => (float) $item->quantity > 0 ? 'available' : 'out',
-                'quantity' => $item->public_visibility === InventoryVisibility::Exact ? $item->quantity : null,
-                'media' => $item->media->map(fn ($medium) => [
-                    'id' => $medium->id, 'type' => $medium->type, 'url' => $medium->publicUrl(),
-                    'title' => $medium->title, 'altText' => $medium->alt_text, 'isCover' => $medium->is_cover,
-                ]),
-            ]);
+            ->through(function (InventoryItem $item) {
+                $availableQuantity = $item->availableQuantity();
+
+                return [
+                    'id' => $item->id,
+                    'name' => $item->name,
+                    'sku' => $item->sku,
+                    'category' => $item->category?->name ?? 'Diğer',
+                    'location' => $item->location?->is_public ? $item->location->name : null,
+                    'type' => $item->item_type->value,
+                    'unit' => $item->unit,
+                    'description' => $item->description,
+                    'technicalSpecs' => $item->technical_specs ?? [],
+                    'availability' => (float) $availableQuantity > 0 ? 'available' : 'out',
+                    'quantity' => $item->public_visibility === InventoryVisibility::Exact ? $availableQuantity : null,
+                    'media' => $item->media->map(fn ($medium) => [
+                        'id' => $medium->id, 'type' => $medium->type, 'url' => $medium->publicUrl(),
+                        'title' => $medium->title, 'altText' => $medium->alt_text, 'isCover' => $medium->is_cover,
+                    ]),
+                ];
+            });
 
         return Inertia::render('Materials', [
             'items' => $items,

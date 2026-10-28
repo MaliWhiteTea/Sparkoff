@@ -23,9 +23,8 @@ class BookingSettingsTest extends TestCase
 
     public function test_admin_can_update_every_booking_rule_and_booking_form_receives_them(): void
     {
-        $admin = User::query()->create([
-            'name' => 'Yönetici', 'email' => 'admin@sparkoff.tr', 'password' => 'guvenli-test-parolasi',
-            'role' => 'admin', 'is_active' => true,
+        $admin = User::factory()->systemAdministrator()->create([
+            'name' => 'Yönetici', 'email' => 'admin@sparkoff.tr',
         ]);
         $hours = collect(range(1, 7))->map(fn (int $weekday) => [
             'weekday' => $weekday,
@@ -62,9 +61,8 @@ class BookingSettingsTest extends TestCase
 
     public function test_open_day_rejects_a_latest_start_before_opening_time(): void
     {
-        $admin = User::query()->create([
-            'name' => 'Yönetici', 'email' => 'admin@sparkoff.tr', 'password' => 'guvenli-test-parolasi',
-            'role' => 'admin', 'is_active' => true,
+        $admin = User::factory()->systemAdministrator()->create([
+            'name' => 'Yönetici', 'email' => 'admin@sparkoff.tr',
         ]);
         $hours = collect(range(1, 7))->map(fn (int $weekday) => [
             'weekday' => $weekday, 'is_open' => true, 'opens_at' => '18:00', 'latest_start_at' => '09:00',

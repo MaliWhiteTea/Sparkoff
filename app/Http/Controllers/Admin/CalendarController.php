@@ -27,8 +27,8 @@ class CalendarController extends Controller
             : CarbonImmutable::now($timezone)->startOfDay();
         $periodStart = $view === 'day' ? $reference : $reference->startOfWeek();
         $periodEnd = $periodStart->addDays($view === 'day' ? 1 : 7);
-        $canViewPersonalData = $request->user()->role === 'admin' || $request->user()->hasPermissionTo('appointments.view_personal_data');
-        $canViewAppointments = $request->user()->role === 'admin' || $request->user()->hasPermissionTo('appointments.view');
+        $canViewPersonalData = $request->user()->hasPermissionTo('appointments.view_personal_data');
+        $canViewAppointments = $request->user()->hasPermissionTo('appointments.view');
 
         $appointments = Appointment::query()
             ->with('printer')

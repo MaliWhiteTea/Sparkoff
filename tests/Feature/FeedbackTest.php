@@ -92,6 +92,10 @@ class FeedbackTest extends TestCase
     public function test_unauthorized_staff_cannot_view_feedback(): void
     {
         $staff = User::factory()->create(['role' => 'operator', 'is_active' => true]);
+        $staff->roles()->attach(Role::query()->create([
+            'name' => 'Yetkisiz Panel Rolü',
+            'slug' => 'yetkisiz-panel-rolu',
+        ]));
 
         $this->actingAs($staff)->get(route('admin.feedback.index'))->assertForbidden();
     }

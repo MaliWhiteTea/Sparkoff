@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -24,6 +25,10 @@ class AuthController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        if ($request->has('email')) {
+            $request->merge(['email' => Str::lower(trim((string) $request->input('email')))]);
+        }
+
         $credentials = $request->validate([
             'email' => ['required', 'email'],
             'password' => ['required', 'string'],
@@ -35,7 +40,7 @@ class AuthController extends Controller
             ]);
         }
 
-        if (! in_array($request->user()?->role, ['admin', 'operator'], true) && ! $request->user()?->roles()->exists()) {
+        if (! $request->user()?->canAccessAdminPanel()) {
             Auth::logout();
 
             throw ValidationException::withMessages([
@@ -77,7 +82,7 @@ class AuthController extends Controller
 
         foreach ($destinations as $permission => $route) {
             $requiresBooking = in_array($route, ['admin.appointments.index', 'admin.calendar.index', 'admin.settings.booking.edit'], true);
-            if (($user->role === 'admin' || $user->hasPermissionTo($permission))
+            if ($user->hasPermissionTo($permission)
                 && (! $requiresBooking || config('features.online_booking'))) {
                 return route($route);
             }

@@ -3,10 +3,12 @@
 namespace Tests\Feature;
 
 use App\Enums\InventoryItemType;
+use App\Enums\InventoryTransactionStatus;
 use App\Enums\InventoryVisibility;
 use App\Models\InventoryCategory;
 use App\Models\InventoryItem;
 use App\Models\InventoryLocation;
+use App\Models\InventoryTransaction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
@@ -47,6 +49,32 @@ class PublicInventoryCatalogTest extends TestCase
             ->has('items.data', 1)
             ->where('items.data.0.id', $wanted->id)
             ->where('filters.search', 'Arduino R3'));
+    }
+
+    public function test_fully_used_fixed_asset_is_out_of_stock_in_catalog_and_stock_filters(): void
+    {
+        $category = InventoryCategory::query()->create(['name' => 'Cihazlar', 'slug' => 'cihazlar', 'is_active' => true]);
+        $item = $this->item('Atölye Tableti', InventoryVisibility::Exact, 1, $category);
+        $item->update(['item_type' => InventoryItemType::FixedAsset]);
+        InventoryTransaction::query()->create([
+            'inventory_item_id' => $item->id,
+            'item_type' => InventoryItemType::FixedAsset,
+            'status' => InventoryTransactionStatus::Active,
+            'recipient_name' => 'Test Kullanıcı',
+            'quantity' => 1,
+            'quantity_returned' => 0,
+            'issued_at' => now(),
+        ]);
+
+        $this->get(route('materials.index'))->assertInertia(fn (Assert $page) => $page
+            ->has('items.data', 1)
+            ->where('items.data.0.availability', 'out')
+            ->where('items.data.0.quantity', '0.000'));
+        $this->get(route('materials.index', ['stock' => 'available']))->assertInertia(fn (Assert $page) => $page
+            ->has('items.data', 0));
+        $this->get(route('materials.index', ['stock' => 'out']))->assertInertia(fn (Assert $page) => $page
+            ->has('items.data', 1)
+            ->where('items.data.0.id', $item->id));
     }
 
     public function test_catalog_rejects_invalid_filters(): void

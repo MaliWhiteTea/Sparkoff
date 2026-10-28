@@ -39,6 +39,42 @@ class AdminInventoryTest extends TestCase
                 ->where('recentMovements', []));
     }
 
+    public function test_inactive_item_can_be_found_and_reactivated_from_inactive_or_all_filters(): void
+    {
+        $viewer = $this->userWithPermissions(['inventory.view', 'inventory.update']);
+        $inactive = InventoryItem::query()->create($this->itemData([
+            'name' => 'Pasif Test Malzemesi',
+            'quantity' => 10,
+            'minimum_stock' => 1,
+            'is_active' => false,
+        ]));
+        InventoryItem::query()->create($this->itemData(['name' => 'Aktif Test Malzemesi', 'quantity' => 10]));
+
+        $this->actingAs($viewer)->get(route('admin.inventory.index', ['status' => 'inactive', 'search' => 'Pasif Test']))
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('items.data', 1)
+                ->where('items.data.0.id', $inactive->id)
+                ->where('summary.total', 1)
+                ->where('summary.inactive', 1));
+
+        $this->actingAs($viewer)->get(route('admin.inventory.index', ['status' => 'all', 'search' => 'Pasif Test']))
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('items.data', 1)
+                ->where('items.data.0.id', $inactive->id));
+
+        foreach (['active', 'low', 'out', 'archived'] as $status) {
+            $this->actingAs($viewer)->get(route('admin.inventory.index', ['status' => $status, 'search' => 'Pasif Test']))
+                ->assertInertia(fn (Assert $page) => $page->has('items.data', 0));
+        }
+
+        $this->actingAs($viewer)->put(route('admin.inventory.update', $inactive), [
+            'name' => $inactive->name, 'sku' => null, 'category_id' => null, 'location_id' => null,
+            'item_type' => $inactive->item_type->value, 'unit' => $inactive->unit, 'minimum_stock' => 1,
+            'public_visibility' => $inactive->public_visibility->value, 'description' => null, 'is_active' => true,
+        ])->assertSessionHas('success');
+        $this->assertTrue($inactive->fresh()->is_active);
+    }
+
     public function test_authorized_user_can_create_an_item_with_audited_initial_stock(): void
     {
         $staff = $this->userWithPermissions(['inventory.create']);
@@ -55,6 +91,25 @@ class AdminInventoryTest extends TestCase
             'inventory_item_id' => $item->id, 'user_id' => $staff->id,
             'movement_type' => 'initial', 'quantity_change' => 30,
         ]);
+    }
+
+    public function test_item_creation_uses_the_same_thousandth_precision_as_stock_service(): void
+    {
+        $staff = $this->userWithPermissions(['inventory.create']);
+        $data = [
+            'name' => 'Hassas Malzeme', 'sku' => 'HAS-01', 'category_id' => null, 'location_id' => null,
+            'item_type' => 'consumable', 'unit' => 'adet', 'quantity' => '0.0001', 'minimum_stock' => '0.0001',
+            'public_visibility' => 'status', 'description' => null, 'is_active' => true,
+        ];
+
+        $this->actingAs($staff)->post(route('admin.inventory.store'), $data)
+            ->assertSessionHasErrors(['quantity', 'minimum_stock']);
+        $this->assertDatabaseMissing('inventory_items', ['sku' => 'HAS-01']);
+
+        $this->post(route('admin.inventory.store'), [
+            ...$data, 'quantity' => '0.001', 'minimum_stock' => '0',
+        ])->assertSessionHas('success');
+        $this->assertSame('0.001', InventoryItem::query()->where('sku', 'HAS-01')->firstOrFail()->quantity);
     }
 
     public function test_stock_adjustment_requires_permission_and_reason_and_cannot_go_negative(): void
@@ -89,7 +144,7 @@ class AdminInventoryTest extends TestCase
     public function test_archived_item_cannot_be_edited_or_have_stock_adjusted(): void
     {
         $item = InventoryItem::query()->create($this->itemData(['archived_at' => now(), 'is_active' => false]));
-        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+        $admin = User::factory()->systemAdministrator()->create();
 
         $this->actingAs($admin)->post(route('admin.inventory.stock.adjust', $item), ['quantity_change' => 1, 'reason' => 'Test'])->assertSessionHasErrors('quantity_change');
         $this->actingAs($admin)->put(route('admin.inventory.update', $item), [

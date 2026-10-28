@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -41,5 +42,16 @@ class UserFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
         ]);
+    }
+
+    public function systemAdministrator(): static
+    {
+        return $this
+            ->state(fn () => ['role' => 'operator', 'is_active' => true])
+            ->afterCreating(function (User $user): void {
+                $user->roles()->syncWithoutDetaching([
+                    Role::query()->where('is_system', true)->firstOrFail()->id,
+                ]);
+            });
     }
 }

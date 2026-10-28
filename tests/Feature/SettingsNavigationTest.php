@@ -20,7 +20,7 @@ class SettingsNavigationTest extends TestCase
 
     public function test_settings_entry_redirects_an_administrator_to_personal_settings(): void
     {
-        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+        $admin = User::factory()->systemAdministrator()->create();
 
         $this->actingAs($admin)->get(route('admin.settings.index'))
             ->assertRedirect(route('admin.settings.personal.edit'));
@@ -48,9 +48,9 @@ class SettingsNavigationTest extends TestCase
             ->assertRedirect(route('admin.settings.personal.edit'));
     }
 
-    public function test_every_active_staff_user_can_open_personal_settings(): void
+    public function test_every_active_panel_user_can_open_personal_settings(): void
     {
-        $user = User::factory()->create(['role' => 'operator', 'is_active' => true]);
+        $user = $this->panelUser();
 
         $this->actingAs($user)->get(route('admin.settings.personal.edit'))
             ->assertOk()
@@ -64,7 +64,7 @@ class SettingsNavigationTest extends TestCase
 
     public function test_user_can_save_only_their_own_interface_preferences(): void
     {
-        $user = User::factory()->create(['role' => 'operator', 'is_active' => true]);
+        $user = $this->panelUser();
         $other = User::factory()->create(['role' => 'operator', 'is_active' => true]);
 
         $this->actingAs($user)->put(route('admin.settings.personal.update'), [
@@ -79,7 +79,7 @@ class SettingsNavigationTest extends TestCase
 
     public function test_invalid_interface_preferences_are_rejected(): void
     {
-        $user = User::factory()->create(['role' => 'operator', 'is_active' => true]);
+        $user = $this->panelUser();
 
         $this->actingAs($user)->from(route('admin.settings.personal.edit'))->put(route('admin.settings.personal.update'), [
             'theme' => 'neon', 'scale' => 'huge', 'density' => 'none', 'sidebar' => 'hidden',
@@ -90,8 +90,7 @@ class SettingsNavigationTest extends TestCase
 
     public function test_user_can_reset_interface_preferences(): void
     {
-        $user = User::factory()->create([
-            'role' => 'operator', 'is_active' => true,
+        $user = $this->panelUser([
             'interface_preferences' => ['theme' => 'dark', 'scale' => 'large', 'density' => 'compact', 'sidebar' => 'narrow'],
         ]);
 
@@ -103,7 +102,7 @@ class SettingsNavigationTest extends TestCase
 
     public function test_user_without_system_permissions_cannot_open_system_settings_directly(): void
     {
-        $user = User::factory()->create(['role' => 'operator', 'is_active' => true]);
+        $user = $this->panelUser();
 
         $this->actingAs($user)->get(route('admin.settings.workshop.edit'))->assertForbidden();
         $this->actingAs($user)->get(route('admin.settings.printers.index'))->assertForbidden();
@@ -113,7 +112,7 @@ class SettingsNavigationTest extends TestCase
 
     public function test_user_can_store_personal_table_columns(): void
     {
-        $user = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+        $user = User::factory()->systemAdministrator()->create();
 
         $this->actingAs($user)->put(route('admin.settings.personal.table.update'), [
             'table' => 'appointments', 'columns' => ['status', 'starts_at', 'applicant'],
@@ -158,7 +157,7 @@ class SettingsNavigationTest extends TestCase
 
     public function test_table_preferences_reject_unknown_tables_columns_and_duplicates(): void
     {
-        $user = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+        $user = User::factory()->systemAdministrator()->create();
 
         $this->actingAs($user)->put(route('admin.settings.personal.table.update'), [
             'table' => 'secrets', 'columns' => ['password'],
@@ -169,5 +168,20 @@ class SettingsNavigationTest extends TestCase
         $this->actingAs($user)->put(route('admin.settings.personal.table.update'), [
             'table' => 'users', 'columns' => ['name', 'name'],
         ])->assertSessionHasErrors('columns.1');
+    }
+
+    private function panelUser(array $attributes = []): User
+    {
+        $user = User::factory()->create([
+            'role' => 'operator',
+            'is_active' => true,
+            ...$attributes,
+        ]);
+        $user->roles()->attach(Role::query()->create([
+            'name' => "Panel Kullanıcısı {$user->id}",
+            'slug' => "panel-kullanicisi-{$user->id}",
+        ]));
+
+        return $user;
     }
 }

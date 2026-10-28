@@ -14,6 +14,7 @@ use App\Models\InventoryMedia;
 use App\Models\InventoryTransaction;
 use App\Models\StockMovement;
 use App\Services\InventoryStockService;
+use App\Support\InventoryCsvContract;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -42,7 +43,7 @@ class InventoryController extends Controller
             ->withQueryString()
             ->through(fn (InventoryItem $item) => $this->itemData($item));
 
-        $active = InventoryItem::query()->whereNull('archived_at');
+        $unarchived = InventoryItem::query()->whereNull('archived_at');
 
         return Inertia::render('Admin/Inventory/Index', [
             'items' => $items,
@@ -54,9 +55,10 @@ class InventoryController extends Controller
                 'sort' => $sort, 'direction' => $direction,
             ],
             'summary' => [
-                'total' => (clone $active)->count(),
-                'low' => (clone $active)->whereNotNull('minimum_stock')->whereColumn('quantity', '<=', 'minimum_stock')->where('quantity', '>', 0)->count(),
-                'out' => (clone $active)->where('quantity', '<=', 0)->count(),
+                'total' => (clone $unarchived)->where('is_active', true)->count(),
+                'inactive' => (clone $unarchived)->where('is_active', false)->count(),
+                'low' => (clone $unarchived)->where('is_active', true)->whereNotNull('minimum_stock')->whereColumn('quantity', '<=', 'minimum_stock')->where('quantity', '>', 0)->count(),
+                'out' => (clone $unarchived)->where('is_active', true)->where('quantity', '<=', 0)->count(),
                 'archived' => InventoryItem::query()->whereNotNull('archived_at')->count(),
             ],
             'categories' => InventoryCategory::query()->orderBy('sort_order')->orderBy('name')->get()->map(fn ($category) => [
@@ -68,7 +70,7 @@ class InventoryController extends Controller
                 'description' => $location->description, 'isPublic' => $location->is_public,
                 'isActive' => $location->is_active, 'itemCount' => $location->items()->count(),
             ]),
-            'recentMovements' => ($request->user()->role === 'admin' || $request->user()->hasPermissionTo('inventory.view_movements'))
+            'recentMovements' => $request->user()->hasPermissionTo('inventory.view_movements')
                 ? StockMovement::query()->with(['item:id,name,unit', 'user:id,name'])->latest()->limit(15)->get()->map(fn ($movement) => [
                     'id' => $movement->id, 'item' => $movement->item->name, 'unit' => $movement->item->unit,
                     'type' => $movement->movement_type->value, 'change' => $movement->quantity_change,
@@ -105,14 +107,14 @@ class InventoryController extends Controller
         return response()->streamDownload(function () use ($items) {
             $output = fopen('php://output', 'wb');
             fwrite($output, "\xEF\xBB\xBF");
-            fputcsv($output, ['Stok kodu', 'Malzeme', 'Tür', 'Kategori', 'Konum kodu', 'Konum', 'Miktar', 'Birim', 'Kritik stok', 'Durum', 'Katalog görünürlüğü', 'Açıklama'], ';', '"', '');
+            fputcsv($output, array_values(InventoryCsvContract::COLUMNS), ';', '"', '');
 
             foreach ($items as $item) {
                 fputcsv($output, array_map($this->safeCsvValue(...), [
-                    $item->sku, $item->name, $this->itemTypeLabel($item->item_type), $item->category?->name,
+                    $item->sku, $item->name, InventoryCsvContract::typeLabel($item->item_type), $item->category?->name,
                     $item->location?->code, $item->location?->name, $item->quantity, $item->unit,
-                    $item->minimum_stock, $item->archived_at ? 'Arşivlendi' : ($item->is_active ? 'Aktif' : 'Pasif'),
-                    $this->visibilityLabel($item->public_visibility), $item->description,
+                    $item->minimum_stock, InventoryCsvContract::statusLabel($item->archived_at ? 'archived' : ($item->is_active ? 'active' : 'inactive')),
+                    InventoryCsvContract::visibilityLabel($item->public_visibility), $item->description,
                 ]), ';', '"', '');
             }
 
@@ -126,13 +128,24 @@ class InventoryController extends Controller
     public function update(Request $request, InventoryItem $item): RedirectResponse
     {
         $data = $this->validatedItem($request, false, $item);
-        if ($item->archived_at) {
-            throw ValidationException::withMessages(['item' => 'Arşivlenmiş bir malzeme düzenlenemez.']);
-        }
-        if ($request->user()->role !== 'admin' && ! $request->user()->hasPermissionTo('inventory.change_item_type')) {
+        if (! $request->user()->hasPermissionTo('inventory.change_item_type')) {
             unset($data['item_type']);
         }
-        $item->update($data);
+
+        DB::transaction(function () use ($item, $data) {
+            $lockedItem = InventoryItem::query()->lockForUpdate()->findOrFail($item->id);
+            if ($lockedItem->archived_at) {
+                throw ValidationException::withMessages(['item' => 'Arşivlenmiş bir malzeme düzenlenemez.']);
+            }
+            if (isset($data['item_type'])
+                && $data['item_type'] !== $lockedItem->item_type->value
+                && $lockedItem->transactions()->where('status', 'active')->exists()) {
+                throw ValidationException::withMessages([
+                    'item_type' => 'Aktif teslimi bulunan malzemenin türü değiştirilemez. Önce teslim kaydını kapatın.',
+                ]);
+            }
+            $lockedItem->update($data);
+        }, 3);
 
         return back()->with('success', 'Malzeme bilgileri güncellendi.');
     }
@@ -229,13 +242,13 @@ class InventoryController extends Controller
             'location_id' => ['nullable', 'integer', 'exists:inventory_locations,id'],
             'item_type' => ['required', Rule::enum(InventoryItemType::class)],
             'unit' => ['required', 'string', 'max:30'],
-            'minimum_stock' => ['nullable', 'numeric', 'min:0', 'max:9999999999'],
+            'minimum_stock' => ['nullable', 'numeric', 'decimal:0,3', 'min:0', 'max:9999999999'],
             'public_visibility' => ['required', Rule::enum(InventoryVisibility::class)],
             'description' => ['nullable', 'string', 'max:3000'],
             'is_active' => ['required', 'boolean'],
         ];
         if ($creating) {
-            $rules['quantity'] = ['required', 'numeric', 'min:0', 'max:9999999999'];
+            $rules['quantity'] = ['required', 'numeric', 'decimal:0,3', 'min:0', 'max:9999999999'];
         }
         $request->merge(['is_active' => $request->boolean('is_active')]);
 
@@ -248,7 +261,7 @@ class InventoryController extends Controller
             'search' => ['nullable', 'string', 'max:100'],
             'category' => ['nullable', 'integer', 'exists:inventory_categories,id'],
             'type' => ['nullable', Rule::enum(InventoryItemType::class)],
-            'status' => ['nullable', Rule::in(['active', 'low', 'out', 'archived'])],
+            'status' => ['nullable', Rule::in(['all', 'active', 'inactive', 'low', 'out', 'archived'])],
             'sort' => ['nullable', Rule::in(['name', 'quantity', 'minimum_stock', 'updated_at'])],
             'direction' => ['nullable', Rule::in(['asc', 'desc'])],
         ]);
@@ -262,10 +275,12 @@ class InventoryController extends Controller
             })
             ->when($filters['category'] ?? null, fn ($query, $category) => $query->where('category_id', $category))
             ->when($filters['type'] ?? null, fn ($query, $type) => $query->where('item_type', $type))
+            ->when(($filters['status'] ?? null) === 'all', fn ($query) => $query->whereNull('archived_at'))
             ->when(($filters['status'] ?? 'active') === 'active', fn ($query) => $query->whereNull('archived_at')->where('is_active', true))
+            ->when(($filters['status'] ?? null) === 'inactive', fn ($query) => $query->whereNull('archived_at')->where('is_active', false))
             ->when(($filters['status'] ?? null) === 'archived', fn ($query) => $query->whereNotNull('archived_at'))
-            ->when(($filters['status'] ?? null) === 'out', fn ($query) => $query->whereNull('archived_at')->where('quantity', '<=', 0))
-            ->when(($filters['status'] ?? null) === 'low', fn ($query) => $query->whereNull('archived_at')->whereNotNull('minimum_stock')->whereColumn('quantity', '<=', 'minimum_stock')->where('quantity', '>', 0));
+            ->when(($filters['status'] ?? null) === 'out', fn ($query) => $query->whereNull('archived_at')->where('is_active', true)->where('quantity', '<=', 0))
+            ->when(($filters['status'] ?? null) === 'low', fn ($query) => $query->whereNull('archived_at')->where('is_active', true)->whereNotNull('minimum_stock')->whereColumn('quantity', '<=', 'minimum_stock')->where('quantity', '>', 0));
     }
 
     private function safeCsvValue(mixed $value): string
@@ -273,24 +288,6 @@ class InventoryController extends Controller
         $value = (string) ($value ?? '');
 
         return preg_match('/^[=+\-@]/u', $value) ? "'{$value}" : $value;
-    }
-
-    private function itemTypeLabel(InventoryItemType $type): string
-    {
-        return match ($type) {
-            InventoryItemType::Consumable => 'Sarf malzemesi',
-            InventoryItemType::Loanable => 'Ödünç verilebilir',
-            InventoryItemType::FixedAsset => 'Demirbaş',
-        };
-    }
-
-    private function visibilityLabel(InventoryVisibility $visibility): string
-    {
-        return match ($visibility) {
-            InventoryVisibility::Exact => 'Kesin miktar',
-            InventoryVisibility::Status => 'Stok durumu',
-            InventoryVisibility::Hidden => 'Gizli',
-        };
     }
 
     private function validatedCategory(Request $request): array

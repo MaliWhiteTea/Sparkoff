@@ -60,7 +60,7 @@ class PersonalSettingsController extends Controller
         $columns = $this->tableColumns()[$table];
 
         return array_keys(array_filter($columns, function (?string $permission) use ($request) {
-            return $permission === null || $request->user()->role === 'admin' || $request->user()->hasPermissionTo($permission);
+            return $permission === null || $request->user()->hasPermissionTo($permission);
         }));
     }
 

@@ -1,4 +1,5 @@
 import AdminLayout from "@/components/AdminLayout";
+import { FieldError, FormErrors, FormErrorSummary } from "@/components/FormErrorSummary";
 import SettingsTabs from "@/components/SettingsTabs";
 import StatusBadge from "@/components/StatusBadge";
 import { Head, router } from "@inertiajs/react";
@@ -42,6 +43,8 @@ const empty = {
 
 function FilamentCard({ filament }: { filament: Filament }) {
   const [data, setData] = useState({ ...filament });
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [processing, setProcessing] = useState(false);
   return (
     <form
       className="filament-admin-card"
@@ -49,6 +52,11 @@ function FilamentCard({ filament }: { filament: Filament }) {
         event.preventDefault();
         router.patch(`/yonetim/ayarlar/filamentler/${filament.id}`, data, {
           preserveScroll: true,
+          errorBag: `filament-${filament.id}`,
+          onStart: () => setProcessing(true),
+          onError: (nextErrors) => setErrors(nextErrors),
+          onSuccess: () => setErrors({}),
+          onFinish: () => setProcessing(false),
         });
       }}
     >
@@ -58,40 +66,49 @@ function FilamentCard({ filament }: { filament: Filament }) {
           <strong>{filament.color}</strong>
         </div>
         <StatusBadge
-          status={data.is_available ? "available" : "inactive"}
-          label={data.is_available ? "Kullanılabilir" : "Kullanıma kapalı"}
+          status={filament.is_available ? "available" : "inactive"}
+          label={filament.is_available ? "Kullanılabilir" : "Kullanıma kapalı"}
         />
       </header>
+      <FormErrorSummary errors={errors} />
       <div className="field-grid">
         <label className="field">
           <span>Malzeme</span>
           <input
+            aria-invalid={Boolean(errors.material)}
             value={data.material}
             onChange={(e) => setData({ ...data, material: e.target.value })}
           />
+          <FieldError errors={errors} name="material" />
         </label>
         <label className="field">
           <span>Renk</span>
           <input
+            aria-invalid={Boolean(errors.color)}
             value={data.color}
             onChange={(e) => setData({ ...data, color: e.target.value })}
           />
+          <FieldError errors={errors} name="color" />
         </label>
         <label className="field">
           <span>Marka</span>
           <input
+            aria-invalid={Boolean(errors.brand)}
             value={data.brand ?? ""}
             onChange={(e) => setData({ ...data, brand: e.target.value })}
           />
+          <FieldError errors={errors} name="brand" />
         </label>
         <label className="field">
           <span>Çap (mm)</span>
           <input
+            aria-invalid={Boolean(errors.diameter_mm)}
             type="number"
             step="0.01"
             value={data.diameter_mm}
             onChange={(e) => setData({ ...data, diameter_mm: e.target.value })}
           />
+          <FieldError errors={errors} name="diameter_mm" />
         </label>
         <label className="field">
           <span>Makara ağırlığı (g)</span>
@@ -157,7 +174,7 @@ function FilamentCard({ filament }: { filament: Filament }) {
           />
         </label>
       </div>
-      <button>Bilgileri kaydet</button>
+      <button disabled={processing}>{processing ? "Kaydediliyor…" : "Bilgileri kaydet"}</button>
     </form>
   );
 }

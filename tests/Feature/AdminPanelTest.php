@@ -11,6 +11,7 @@ use App\Models\Announcement;
 use App\Models\Appointment;
 use App\Models\BlackoutPeriod;
 use App\Models\Printer;
+use App\Models\Role;
 use App\Models\Setting;
 use App\Models\User;
 use Carbon\CarbonImmutable;
@@ -29,7 +30,7 @@ class AdminPanelTest extends TestCase
     {
         $this->get(route('admin.index'))->assertOk()->assertInertia(fn (Assert $page) => $page->component('Admin/Login'));
 
-        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+        $admin = User::factory()->systemAdministrator()->create();
 
         $this->actingAs($admin)->get(route('admin.index'))->assertRedirect(route('admin.appointments.index'));
     }
@@ -63,6 +64,18 @@ class AdminPanelTest extends TestCase
                 ->where('appointments.data.0.publicId', $appointment->public_id));
     }
 
+    public function test_login_email_is_normalized_before_authentication(): void
+    {
+        $admin = $this->admin();
+
+        $this->post(route('admin.login.store'), [
+            'email' => '  '.strtoupper($admin->email).' ',
+            'password' => 'guvenli-test-parolasi',
+        ])->assertRedirect(route('admin.appointments.index'));
+
+        $this->assertAuthenticatedAs($admin);
+    }
+
     public function test_inactive_admin_cannot_log_in(): void
     {
         $admin = $this->admin(['is_active' => false]);
@@ -75,9 +88,13 @@ class AdminPanelTest extends TestCase
         $this->assertGuest();
     }
 
-    public function test_an_active_user_without_an_admin_role_cannot_log_in(): void
+    public function test_a_legacy_admin_without_an_assigned_panel_role_cannot_log_in(): void
     {
-        $user = $this->admin(['role' => 'student']);
+        $user = User::factory()->create([
+            'password' => 'guvenli-test-parolasi',
+            'role' => 'admin',
+            'is_active' => true,
+        ]);
 
         $this->post(route('admin.login.store'), [
             'email' => $user->email,
@@ -201,7 +218,11 @@ class AdminPanelTest extends TestCase
 
     public function test_only_admin_role_can_manage_printer_settings(): void
     {
-        $operator = $this->admin(['role' => 'operator']);
+        $operator = User::factory()->create(['role' => 'operator', 'is_active' => true]);
+        $operator->roles()->attach(Role::query()->create([
+            'name' => 'Sınırlı Görevli',
+            'slug' => 'sinirli-gorevli',
+        ]));
 
         $this->actingAs($operator)
             ->get(route('admin.settings.printers.index'))
@@ -262,6 +283,21 @@ class AdminPanelTest extends TestCase
             'kind' => 'maintenance',
             'reason' => 'Planlı bakım',
         ]);
+    }
+
+    public function test_invalid_printer_card_data_is_rejected_without_overwriting_the_printer(): void
+    {
+        $admin = $this->admin();
+        $printer = Printer::query()->firstOrFail();
+        $originalDescription = $printer->description;
+
+        $this->actingAs($admin)->patch(route('admin.settings.printers.update', $printer), [
+            'name' => $printer->name,
+            'status' => $printer->status->value,
+            'description' => str_repeat('a', 1001),
+        ])->assertSessionHasErrors('description');
+
+        $this->assertSame($originalDescription, $printer->fresh()->description);
     }
 
     public function test_admin_cannot_add_an_overlapping_schedule_block(): void
@@ -392,14 +428,18 @@ class AdminPanelTest extends TestCase
 
     private function admin(array $overrides = []): User
     {
-        return User::query()->create([
+        $user = User::query()->create([
             'name' => 'Test Yöneticisi',
             'email' => 'admin@example.com',
             'password' => 'guvenli-test-parolasi',
-            'role' => 'admin',
+            'role' => 'operator',
             'is_active' => true,
             ...$overrides,
         ]);
+
+        $user->roles()->attach(Role::query()->where('is_system', true)->firstOrFail());
+
+        return $user;
     }
 
     private function appointment(): Appointment

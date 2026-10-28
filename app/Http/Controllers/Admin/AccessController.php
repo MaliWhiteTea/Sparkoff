@@ -20,8 +20,8 @@ class AccessController extends Controller
 {
     public function index(Request $request): Response
     {
-        $canViewRoles = $request->user()->role === 'admin' || $request->user()->hasPermissionTo('roles.view');
-        $canViewUsers = $request->user()->role === 'admin' || $request->user()->hasPermissionTo('users.view');
+        $canViewRoles = $request->user()->hasPermissionTo('roles.view');
+        $canViewUsers = $request->user()->hasPermissionTo('users.view');
         $sorting = $request->validate([
             'user_sort' => ['nullable', Rule::in(['name', 'email', 'is_active', 'created_at'])],
             'user_direction' => ['nullable', Rule::in(['asc', 'desc'])],
@@ -101,6 +101,7 @@ class AccessController extends Controller
 
     public function storeUser(Request $request): RedirectResponse
     {
+        $this->normalizeEmail($request);
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email:rfc', 'max:255', 'unique:users,email'],
@@ -128,6 +129,7 @@ class AccessController extends Controller
 
     public function updateUser(Request $request, User $user): RedirectResponse
     {
+        $this->normalizeEmail($request);
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email:rfc', 'max:255', Rule::unique('users', 'email')->ignore($user)],
@@ -137,7 +139,7 @@ class AccessController extends Controller
             'role_ids.*' => ['integer', 'distinct', 'exists:roles,id'],
         ]);
 
-        $can = fn (string $permission) => $request->user()->role === 'admin' || $request->user()->hasPermissionTo($permission);
+        $can = fn (string $permission) => $request->user()->hasPermissionTo($permission);
         $submittedRoleIds = collect($validated['role_ids'])->map(fn ($id) => (int) $id)->sort()->values()->all();
         $currentRoleIds = $user->roles()->pluck('roles.id')->map(fn ($id) => (int) $id)->sort()->values()->all();
 
@@ -160,6 +162,7 @@ class AccessController extends Controller
             $attributes = [
                 'name' => $validated['name'],
                 'email' => Str::lower($validated['email']),
+                'role' => 'operator',
                 'is_active' => $validated['is_active'],
             ];
             if (! empty($validated['password'])) {
@@ -181,6 +184,13 @@ class AccessController extends Controller
             'permissions' => ['present', 'array'],
             'permissions.*' => ['string', 'distinct', 'exists:permissions,key'],
         ]);
+    }
+
+    private function normalizeEmail(Request $request): void
+    {
+        if ($request->has('email')) {
+            $request->merge(['email' => Str::lower(trim((string) $request->input('email')))]);
+        }
     }
 
     private function permissionIds(array $keys): array
@@ -207,7 +217,7 @@ class AccessController extends Controller
             || $target?->roles()->where('is_system', true)->exists();
 
         abort_if(
-            $touchesSystemRole && $request->user()?->role !== 'admin' && ! $request->user()?->isSystemAdministrator(),
+            $touchesSystemRole && ! $request->user()?->isSystemAdministrator(),
             403,
             'Sistem Yöneticisi rolünü yalnızca başka bir Sistem Yöneticisi atayabilir.',
         );

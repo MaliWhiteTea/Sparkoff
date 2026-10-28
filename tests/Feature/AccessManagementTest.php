@@ -23,7 +23,7 @@ class AccessManagementTest extends TestCase
 
     public function test_system_administrator_can_create_a_role_with_selected_permissions(): void
     {
-        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+        $admin = User::factory()->systemAdministrator()->create();
 
         $this->actingAs($admin)->post(route('admin.roles.store'), [
             'name' => 'Malzeme Sorumlusu',
@@ -60,12 +60,56 @@ class AccessManagementTest extends TestCase
         $this->assertTrue(ActivityLog::query()->where('subject_type', User::class)->where('subject_id', $user->id)->whereJsonContains('changed_fields', 'roles')->exists());
     }
 
+    public function test_case_variant_duplicate_email_is_a_validation_error_instead_of_a_server_error(): void
+    {
+        $admin = User::factory()->systemAdministrator()->create();
+        User::factory()->create(['email' => 'duplicate@example.test']);
+        $role = Role::query()->where('slug', 'inventory-moderator')->firstOrFail();
+
+        $this->actingAs($admin)->from(route('admin.access.index'))->post(route('admin.users.store'), [
+            'name' => 'Tekrar Kullanıcı',
+            'email' => '  DUPLICATE@EXAMPLE.TEST ',
+            'password' => 'guvenli-gecici-parola',
+            'role_ids' => [$role->id],
+        ])->assertRedirect(route('admin.access.index'))->assertSessionHasErrors('email');
+
+        $this->assertSame(1, User::query()->where('email', 'duplicate@example.test')->count());
+    }
+
+    public function test_user_can_keep_their_email_when_only_case_and_whitespace_change(): void
+    {
+        $admin = User::factory()->systemAdministrator()->create();
+        $roleId = $admin->roles()->sole()->id;
+
+        $this->actingAs($admin)->put(route('admin.users.update', $admin), [
+            'name' => $admin->name,
+            'email' => '  '.strtoupper($admin->email).' ',
+            'password' => '',
+            'is_active' => true,
+            'role_ids' => [$roleId],
+        ])->assertSessionHas('success');
+
+        $this->assertSame(strtolower($admin->email), $admin->fresh()->email);
+    }
+
+    public function test_user_creation_requires_at_least_one_role(): void
+    {
+        $admin = User::factory()->systemAdministrator()->create();
+
+        $this->actingAs($admin)->post(route('admin.users.store'), [
+            'name' => 'Rolsüz Kullanıcı',
+            'email' => 'rolsuz@example.test',
+            'password' => 'guvenli-gecici-parola',
+            'role_ids' => [],
+        ])->assertSessionHasErrors('role_ids');
+
+        $this->assertDatabaseMissing('users', ['email' => 'rolsuz@example.test']);
+    }
+
     public function test_the_last_active_system_administrator_cannot_lose_system_access(): void
     {
-        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
-        $systemRole = Role::query()->where('is_system', true)->firstOrFail();
+        $admin = User::factory()->systemAdministrator()->create();
         $moderatorRole = Role::query()->where('slug', 'inventory-moderator')->firstOrFail();
-        $admin->roles()->attach($systemRole);
 
         $this->actingAs($admin)->put(route('admin.users.update', $admin), [
             'name' => $admin->name,
@@ -98,7 +142,7 @@ class AccessManagementTest extends TestCase
 
     public function test_protected_system_role_cannot_be_changed_or_deleted(): void
     {
-        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+        $admin = User::factory()->systemAdministrator()->create();
         $role = Role::query()->where('is_system', true)->firstOrFail();
 
         $this->actingAs($admin)->put(route('admin.roles.update', $role), [
@@ -108,6 +152,40 @@ class AccessManagementTest extends TestCase
         ])->assertForbidden();
 
         $this->actingAs($admin)->delete(route('admin.roles.destroy', $role))->assertForbidden();
+    }
+
+    public function test_a_demoted_legacy_administrator_loses_access_on_the_next_request_for_every_http_verb(): void
+    {
+        $owner = User::factory()->systemAdministrator()->create();
+        $legacyAdmin = User::factory()->systemAdministrator()->create(['role' => 'admin']);
+        $limitedRole = Role::query()->create(['name' => 'Yetkisiz Panel Rolü', 'slug' => 'yetkisiz-panel-rolu']);
+        $editableRole = Role::query()->create(['name' => 'Düzenlenebilir Rol', 'slug' => 'duzenlenebilir-rol']);
+
+        $this->actingAs($legacyAdmin)->get(route('admin.access.index'))->assertOk();
+
+        $this->actingAs($owner)->put(route('admin.users.update', $legacyAdmin), [
+            'name' => $legacyAdmin->name,
+            'email' => $legacyAdmin->email,
+            'password' => '',
+            'is_active' => true,
+            'role_ids' => [$limitedRole->id],
+        ])->assertSessionHas('success');
+
+        $this->assertFalse($legacyAdmin->fresh()->isSystemAdministrator());
+        $this->assertSame('operator', $legacyAdmin->fresh()->role);
+
+        $this->actingAs($legacyAdmin)->get(route('admin.access.index'))->assertForbidden();
+        $this->actingAs($legacyAdmin)->post(route('admin.roles.store'), [
+            'name' => 'Yetkisiz Oluşturma',
+            'description' => '',
+            'permissions' => [],
+        ])->assertForbidden();
+        $this->actingAs($legacyAdmin)->put(route('admin.roles.update', $editableRole), [
+            'name' => 'Yetkisiz Güncelleme',
+            'description' => '',
+            'permissions' => [],
+        ])->assertForbidden();
+        $this->actingAs($legacyAdmin)->delete(route('admin.roles.destroy', $editableRole))->assertForbidden();
     }
 
     public function test_user_viewer_can_open_access_page_without_role_details(): void

@@ -13,7 +13,7 @@ class EnsureActiveAdmin
     {
         $user = $request->user();
 
-        if (! $user?->is_active || (! in_array($user->role, ['admin', 'operator'], true) && ! $user->roles()->exists())) {
+        if (! $user?->is_active || ! $user->canAccessAdminPanel()) {
             Auth::logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();

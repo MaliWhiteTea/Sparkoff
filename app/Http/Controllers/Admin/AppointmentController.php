@@ -120,7 +120,7 @@ class AppointmentController extends Controller
 
     private function can(Request $request, string $permission): bool
     {
-        return $request->user()->role === 'admin' || $request->user()->hasPermissionTo($permission);
+        return $request->user()->hasPermissionTo($permission);
     }
 
     public function updateStatus(Request $request, string $publicId): RedirectResponse

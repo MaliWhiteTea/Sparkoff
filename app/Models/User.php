@@ -55,6 +55,11 @@ class User extends Authenticatable
         return $this->roles()->where('is_system', true)->exists();
     }
 
+    public function canAccessAdminPanel(): bool
+    {
+        return $this->roles()->exists();
+    }
+
     public function hasRole(string $slug): bool
     {
         return $this->roles()->where('slug', $slug)->exists();

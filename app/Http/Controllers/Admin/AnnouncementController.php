@@ -7,6 +7,7 @@ use App\Models\ActivityLog;
 use App\Models\Announcement;
 use App\Models\Role;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -20,26 +21,45 @@ class AnnouncementController extends Controller
     {
         $canPublic = $this->can($request, 'announcements.view');
         $canStaff = $this->can($request, 'staff_announcements.view');
+        $canManageStaff = $request->user()->isSystemAdministrator()
+            || $this->can($request, 'staff_announcements.update')
+            || $this->can($request, 'staff_announcements.archive');
+        $canCreateStaff = $this->can($request, 'staff_announcements.create');
 
         return Inertia::render('Admin/Announcements/Index', [
             'announcements' => Announcement::query()
                 ->with('targetRoles:id,name')
                 ->withCount(['readers', 'readers as acknowledged_count' => fn ($query) => $query->whereNotNull('announcement_user.acknowledged_at')])
-                ->when(! ($canPublic && $canStaff), fn ($query) => $query->whereIn('audience', $canPublic ? ['public', 'both'] : ['staff', 'both']))
+                ->where(function (Builder $visibility) use ($canPublic, $canStaff, $canManageStaff, $request) {
+                    if ($canPublic) {
+                        $visibility->orWhereIn('audience', ['public', 'both']);
+                    }
+                    if ($canStaff) {
+                        $visibility->orWhere(function (Builder $staff) use ($canManageStaff, $request) {
+                            if ($canManageStaff) {
+                                $staff->whereIn('audience', ['staff', 'both']);
+
+                                return;
+                            }
+
+                            $staff->visibleToStaffReader($request->user());
+                        });
+                    }
+                })
                 ->orderByDesc('is_pinned')->latest()->get()->map(fn (Announcement $announcement) => [
                     'id' => $announcement->id, 'title' => $announcement->title, 'body' => $announcement->body,
                     'type' => $announcement->type, 'placement' => $announcement->placement, 'audience' => $announcement->audience,
                     'isPublished' => $announcement->is_published, 'isPinned' => $announcement->is_pinned,
                     'requiresAcknowledgement' => $announcement->requires_acknowledgement,
                     'startsAt' => $announcement->starts_at?->format('Y-m-d\TH:i'), 'endsAt' => $announcement->ends_at?->format('Y-m-d\TH:i'),
-                    'roleIds' => $canStaff ? $announcement->targetRoles->pluck('id') : [],
-                    'roleNames' => $canStaff ? $announcement->targetRoles->pluck('name') : [],
-                    'readCount' => $canStaff ? $announcement->readers_count : 0,
-                    'acknowledgedCount' => $canStaff ? $announcement->acknowledged_count : 0,
+                    'roleIds' => $canManageStaff ? $announcement->targetRoles->pluck('id') : [],
+                    'roleNames' => $canManageStaff ? $announcement->targetRoles->pluck('name') : [],
+                    'readCount' => $canManageStaff ? $announcement->readers_count : 0,
+                    'acknowledgedCount' => $canManageStaff ? $announcement->acknowledged_count : 0,
                     'canUpdate' => $this->canManageAudience($request, $announcement->audience, 'update'),
                     'canArchive' => $this->canManageAudience($request, $announcement->audience, 'archive'),
                 ]),
-            'roles' => $canStaff ? Role::query()->orderBy('name')->get(['id', 'name']) : [],
+            'roles' => ($canManageStaff || $canCreateStaff) ? Role::query()->orderBy('name')->get(['id', 'name']) : [],
             'capabilities' => [
                 'createPublic' => $this->can($request, 'announcements.create'),
                 'createStaff' => $this->can($request, 'staff_announcements.create'),
@@ -136,12 +156,12 @@ class AnnouncementController extends Controller
 
     private function can(Request $request, string $permission): bool
     {
-        return $request->user()->role === 'admin' || $request->user()->hasPermissionTo($permission);
+        return $request->user()->hasPermissionTo($permission);
     }
 
     private function targetsUser(Announcement $announcement, User $user): bool
     {
-        return $user->role === 'admin' || $user->isSystemAdministrator()
+        return $user->isSystemAdministrator()
             || ! $announcement->targetRoles()->exists()
             || $announcement->targetRoles()->whereIn('roles.id', $user->roles()->pluck('roles.id'))->exists();
     }

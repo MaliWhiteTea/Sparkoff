@@ -37,7 +37,7 @@ class PrivacyNoticeTest extends TestCase
 
     public function test_admin_can_update_privacy_and_retention_settings(): void
     {
-        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+        $admin = User::factory()->systemAdministrator()->create();
 
         $this->actingAs($admin)->put(route('admin.settings.privacy.update'), [
             'controller_name' => 'Örnek Mesleki ve Teknik Anadolu Lisesi',

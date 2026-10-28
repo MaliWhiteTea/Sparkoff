@@ -13,7 +13,7 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         $user = $request->user();
-        $canSeeStaffAnnouncements = $user && ($user->role === 'admin' || $user->hasPermissionTo('staff_announcements.view'));
+        $canSeeStaffAnnouncements = $user?->hasPermissionTo('staff_announcements.view') ?? false;
         $staffAnnouncements = $canSeeStaffAnnouncements ? $this->staffAnnouncements($user) : collect();
 
         return [
@@ -29,7 +29,7 @@ class HandleInertiaRequests extends Middleware
                     'role' => $user->role,
                     'isSystemAdministrator' => $user->isSystemAdministrator(),
                     'roles' => $user->roles()->pluck('name'),
-                    'permissions' => $user->role === 'admin' || $user->isSystemAdministrator()
+                    'permissions' => $user->isSystemAdministrator()
                         ? collect(config('permissions'))->flatMap(fn ($permissions) => array_keys($permissions))->values()
                         : $user->roles()->with('permissions:id,key')->get()->flatMap->permissions->pluck('key')->unique()->values(),
                     'interfacePreferences' => $user->interfacePreferences(),
@@ -48,15 +48,8 @@ class HandleInertiaRequests extends Middleware
 
     private function staffAnnouncements($user)
     {
-        $roleIds = $user->roles()->pluck('roles.id');
-
         $query = Announcement::query()
-            ->where('is_published', true)->whereIn('audience', ['staff', 'both'])
-            ->where(fn ($query) => $query->whereNull('starts_at')->orWhere('starts_at', '<=', now()))
-            ->where(fn ($query) => $query->whereNull('ends_at')->orWhere('ends_at', '>', now()));
-        if ($user->role !== 'admin' && ! $user->isSystemAdministrator()) {
-            $query->where(fn ($query) => $query->whereDoesntHave('targetRoles')->orWhereHas('targetRoles', fn ($roles) => $roles->whereIn('roles.id', $roleIds)));
-        }
+            ->visibleToStaffReader($user);
 
         return $query
             ->with(['readers' => fn ($query) => $query->where('users.id', $user->id)])

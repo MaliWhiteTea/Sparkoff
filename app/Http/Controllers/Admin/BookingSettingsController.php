@@ -57,8 +57,8 @@ class BookingSettingsController extends Controller
             'allowed_extensions.*' => ['required', 'string', 'distinct', Rule::in(self::SUPPORTED_EXTENSIONS)],
         ]);
 
-        $canManageHours = $request->user()->role === 'admin' || $request->user()->hasPermissionTo('printers.manage_hours');
-        $canManageSystemSettings = $request->user()->role === 'admin' || $request->user()->hasPermissionTo('system_settings.update');
+        $canManageHours = $request->user()->hasPermissionTo('printers.manage_hours');
+        $canManageSystemSettings = $request->user()->hasPermissionTo('system_settings.update');
 
         foreach ($validated['hours'] as $index => $day) {
             if (! $day['is_open']) {

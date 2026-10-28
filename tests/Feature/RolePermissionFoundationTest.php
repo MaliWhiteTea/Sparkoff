@@ -48,6 +48,20 @@ class RolePermissionFoundationTest extends TestCase
 
         $this->assertTrue($admin->fresh()->isSystemAdministrator());
         $this->assertTrue($admin->fresh()->hasPermissionTo('roles.update'));
+        $this->assertSame('operator', $admin->fresh()->role);
+    }
+
+    public function test_reseeding_does_not_restore_a_removed_legacy_administrator_role(): void
+    {
+        $this->seed();
+        $admin = User::factory()->systemAdministrator()->create();
+        $admin->update(['role' => 'admin']);
+        $admin->roles()->detach();
+
+        $this->seed();
+
+        $this->assertFalse($admin->fresh()->isSystemAdministrator());
+        $this->assertSame('operator', $admin->fresh()->role);
     }
 
     public function test_a_panel_user_cannot_open_a_route_without_its_permission(): void

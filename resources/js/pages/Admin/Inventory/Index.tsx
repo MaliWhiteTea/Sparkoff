@@ -1,4 +1,5 @@
 import AdminLayout from "@/components/AdminLayout";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import StatusBadge from "@/components/StatusBadge";
 import ListSort from "@/components/ListSort";
 import TableColumns, { ColumnDefinition, initialTableColumns } from "@/components/TableColumns";
@@ -262,6 +263,8 @@ function ItemCard({
   const [editing, setEditing] = useState(false);
   const [stocking, setStocking] = useState(false);
   const [managingMedia, setManagingMedia] = useState(false);
+  const [confirmingPurge, setConfirmingPurge] = useState(false);
+  const [purging, setPurging] = useState(false);
   const [error, setError] = useState("");
   const [stock, setStock] = useState({ quantity_change: "", reason: "" });
   const [data, setData] = useState<ItemForm>({
@@ -296,6 +299,15 @@ function ItemCard({
         setStock({ quantity_change: "", reason: "" });
       },
       onError: (e) => setError(Object.values(e)[0] ?? "Stok kaydedilemedi."),
+    });
+  };
+  const purge = () => {
+    setPurging(true);
+    router.delete(`/yonetim/envanter/${item.id}`, {
+      data: { confirmation: String(item.id) },
+      preserveScroll: true,
+      onSuccess: () => setConfirmingPurge(false),
+      onFinish: () => setPurging(false),
     });
   };
   if (editing)
@@ -424,19 +436,14 @@ function ItemCard({
             <button
               type="button"
               className="danger"
-              onClick={() =>
-                window.confirm(`${item.name} kalıcı olarak silinsin mi? Bu işlem geri alınamaz.`) &&
-                router.delete(`/yonetim/envanter/${item.id}`, {
-                  data: { confirmation: String(item.id) },
-                  preserveScroll: true,
-                })
-              }
+              onClick={() => setConfirmingPurge(true)}
             >
               Kalıcı sil
             </button>
           )}
         </div>
       </footer>
+      <ConfirmDialog open={confirmingPurge} eyebrow="KALICI SİLME" title={`${item.name} kalıcı olarak silinsin mi?`} description="Bu malzeme; stok hareketleri, teslim kayıtları ve medya dosyalarıyla birlikte silinecek. Bu işlem geri alınamaz." confirmLabel="Malzemeyi kalıcı sil" tone="danger" processing={purging} onClose={() => setConfirmingPurge(false)} onConfirm={purge} />
     </article>
   );
 }
@@ -865,6 +872,10 @@ export default function Inventory({
           <strong>{summary.total}</strong>
           <span>Aktif malzeme</span>
         </button>
+        <button onClick={() => filter({ status: "inactive" })}>
+          <strong>{summary.inactive}</strong>
+          <span>Pasif malzeme</span>
+        </button>
         <button onClick={() => filter({ status: "low" })}>
           <strong>{summary.low}</strong>
           <span>Kritik stok</span>
@@ -959,7 +970,9 @@ export default function Inventory({
             value={filters.status}
             onChange={(e) => filter({ status: e.target.value })}
           >
+            <option value="all">Tüm etkinlik durumları</option>
             <option value="active">Aktif</option>
+            <option value="inactive">Pasif</option>
             <option value="low">Kritik stok</option>
             <option value="out">Tükenen</option>
             <option value="archived">Arşivlenen</option>

@@ -53,8 +53,8 @@ class InventoryTransactionController extends Controller
         return Inertia::render('Admin/InventoryTransactions/Index', [
             'transactions' => $transactions, 'filter' => $status,
             'sorting' => ['sort' => $sort, 'direction' => $direction],
-            'items' => InventoryItem::query()->whereNull('archived_at')->where('is_active', true)->orderBy('name')->get()->map(fn ($item) => [
-                'id' => $item->id, 'name' => $item->name, 'type' => $item->item_type->value, 'quantity' => $item->quantity, 'unit' => $item->unit,
+            'items' => InventoryItem::query()->withAvailableQuantity()->whereNull('archived_at')->where('is_active', true)->orderBy('name')->get()->map(fn ($item) => [
+                'id' => $item->id, 'name' => $item->name, 'type' => $item->item_type->value, 'quantity' => $item->availableQuantity(), 'unit' => $item->unit,
             ]),
             'counts' => [
                 'active' => InventoryTransaction::query()->where('status', InventoryTransactionStatus::Active)->count(),
@@ -118,6 +118,6 @@ class InventoryTransactionController extends Controller
 
     private function can(Request $request, string $permission): bool
     {
-        return $request->user()->role === 'admin' || $request->user()->hasPermissionTo($permission);
+        return $request->user()->hasPermissionTo($permission);
     }
 }

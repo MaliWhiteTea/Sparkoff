@@ -29,13 +29,10 @@ class InventoryTransactionService
             if ($item->item_type === InventoryItemType::Loanable && ! $dueAt) {
                 throw new LogicException('Ödünç malzeme için beklenen iade tarihi zorunludur.');
             }
-            if ($item->item_type === InventoryItemType::FixedAsset) {
-                $inUse = (float) InventoryTransaction::query()
-                    ->where('inventory_item_id', $item->id)->where('status', InventoryTransactionStatus::Active)
-                    ->selectRaw('COALESCE(SUM(quantity - quantity_returned), 0) as in_use')->value('in_use');
-                if ($inUse + $quantity > (float) $item->quantity) {
-                    throw new LogicException('Kullanımdaki demirbaş miktarı mevcut miktarı aşamaz.');
-                }
+            if ($quantity > (float) $item->availableQuantity()) {
+                throw new LogicException($item->item_type === InventoryItemType::FixedAsset
+                    ? 'Kullanımdaki demirbaş miktarı mevcut miktarı aşamaz.'
+                    : 'Teslim miktarı kullanılabilir stok miktarını aşamaz.');
             }
 
             $completed = $item->item_type === InventoryItemType::Consumable;
