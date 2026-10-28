@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Enums\AppointmentStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Appointment;
+use App\Models\BlackoutPeriod;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -42,8 +43,14 @@ class CalendarController extends Controller
             ->where('ends_at', '>', $periodStart)
             ->orderBy('starts_at')
             ->get();
+        $blackouts = BlackoutPeriod::query()
+            ->with('printer')
+            ->where('starts_at', '<', $periodEnd)
+            ->where('ends_at', '>', $periodStart)
+            ->orderBy('starts_at')
+            ->get();
 
-        $days = collect(range(0, $view === 'day' ? 0 : 6))->map(function (int $offset) use ($periodStart, $appointments, $canViewPersonalData, $canViewAppointments) {
+        $days = collect(range(0, $view === 'day' ? 0 : 6))->map(function (int $offset) use ($periodStart, $appointments, $blackouts, $canViewPersonalData, $canViewAppointments) {
             $dayStart = $periodStart->addDays($offset);
             $dayEnd = $dayStart->addDay();
 
@@ -69,7 +76,27 @@ class CalendarController extends Controller
                             'continuesFromPrevious' => $continuesFromPrevious,
                             'continuesNext' => $continuesNext,
                         ];
-                    })->values(),
+                    })
+                    ->concat($blackouts
+                        ->filter(fn (BlackoutPeriod $blackout) => $blackout->starts_at->lt($dayEnd) && $blackout->ends_at->gt($dayStart))
+                        ->map(function (BlackoutPeriod $blackout) use ($dayStart, $dayEnd) {
+                            $continuesFromPrevious = $blackout->starts_at->lt($dayStart);
+                            $continuesNext = $blackout->ends_at->gt($dayEnd);
+
+                            return [
+                                'publicId' => null,
+                                'name' => $blackout->reason ?: $this->kindLabel($blackout->kind),
+                                'printer' => $blackout->printer?->name ?? 'Tüm atölye',
+                                'status' => $blackout->kind,
+                                'statusLabel' => $this->kindLabel($blackout->kind),
+                                'startTime' => $continuesFromPrevious ? '00:00' : $blackout->starts_at->format('H:i'),
+                                'endTime' => $continuesNext ? '24:00' : $blackout->ends_at->format('H:i'),
+                                'continuesFromPrevious' => $continuesFromPrevious,
+                                'continuesNext' => $continuesNext,
+                            ];
+                        }))
+                    ->sortBy('startTime')
+                    ->values(),
             ];
         });
 
@@ -102,6 +129,15 @@ class CalendarController extends Controller
             AppointmentStatus::Rejected => 'Reddedildi',
             AppointmentStatus::Canceled => 'İptal edildi',
             AppointmentStatus::Expired => 'Süresi doldu',
+        };
+    }
+
+    private function kindLabel(string $kind): string
+    {
+        return match ($kind) {
+            'busy' => 'Dolu',
+            'maintenance' => 'Bakım',
+            default => 'Kapalı',
         };
     }
 }

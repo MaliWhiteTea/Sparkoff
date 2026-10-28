@@ -3,16 +3,21 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Enums\AppointmentStatus;
+use App\Exceptions\SlotUnavailableException;
 use App\Http\Controllers\Controller;
 use App\Mail\AppointmentStatusMail;
 use App\Models\Appointment;
 use App\Models\AppointmentFile;
+use App\Models\Printer;
+use App\Services\AppointmentAvailabilityService;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -123,7 +128,7 @@ class AppointmentController extends Controller
         return $request->user()->hasPermissionTo($permission);
     }
 
-    public function updateStatus(Request $request, string $publicId): RedirectResponse
+    public function updateStatus(Request $request, string $publicId, AppointmentAvailabilityService $availability): RedirectResponse
     {
         $validated = $request->validate([
             'status' => ['required', Rule::in(array_column(AppointmentStatus::cases(), 'value'))],
@@ -142,27 +147,43 @@ class AppointmentController extends Controller
         $requestedStatus = AppointmentStatus::from($validated['status']);
         abort_unless($this->can($request, $this->isReviewStatus($requestedStatus) ? 'appointments.review' : 'appointments.manage_status'), 403);
 
-        $appointment = DB::transaction(function () use ($publicId, $validated, $request) {
-            $appointment = Appointment::query()->where('public_id', $publicId)->lockForUpdate()->firstOrFail();
+        try {
+            $appointment = DB::transaction(function () use ($publicId, $validated, $request, $availability) {
+                $reference = Appointment::query()->where('public_id', $publicId)->firstOrFail(['id', 'printer_id']);
+                $printer = Printer::query()->lockForUpdate()->findOrFail($reference->printer_id);
+                $appointment = Appointment::query()->whereKey($reference->id)->lockForUpdate()->firstOrFail();
 
-            $previousStatus = $appointment->status;
-            $newStatus = AppointmentStatus::from($validated['status']);
-            abort_unless(in_array($newStatus, $this->allowedTransitions($previousStatus), true), 422);
+                $previousStatus = $appointment->status;
+                $newStatus = AppointmentStatus::from($validated['status']);
+                abort_unless(in_array($newStatus, $this->allowedTransitions($previousStatus), true), 422);
 
-            $note = $validated['note'] ?? $this->defaultStatusNote($newStatus);
-            $appointment->update([
-                'status' => $newStatus,
-                'admin_note' => $validated['note'] ?? $appointment->admin_note,
-            ]);
-            $appointment->statusHistory()->create([
-                'actor_id' => $request->user()->id,
-                'from_status' => $previousStatus,
-                'to_status' => $newStatus,
-                'note' => $note,
-            ]);
+                if (! in_array($previousStatus->value, AppointmentStatus::blockingValues(), true)
+                    && in_array($newStatus->value, AppointmentStatus::blockingValues(), true)) {
+                    $availability->assertIntervalAvailable(
+                        $printer,
+                        CarbonImmutable::instance($appointment->starts_at),
+                        CarbonImmutable::instance($appointment->ends_at),
+                        $appointment->id,
+                    );
+                }
 
-            return $appointment->fresh('printer');
-        });
+                $note = $validated['note'] ?? $this->defaultStatusNote($newStatus);
+                $appointment->update([
+                    'status' => $newStatus,
+                    'admin_note' => $validated['note'] ?? $appointment->admin_note,
+                ]);
+                $appointment->statusHistory()->create([
+                    'actor_id' => $request->user()->id,
+                    'from_status' => $previousStatus,
+                    'to_status' => $newStatus,
+                    'note' => $note,
+                ]);
+
+                return $appointment->fresh('printer');
+            }, 3);
+        } catch (SlotUnavailableException $exception) {
+            throw ValidationException::withMessages(['status' => $exception->getMessage()]);
+        }
 
         try {
             Mail::to($appointment->email)->send(new AppointmentStatusMail($appointment));

@@ -10,6 +10,7 @@ use App\Models\Appointment;
 use App\Models\BlackoutPeriod;
 use App\Models\OperatingHour;
 use App\Models\Printer;
+use App\Models\Setting;
 use App\Services\AppointmentAvailabilityService;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -58,6 +59,36 @@ class AppointmentAvailabilityTest extends TestCase
         $end = $this->service->assertAvailable($this->printer, $start, 24 * 60);
 
         $this->assertSame('2026-10-06 21:00:00', $end->format('Y-m-d H:i:s'));
+    }
+
+    public function test_slot_alignment_uses_each_days_opening_time_for_every_supported_step(): void
+    {
+        foreach (['09:00:00', '09:15:00'] as $opensAt) {
+            foreach ([15, 30, 60] as $slotMinutes) {
+                OperatingHour::query()->where('weekday', 1)->update([
+                    'opens_at' => $opensAt,
+                    'latest_start_at' => '12:15:00',
+                ]);
+                Setting::query()->updateOrCreate(
+                    ['key' => 'booking.slot_minutes'],
+                    ['value' => $slotMinutes, 'group' => 'booking'],
+                );
+
+                $date = CarbonImmutable::parse('2026-10-05 00:00:00', 'Europe/Istanbul');
+                $opening = $date->setTimeFromTimeString($opensAt);
+                $slots = $this->service->availableStartTimes($this->printer, $date, $slotMinutes);
+
+                $this->assertSame($opening->format('H:i'), $slots[0]);
+                $this->assertSame($opening->addMinutes($slotMinutes)->format('H:i'), $slots[1]);
+
+                try {
+                    $this->service->assertAvailable($this->printer, $opening->addMinute(), $slotMinutes);
+                    $this->fail("{$opensAt} açılışı ve {$slotMinutes} dakika adımında hizasız saat reddedilmeliydi.");
+                } catch (SlotUnavailableException) {
+                    $this->assertTrue(true);
+                }
+            }
+        }
     }
 
     public function test_a_start_after_21_is_rejected(): void
@@ -139,6 +170,35 @@ class AppointmentAvailabilityTest extends TestCase
             CarbonImmutable::parse('2026-10-05 14:00:00', 'Europe/Istanbul'),
             60,
         );
+    }
+
+    public function test_global_blackout_blocks_all_printers_but_adjacent_interval_is_allowed(): void
+    {
+        BlackoutPeriod::query()->create([
+            'printer_id' => null,
+            'kind' => 'closed',
+            'starts_at' => '2026-10-05 13:00:00',
+            'ends_at' => '2026-10-05 15:00:00',
+            'reason' => 'Atölye kapalı',
+        ]);
+
+        try {
+            $this->service->assertAvailable(
+                $this->printer,
+                CarbonImmutable::parse('2026-10-05 14:00:00', 'Europe/Istanbul'),
+                60,
+            );
+            $this->fail('Global kapalı zaman yazıcı randevusunu engellemeliydi.');
+        } catch (SlotUnavailableException) {
+            $this->assertTrue(true);
+        }
+
+        $end = $this->service->assertAvailable(
+            $this->printer,
+            CarbonImmutable::parse('2026-10-05 15:00:00', 'Europe/Istanbul'),
+            60,
+        );
+        $this->assertSame('16:00', $end->format('H:i'));
     }
 
     private function createAppointment(string $startsAt, string $endsAt): Appointment

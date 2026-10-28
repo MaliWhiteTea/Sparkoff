@@ -3,12 +3,15 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Enums\PrinterStatus;
+use App\Exceptions\SlotUnavailableException;
 use App\Http\Controllers\Controller;
 use App\Models\BlackoutPeriod;
 use App\Models\Printer;
+use App\Services\AppointmentAvailabilityService;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -95,44 +98,60 @@ class PrinterSettingsController extends Controller
         return back()->with('success', "{$printer->code} yazıcısı güncellendi.");
     }
 
-    public function storeBlackout(Request $request): RedirectResponse
+    public function storeBlackout(Request $request, AppointmentAvailabilityService $availability): RedirectResponse
     {
         $validated = $this->validateSchedule($request);
         [$startsAt, $endsAt] = $this->scheduleDates($validated);
 
-        if ($this->hasScheduleConflict($validated['printer_id'] ?? null, $startsAt, $endsAt)) {
-            return back()->withErrors(['starts_at' => 'Bu yazıcı için seçilen zaman aralığı mevcut bir kayıtla çakışıyor.'])->withInput();
-        }
+        try {
+            DB::transaction(function () use ($validated, $startsAt, $endsAt, $availability) {
+                $this->lockSchedulePrinters($validated['printer_id'] ?? null);
+                $availability->assertBlackoutAvailable($validated['printer_id'] ?? null, $startsAt, $endsAt);
 
-        BlackoutPeriod::query()->create([
-            'printer_id' => $validated['printer_id'] ?? null,
-            'kind' => $validated['kind'],
-            'is_all_day' => $validated['is_all_day'],
-            'starts_at' => $startsAt,
-            'ends_at' => $endsAt,
-            'reason' => $validated['reason'],
-        ]);
+                BlackoutPeriod::query()->create([
+                    'printer_id' => $validated['printer_id'] ?? null,
+                    'kind' => $validated['kind'],
+                    'is_all_day' => $validated['is_all_day'],
+                    'starts_at' => $startsAt,
+                    'ends_at' => $endsAt,
+                    'reason' => $validated['reason'],
+                ]);
+            }, 3);
+        } catch (SlotUnavailableException $exception) {
+            return back()->withErrors(['starts_at' => $exception->getMessage()])->withInput();
+        }
 
         return back()->with('success', 'Takvim kaydı eklendi.');
     }
 
-    public function updateBlackout(Request $request, BlackoutPeriod $blackout): RedirectResponse
+    public function updateBlackout(Request $request, BlackoutPeriod $blackout, AppointmentAvailabilityService $availability): RedirectResponse
     {
         $validated = $this->validateSchedule($request);
         [$startsAt, $endsAt] = $this->scheduleDates($validated);
 
-        if ($this->hasScheduleConflict($validated['printer_id'] ?? null, $startsAt, $endsAt, $blackout)) {
-            return back()->withErrors(['starts_at' => 'Bu yazıcı için seçilen zaman aralığı mevcut bir kayıtla çakışıyor.'])->withInput();
-        }
+        try {
+            DB::transaction(function () use ($validated, $startsAt, $endsAt, $blackout, $availability) {
+                $this->lockSchedulePrinters($validated['printer_id'] ?? null, $blackout);
+                $lockedBlackout = BlackoutPeriod::query()->lockForUpdate()->findOrFail($blackout->id);
+                $availability->assertBlackoutAvailable(
+                    $validated['printer_id'] ?? null,
+                    $startsAt,
+                    $endsAt,
+                    $lockedBlackout->id,
+                );
 
-        $blackout->update([
-            'printer_id' => $validated['printer_id'] ?? null,
-            'kind' => $validated['kind'],
-            'is_all_day' => $validated['is_all_day'],
-            'starts_at' => $startsAt,
-            'ends_at' => $endsAt,
-            'reason' => $validated['reason'],
-        ]);
+                $lockedBlackout->update([
+                    'printer_id' => $validated['printer_id'] ?? null,
+                    'kind' => $validated['kind'],
+                    'is_all_day' => $validated['is_all_day'],
+                    'starts_at' => $startsAt,
+                    'ends_at' => $endsAt,
+                    'reason' => $validated['reason'],
+                ]);
+            }, 3);
+        } catch (SlotUnavailableException $exception) {
+            return back()->withErrors(['starts_at' => $exception->getMessage()])->withInput();
+        }
 
         return back()->with('success', 'Takvim kaydı güncellendi.');
     }
@@ -166,16 +185,16 @@ class PrinterSettingsController extends Controller
         ];
     }
 
-    private function hasScheduleConflict(?int $printerId, CarbonImmutable $startsAt, CarbonImmutable $endsAt, ?BlackoutPeriod $except = null): bool
+    private function lockSchedulePrinters(?int $printerId, ?BlackoutPeriod $existing = null): void
     {
-        return BlackoutPeriod::query()
-            ->when($except, fn ($query) => $query->whereKeyNot($except->id))
-            ->when($printerId !== null, fn ($query) => $query->where(
-                fn ($scope) => $scope->whereNull('printer_id')->orWhere('printer_id', $printerId)
-            ))
-            ->where('starts_at', '<', $endsAt)
-            ->where('ends_at', '>', $startsAt)
-            ->exists();
+        if ($printerId === null || ($existing && $existing->printer_id === null)) {
+            Printer::query()->orderBy('id')->lockForUpdate()->get();
+
+            return;
+        }
+
+        $printerIds = collect([$printerId, $existing?->printer_id])->filter()->unique()->sort()->values();
+        Printer::query()->whereIn('id', $printerIds)->orderBy('id')->lockForUpdate()->get();
     }
 
     public function destroyBlackout(BlackoutPeriod $blackout): RedirectResponse

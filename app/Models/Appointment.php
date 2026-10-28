@@ -43,10 +43,10 @@ class Appointment extends Model
         ];
     }
 
-    public function scopeOverlapping(Builder $query, int $printerId, mixed $startsAt, mixed $endsAt): Builder
+    public function scopeOverlapping(Builder $query, ?int $printerId, mixed $startsAt, mixed $endsAt): Builder
     {
         return $query
-            ->where('printer_id', $printerId)
+            ->when($printerId !== null, fn (Builder $query) => $query->where('printer_id', $printerId))
             ->whereIn('status', AppointmentStatus::blockingValues())
             ->where('starts_at', '<', $endsAt)
             ->where('ends_at', '>', $startsAt)
