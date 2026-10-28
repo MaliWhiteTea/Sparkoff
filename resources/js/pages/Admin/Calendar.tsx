@@ -1,6 +1,7 @@
 import AdminLayout from '@/components/AdminLayout';
 import StatusBadge from '@/components/StatusBadge';
 import { Head, Link, router } from '@inertiajs/react';
+import { KeyboardEvent, useRef } from 'react';
 
 type CalendarEvent = {
     publicId: string | null; name: string; printer: string; status: string; statusLabel: string;
@@ -10,8 +11,16 @@ type CalendarDay = { date: string; weekday: string; dayLabel: string; isToday: b
 type Props = { view: 'week' | 'day'; referenceDate: string; rangeLabel: string; previousDate: string; nextDate: string; today: string; days: CalendarDay[] };
 
 export default function AdminCalendar({ view, referenceDate, rangeLabel, previousDate, nextDate, today, days }: Props) {
+    const calendarRef = useRef<HTMLElement>(null);
+
     function navigate(date: string, nextView = view) {
         router.get('/yonetim/takvim', { date, view: nextView }, { preserveState: true, preserveScroll: true, replace: true });
+    }
+
+    function scrollCalendar(event: KeyboardEvent<HTMLElement>) {
+        if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+        event.preventDefault();
+        calendarRef.current?.scrollBy({ left: event.key === 'ArrowRight' ? 240 : -240, behavior: 'smooth' });
     }
 
     return (
@@ -19,7 +28,7 @@ export default function AdminCalendar({ view, referenceDate, rangeLabel, previou
             <Head title="Randevu Takvimi" />
             <header className="admin-title calendar-title"><div><span className="booking-kicker">ATÖLYE PLANI</span><h1>Takvim</h1><p>Baskı, bakım ve kapalı zamanların günlük ve haftalık planı.</p></div><div className="calendar-view-switch"><button className={view === 'day' ? 'active' : ''} onClick={() => navigate(referenceDate, 'day')}>Gün</button><button className={view === 'week' ? 'active' : ''} onClick={() => navigate(referenceDate, 'week')}>Hafta</button></div></header>
             <section className="calendar-toolbar admin-panel"><button onClick={() => navigate(previousDate)} aria-label="Önceki dönem">←</button><button className="calendar-today" onClick={() => navigate(today)}>Bugün</button><strong>{rangeLabel}</strong><button onClick={() => navigate(nextDate)} aria-label="Sonraki dönem">→</button></section>
-            <section className={`admin-calendar ${view}`}>
+            <section ref={calendarRef} className={`admin-calendar ${view}`} role="region" aria-label={`${rangeLabel} randevu takvimi`} tabIndex={0} onKeyDown={scrollCalendar}>
                 {days.map((day) => <article className={`calendar-day ${day.isToday ? 'today' : ''}`} key={day.date}>
                     <header><span>{day.weekday}</span><strong>{day.dayLabel}</strong>{day.isToday && <small>BUGÜN</small>}</header>
                     <div className="calendar-day-body">

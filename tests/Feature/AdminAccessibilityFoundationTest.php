@@ -111,6 +111,20 @@ class AdminAccessibilityFoundationTest extends TestCase
         $this->assertStringNotContainsString('.printer-portal { overflow-x: hidden', $styles);
     }
 
+    public function test_appointment_filter_and_admin_calendar_have_accessible_names_and_keyboard_scrolling(): void
+    {
+        $appointments = file_get_contents(resource_path('js/pages/Admin/Appointments/Index.tsx'));
+        $calendar = file_get_contents(resource_path('js/pages/Admin/Calendar.tsx'));
+        $styles = file_get_contents(resource_path('css/app.css'));
+
+        $this->assertStringContainsString('<span>Randevu durumu</span><select', $appointments);
+        $this->assertStringContainsString('aria-label={`${rangeLabel} randevu takvimi`}', $calendar);
+        $this->assertStringContainsString('tabIndex={0}', $calendar);
+        $this->assertStringContainsString("event.key !== 'ArrowLeft'", $calendar);
+        $this->assertStringContainsString("event.key !== 'ArrowRight'", $calendar);
+        $this->assertStringContainsString('.admin-calendar:focus-visible', $styles);
+    }
+
     public function test_inventory_media_keeps_accessibility_and_safe_link_contracts(): void
     {
         $catalog = file_get_contents(resource_path('js/pages/Materials.tsx'));

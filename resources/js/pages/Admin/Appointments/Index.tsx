@@ -47,8 +47,8 @@ export default function AppointmentIndex({ appointments, filters, statusOptions,
             </section>
             <section className="admin-panel">
                 <div className="admin-filters">
-                    <form onSubmit={filter}><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Randevu numarası, ad veya e-posta" /><button>Arayın</button></form>
-                    <select value={filters.status} onChange={(event) => changeStatus(event.target.value)}><option value="">Tüm durumlar</option>{statusOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select>
+                    <form onSubmit={filter}><label className="sr-only" htmlFor="appointment-search">Randevularda ara</label><input id="appointment-search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Randevu numarası, ad veya e-posta" /><button>Arayın</button></form>
+                    <label className="admin-filter-field"><span>Randevu durumu</span><select value={filters.status} onChange={(event) => changeStatus(event.target.value)}><option value="">Tüm durumlar</option>{statusOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
                 </div>
                 <ListSort sort={filters.sort} direction={filters.direction} options={[{ value: 'starts_at', label: 'Başlangıç zamanı' }, { value: 'created_at', label: 'Başvuru zamanı' }, { value: 'status', label: 'Durum' }, { value: 'duration_minutes', label: 'Süre' }]} />
                 <TableColumns table="appointments" definitions={columnDefinitions} active={columns} setActive={setColumns} />
