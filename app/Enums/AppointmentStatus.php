@@ -27,4 +27,15 @@ enum AppointmentStatus: string
             self::Printing->value,
         ];
     }
+
+    public static function retentionEligibleValues(): array
+    {
+        return [
+            self::Completed->value,
+            self::Failed->value,
+            self::Rejected->value,
+            self::Canceled->value,
+            self::Expired->value,
+        ];
+    }
 }

@@ -13,17 +13,22 @@ class ActivityLogPresenterTest extends TestCase
         $presenter = app(ActivityLogPresenter::class);
 
         $this->assertSame('Okudu', $presenter->action('read'));
+        $this->assertSame('Veri saklama politikasını uyguladı', $presenter->action('retention_applied'));
         $this->assertSame('Duyuru', $presenter->subject(Announcement::class));
         $this->assertSame([
             'İzinler',
             'Hedef roller',
             'Yönetim duyurusu',
             'Tablo tercihleri',
+            'Silinen randevu',
+            'Silinen model dosyası',
         ], $presenter->fields([
             'permissions',
             'target_roles',
             'staff_announcement',
             'table_preferences',
+            'appointments_deleted',
+            'files_deleted',
         ]));
     }
 

@@ -48,6 +48,10 @@ class CreateAppointmentTest extends TestCase
         $this->assertNull($appointment->user_note);
         $this->assertCount(1, $appointment->files);
         $this->assertCount(1, $appointment->statusHistory);
+        $this->assertSame(
+            now()->addDays(30)->timestamp,
+            $appointment->files->first()->scheduled_deletion_at->timestamp,
+        );
         Storage::disk('local')->assertExists($appointment->files->first()->path);
         Mail::assertSent(AppointmentVerificationMail::class, fn ($mail) => $mail->hasTo('test@example.com'));
     }

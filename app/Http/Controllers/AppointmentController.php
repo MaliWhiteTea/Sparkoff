@@ -183,6 +183,10 @@ class AppointmentController extends Controller
                     'extension' => $extension,
                     'mime_type' => $file->getMimeType(),
                     'size_bytes' => $file->getSize(),
+                    'scheduled_deletion_at' => now()->addDays(max(
+                        1,
+                        (int) Setting::valueOf('privacy.file_retention_days', 30),
+                    )),
                 ]);
 
                 $appointment->statusHistory()->create([

@@ -18,7 +18,8 @@ class Appointment extends Model
         'filament_material', 'filament_color', 'user_note', 'admin_note',
         'verification_token_hash', 'tracking_token_hash', 'email_verified_at',
         'verification_expires_at', 'canceled_at', 'privacy_notice_version',
-        'privacy_notice_seen_at', 'rules_accepted_at',
+        'privacy_notice_seen_at', 'rules_accepted_at', 'retention_exempt_until',
+        'retention_exemption_reason',
     ];
 
     protected static function booted(): void
@@ -40,6 +41,7 @@ class Appointment extends Model
             'canceled_at' => 'datetime',
             'privacy_notice_seen_at' => 'datetime',
             'rules_accepted_at' => 'datetime',
+            'retention_exempt_until' => 'datetime',
         ];
     }
 

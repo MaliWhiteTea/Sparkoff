@@ -12,6 +12,7 @@ class ActivityLogPresenter
         'acknowledged' => 'Okuduğunu onayladı',
         'inventory_imported' => 'Envanteri CSV dosyasından içe aktardı',
         'inventory_test_data_purged' => 'Test malzemelerini kalıcı olarak temizledi',
+        'retention_applied' => 'Veri saklama politikasını uyguladı',
     ];
 
     private const SUBJECTS = [
@@ -48,6 +49,10 @@ class ActivityLogPresenter
         'source_file' => 'Kaynak dosya', 'staff_announcement' => 'Yönetim duyurusu',
         'status' => 'Durum', 'table_preferences' => 'Tablo tercihleri', 'target_roles' => 'Hedef roller',
         'title' => 'Başlık', 'transactions' => 'Silinen teslim kaydı', 'type' => 'Tür', 'unit' => 'Birim',
+        'appointments_deleted' => 'Silinen randevu', 'files_deleted' => 'Silinen model dosyası',
+        'file_schedules_created' => 'Planlanan dosya silme işlemi', 'failures' => 'Ertelenen hata',
+        'appointment_retention_months' => 'Randevu saklama süresi (ay)',
+        'file_retention_days' => 'Dosya saklama süresi (gün)',
     ];
 
     private const SENSITIVE_FIELDS = [

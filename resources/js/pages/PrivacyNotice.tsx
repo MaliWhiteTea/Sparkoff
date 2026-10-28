@@ -94,11 +94,13 @@ export default function PrivacyNotice({ privacy }: Props) {
         <section>
           <h2>Saklama süresi</h2>
           <p>
-            Randevu kayıtları en fazla {privacy.appointmentRetentionMonths} ay,
-            yüklenen baskı dosyaları en fazla {privacy.fileRetentionDays} gün
-            saklanacak şekilde yapılandırılmıştır. Hukuki bir zorunluluk veya
-            uyuşmazlık bulunması hâlinde ilgili kayıtlar gerekli süre boyunca
-            korunabilir.
+            Sonlanmış randevu kayıtları, randevu bitişinden itibaren en fazla{" "}
+            {privacy.appointmentRetentionMonths} ay; yüklenen baskı dosyaları
+            ise yükleme tarihinden itibaren en fazla {privacy.fileRetentionDays}
+            gün saklanır. Devam eden hizmete ait kayıtlar işlem sonuçlanıncaya
+            kadar korunur. Hukuki bir zorunluluk veya uyuşmazlık bulunması
+            hâlinde ilgili kayıtlar tanımlanan istisna süresi boyunca
+            saklanabilir.
           </p>
         </section>
         <section>

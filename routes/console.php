@@ -4,6 +4,7 @@ use App\Models\InventoryTransaction;
 use App\Models\Role;
 use App\Models\Setting;
 use App\Models\User;
+use App\Services\ApplyAppointmentRetention;
 use App\Services\ExpireUnverifiedAppointments;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -95,5 +96,17 @@ Artisan::command('appointments:expire-verifications', function (ExpireUnverified
     return self::SUCCESS;
 })->purpose('Süresi dolan e-posta doğrulama bekleyen randevuları sonlandırır');
 
+Artisan::command('appointments:apply-retention', function (ApplyAppointmentRetention $retention) {
+    $result = $retention->apply(now());
+    $this->info("{$result['files_deleted']} model dosyası silindi, {$result['appointments_deleted']} randevu kaydı temizlendi.");
+
+    if ($result['failures'] > 0) {
+        $this->warn("{$result['failures']} kayıt depolama hatası nedeniyle sonraki çalışmaya bırakıldı.");
+    }
+
+    return self::SUCCESS;
+})->purpose('Saklama süresi dolan randevu kayıtlarını ve model dosyalarını temizler');
+
 Schedule::command('loans:anonymize')->dailyAt('03:10')->withoutOverlapping();
 Schedule::command('appointments:expire-verifications')->everyMinute()->withoutOverlapping();
+Schedule::command('appointments:apply-retention')->dailyAt('03:25')->withoutOverlapping();
