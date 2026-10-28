@@ -1,6 +1,7 @@
 import AdminLayout from "@/components/AdminLayout";
 import BulkSelection, { SelectionCheckbox, usePageSelection } from "@/components/BulkSelection";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import DraftRecoveryNotice from "@/components/DraftRecoveryNotice";
 import StatusBadge from "@/components/StatusBadge";
 import ListSort from "@/components/ListSort";
 import SavedFilters from "@/components/SavedFilters";
@@ -408,7 +409,7 @@ function ItemCard({
   const [data, setData] = useState<ItemForm>(initialData);
   const itemChanged = editing && hasFormChanged(initialData, data);
   useUnsavedChanges(itemChanged);
-  useSafeDraft({ key: `inventory.edit.${item.id}`, source: data, fields: itemDraftFields, enabled: itemChanged });
+  const { draft, clearDraft } = useSafeDraft({ key: `inventory.edit.${item.id}`, source: data, fields: itemDraftFields, enabled: itemChanged });
   useUnsavedChanges(stocking && hasFormChanged({ quantity_change: "", reason: "" }, stock));
   const save = (e: FormEvent) => {
     e.preventDefault();
@@ -444,6 +445,7 @@ function ItemCard({
     return (
       <form className={`admin-panel inventory-edit ${selected ? "is-selected" : ""}`} onSubmit={save}>
         <div className="inventory-edit-heading">{selectable && <SelectionCheckbox checked={selected} label={`${item.name} malzemesinin seçimini değiştir`} onChange={onSelectionChange} />}<h2>{item.name}</h2></div>
+        {draft && <DraftRecoveryNotice updatedAt={draft.updatedAt} onDiscard={clearDraft} onRestore={() => { setData((current) => ({ ...current, ...draft.value })); clearDraft(); }} />}
         {error && <div className="form-error">{error}</div>}
         <Fields
           data={data}
@@ -984,7 +986,7 @@ export default function Inventory({
   const [search, setSearch] = useState(filters.search);
   const createChanged = creating && hasFormChanged(emptyItem, data);
   useUnsavedChanges(createChanged);
-  useSafeDraft({ key: "inventory.create", source: data, fields: itemDraftFields, enabled: createChanged });
+  const { draft, clearDraft } = useSafeDraft({ key: "inventory.create", source: data, fields: itemDraftFields, enabled: createChanged });
   const canUseBulk = can("inventory.update") || can("inventory.archive");
   const selectableItems = items.data.filter((item) => !item.isArchived);
   const selection = usePageSelection(canUseBulk ? selectableItems.map((item) => item.id) : []);
@@ -1059,6 +1061,7 @@ export default function Inventory({
         >
           <h2>Yeni malzeme</h2>
           <p>Başlangıç miktarı ilk stok hareketi olarak kaydedilir.</p>
+          {draft && <DraftRecoveryNotice updatedAt={draft.updatedAt} onDiscard={clearDraft} onRestore={() => { setData((current) => ({ ...current, ...draft.value })); clearDraft(); }} />}
           {error && <div className="form-error">{error}</div>}
           <Fields
             data={data}

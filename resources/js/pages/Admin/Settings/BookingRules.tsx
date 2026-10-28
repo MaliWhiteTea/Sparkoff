@@ -1,4 +1,5 @@
 import AdminLayout from '@/components/AdminLayout';
+import DraftRecoveryNotice from '@/components/DraftRecoveryNotice';
 import SettingsTabs from '@/components/SettingsTabs';
 import { hasFormChanged, useUnsavedChanges } from '@/components/UnsavedChangesGuard';
 import { useSafeDraft } from '@/hooks/useSafeDraft';
@@ -23,7 +24,7 @@ export default function BookingRules({ hours: initialHours, settings, supportedE
     const [processing, setProcessing] = useState(false);
     const changed = hasFormChanged({ hours: initialHours, values: settings }, { hours, values });
     useUnsavedChanges(changed);
-    useSafeDraft({ key: 'settings.booking-rules', source: { hours, values }, fields: ['hours', 'values'] as const, enabled: changed });
+    const { draft, clearDraft } = useSafeDraft({ key: 'settings.booking-rules', source: { hours, values }, fields: ['hours', 'values'] as const, enabled: changed });
 
     function updateDay(index: number, changes: Partial<Day>) {
         setHours((current) => current.map((day, dayIndex) => dayIndex === index ? { ...day, ...changes } : day));
@@ -61,6 +62,7 @@ export default function BookingRules({ hours: initialHours, settings, supportedE
         <header className="admin-title"><div><span className="booking-kicker">SİSTEM AYARLARI</span><h1>Randevu kuralları</h1><p>Çalışma düzenini, süreleri ve dosya yükleme sınırlarını yönetin.</p></div></header>
         <SettingsTabs />
         <form onSubmit={submit}>
+            {draft && <DraftRecoveryNotice updatedAt={draft.updatedAt} onDiscard={clearDraft} onRestore={() => { if (draft.value.hours) setHours(draft.value.hours); if (draft.value.values) setValues(draft.value.values); clearDraft(); }} />}
             {error && <div className="form-error settings-error" role="alert">{error}</div>}
             <section className="admin-panel rules-panel"><div className="settings-heading"><div><h2>Çalışma günleri ve saatleri</h2><p>Saatler baskının bitişini değil, başlayabileceği aralığı belirler.</p></div></div>
                 <div className="hours-list">{hours.map((day, index) => <article className={!day.isOpen ? 'closed' : ''} key={day.weekday}>

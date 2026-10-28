@@ -1,4 +1,5 @@
 import AdminLayout from "@/components/AdminLayout";
+import DraftRecoveryNotice from "@/components/DraftRecoveryNotice";
 import { FieldError, FormErrors, FormErrorSummary } from "@/components/FormErrorSummary";
 import SettingsTabs from "@/components/SettingsTabs";
 import StatusBadge from "@/components/StatusBadge";
@@ -50,7 +51,7 @@ function FilamentCard({ filament }: { filament: Filament }) {
   const [processing, setProcessing] = useState(false);
   const changed = hasFormChanged(filament, data);
   useUnsavedChanges(changed);
-  useSafeDraft({ key: `settings.filaments.edit.${filament.id}`, source: data, fields: filamentDraftFields, enabled: changed });
+  const { draft, clearDraft } = useSafeDraft({ key: `settings.filaments.edit.${filament.id}`, source: data, fields: filamentDraftFields, enabled: changed });
   return (
     <form
       className="filament-admin-card"
@@ -76,6 +77,7 @@ function FilamentCard({ filament }: { filament: Filament }) {
           label={filament.is_available ? "Kullanılabilir" : "Kullanıma kapalı"}
         />
       </header>
+      {draft && <DraftRecoveryNotice updatedAt={draft.updatedAt} onDiscard={clearDraft} onRestore={() => { setData((current) => ({ ...current, ...draft.value })); clearDraft(); }} />}
       <FormErrorSummary errors={errors} />
       <div className="field-grid">
         <label className="field">
@@ -196,7 +198,7 @@ export default function FilamentSettings({
   const [error, setError] = useState("");
   const changed = hasFormChanged(empty, data);
   useUnsavedChanges(changed);
-  useSafeDraft({ key: "settings.filaments.create", source: data, fields: filamentDraftFields, enabled: changed });
+  const { draft, clearDraft } = useSafeDraft({ key: "settings.filaments.create", source: data, fields: filamentDraftFields, enabled: changed });
   function submit(event: FormEvent) {
     event.preventDefault();
     router.post("/yonetim/ayarlar/filamentler", data, {
@@ -288,6 +290,7 @@ export default function FilamentSettings({
         className="admin-panel rules-panel filament-create-form"
         onSubmit={submit}
       >
+        {draft && <DraftRecoveryNotice updatedAt={draft.updatedAt} onDiscard={clearDraft} onRestore={() => { setData((current) => ({ ...current, ...draft.value })); clearDraft(); }} />}
         <div className="settings-heading">
           <div>
             <h2>Yeni filament ekle</h2>

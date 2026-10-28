@@ -45,6 +45,10 @@ class SafeDraftStorageTest extends TestCase
         $this->assertStringContainsString('WRITE_DELAY_MS', $hook);
         $this->assertStringContainsString('window.localStorage.setItem(storageKey', $hook);
         $this->assertStringContainsString('if (wasEnabled.current)', $hook);
+        $this->assertStringContainsString('MAX_AGE_MS', $hook);
+        $this->assertStringContainsString('Date.now() - updatedAt > MAX_AGE_MS', $hook);
+        $this->assertStringContainsString('Object.prototype.hasOwnProperty.call(parsed.value, field)', $hook);
+        $this->assertStringContainsString('clearDraft', $hook);
     }
 
     public function test_approved_admin_forms_use_safe_draft_storage(): void
@@ -61,6 +65,21 @@ class SafeDraftStorageTest extends TestCase
             $source = file_get_contents(resource_path($path));
 
             $this->assertStringContainsString('useSafeDraft(', $source, $path);
+            $this->assertStringContainsString('DraftRecoveryNotice', $source, $path);
         }
+    }
+
+    public function test_draft_recovery_notice_offers_explicit_restore_and_discard_actions(): void
+    {
+        $notice = file_get_contents(resource_path('js/components/DraftRecoveryNotice.tsx'));
+        $styles = file_get_contents(resource_path('css/admin-shell.css'));
+
+        $this->assertStringContainsString('Kaydedilmemiş taslak bulundu', $notice);
+        $this->assertStringContainsString('Taslağı geri yükle', $notice);
+        $this->assertStringContainsString('Taslağı sil', $notice);
+        $this->assertStringContainsString('onRestore', $notice);
+        $this->assertStringContainsString('onDiscard', $notice);
+        $this->assertStringContainsString('.admin-draft-notice', $styles);
+        $this->assertStringContainsString('@media(max-width:650px)', $styles);
     }
 }

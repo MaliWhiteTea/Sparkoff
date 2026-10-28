@@ -1,4 +1,5 @@
 import AdminLayout from '@/components/AdminLayout';
+import DraftRecoveryNotice from '@/components/DraftRecoveryNotice';
 import SettingsTabs from '@/components/SettingsTabs';
 import { hasFormChanged, useUnsavedChanges } from '@/components/UnsavedChangesGuard';
 import { useSafeDraft } from '@/hooks/useSafeDraft';
@@ -15,7 +16,7 @@ export default function WorkshopSettings({ contact: initialContact, hours: initi
     const [error, setError] = useState('');
     const [processing, setProcessing] = useState(false);
     useUnsavedChanges(hasFormChanged({ contact: initialContact, hours: initialHours }, { contact, hours }));
-    useSafeDraft({
+    const { draft, clearDraft } = useSafeDraft({
         key: 'settings.workshop-hours',
         source: { hours },
         fields: ['hours'] as const,
@@ -48,6 +49,7 @@ export default function WorkshopSettings({ contact: initialContact, hours: initi
         <header className="admin-title"><div><span className="booking-kicker">SİSTEM AYARLARI</span><h1>Atölye ve iletişim</h1><p>Halka açık iletişim kanallarını ve yazıcı kullanım başlangıç saatlerini yönetin.</p></div></header>
         <SettingsTabs />
         <form onSubmit={submit}>
+            {draft && <DraftRecoveryNotice updatedAt={draft.updatedAt} onDiscard={clearDraft} onRestore={() => { if (draft.value.hours) setHours(draft.value.hours); clearDraft(); }} />}
             {error && <div className="form-error settings-error" role="alert">{error}</div>}
             <section className="admin-panel rules-panel"><div className="settings-heading"><div><h2>İletişim bilgileri</h2><p>Boş bırakılan alanlar sitede gösterilmez. WhatsApp için ülke koduyla numara girin.</p></div></div><div className="field-grid">
                 <label className="field"><span>Telefon</span><input inputMode="tel" value={contact.phone} onChange={(event) => setContact({ ...contact, phone: event.target.value })} placeholder="+90 5xx xxx xx xx" /></label>

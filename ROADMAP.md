@@ -244,7 +244,7 @@ Sparkoff Proje Atölyesi
 
 - [x] Kaydedilmemiş değişiklikle sayfadan veya sekmeden ayrılma uyarısı ekle (seçim 12)
 - [x] Duyuru, malzeme ve sistem ayarı formlarında hassas olmayan yerel taslak saklama ekle (seçim 13)
-- [ ] Taslağı geri yükle, reddet ve temizle akışlarını oluştur
+- [x] Taslağı geri yükle, reddet ve temizle akışlarını oluştur
 - [ ] Parola, kişi bilgisi, e-posta, model dosyası ve teslim verilerinin tarayıcı taslağına yazılmadığını test et
 
 ### O. Yönetim çalışma alanı — dördüncü uygulama paketi
@@ -322,4 +322,4 @@ Bu sıra ortak bileşenleri önce kurarak aynı özelliğin farklı sayfalarda t
 
 ## Sıradaki teknik adım
 
-N paketinde sıradaki adım, bulunan yerel taslağı geri yükleme, reddetme ve temizleme akışlarını oluşturmaktır.
+N paketinde sıradaki adım, parola, kişi bilgisi, e-posta, model dosyası ve teslim verilerinin tarayıcı taslağına yazılmadığını güvenlik testleriyle doğrulamaktır.

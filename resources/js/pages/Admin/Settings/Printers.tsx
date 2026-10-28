@@ -1,4 +1,5 @@
 import AdminLayout from "@/components/AdminLayout";
+import DraftRecoveryNotice from "@/components/DraftRecoveryNotice";
 import { FieldError, FormErrors, FormErrorSummary } from "@/components/FormErrorSummary";
 import SettingsTabs from "@/components/SettingsTabs";
 import StatusBadge from "@/components/StatusBadge";
@@ -61,7 +62,7 @@ function PrinterCard({
     { name, status, description },
   );
   useUnsavedChanges(changed);
-  useSafeDraft({ key: `settings.printers.edit.${printer.id}`, source: { name, status, description }, fields: printerDraftFields, enabled: changed });
+  const { draft, clearDraft } = useSafeDraft({ key: `settings.printers.edit.${printer.id}`, source: { name, status, description }, fields: printerDraftFields, enabled: changed });
 
   function save(event: FormEvent) {
     event.preventDefault();
@@ -91,6 +92,7 @@ function PrinterCard({
           label={statusOptions.find((option) => option.value === status)?.label ?? status}
         />
       </header>
+      {draft && <DraftRecoveryNotice updatedAt={draft.updatedAt} onDiscard={clearDraft} onRestore={() => { if (draft.value.name !== undefined) setName(draft.value.name); if (draft.value.status !== undefined) setStatus(draft.value.status); if (draft.value.description !== undefined) setDescription(draft.value.description); clearDraft(); }} />}
       <FormErrorSummary errors={errors} />
       <label className="field">
         <span>Yazıcı adı</span>
@@ -164,7 +166,7 @@ function ScheduleItem({
   const [processing, setProcessing] = useState(false);
   const changed = editing && hasFormChanged(initialValues, values);
   useUnsavedChanges(changed);
-  useSafeDraft({ key: `settings.schedule.edit.${item.id}`, source: values, fields: scheduleDraftFields, enabled: changed });
+  const { draft, clearDraft } = useSafeDraft({ key: `settings.schedule.edit.${item.id}`, source: values, fields: scheduleDraftFields, enabled: changed });
 
   function save(event: FormEvent) {
     event.preventDefault();
@@ -209,6 +211,7 @@ function ScheduleItem({
 
   return (
     <form className="admin-panel schedule-edit-form" onSubmit={save}>
+      {draft && <DraftRecoveryNotice updatedAt={draft.updatedAt} onDiscard={clearDraft} onRestore={() => { setValues((current) => ({ ...current, ...draft.value })); clearDraft(); }} />}
       <div className="field-grid">
         <label className="field">
           <span>Yazıcı</span>
@@ -330,8 +333,8 @@ export default function PrinterSettings({
   const blackoutChanged = hasFormChanged(emptyBlackout, blackout);
   useUnsavedChanges(newPrinterChanged);
   useUnsavedChanges(blackoutChanged);
-  useSafeDraft({ key: "settings.printers.create", source: newPrinter, fields: newPrinterDraftFields, enabled: newPrinterChanged });
-  useSafeDraft({ key: "settings.schedule.create", source: blackout, fields: scheduleDraftFields, enabled: blackoutChanged });
+  const { draft: printerDraft, clearDraft: clearPrinterDraft } = useSafeDraft({ key: "settings.printers.create", source: newPrinter, fields: newPrinterDraftFields, enabled: newPrinterChanged });
+  const { draft: scheduleDraft, clearDraft: clearScheduleDraft } = useSafeDraft({ key: "settings.schedule.create", source: blackout, fields: scheduleDraftFields, enabled: blackoutChanged });
 
   function submitPrinter(event: FormEvent) {
     event.preventDefault();
@@ -405,6 +408,7 @@ export default function PrinterSettings({
         {can("printers.create") && (
           <form className="admin-panel settings-form" onSubmit={submitPrinter}>
             <h2>Yeni yazıcı ekle</h2>
+            {printerDraft && <DraftRecoveryNotice updatedAt={printerDraft.updatedAt} onDiscard={clearPrinterDraft} onRestore={() => { setNewPrinter((current) => ({ ...current, ...printerDraft.value })); clearPrinterDraft(); }} />}
             <div className="field-grid">
               <label className="field">
                 <span>Kısa kod</span>
@@ -464,6 +468,7 @@ export default function PrinterSettings({
         {can("printers.manage_schedule") && (
           <form className="admin-panel settings-form" onSubmit={submitBlackout}>
             <h2>Takvime zaman ekle</h2>
+            {scheduleDraft && <DraftRecoveryNotice updatedAt={scheduleDraft.updatedAt} onDiscard={clearScheduleDraft} onRestore={() => { setBlackout((current) => ({ ...current, ...scheduleDraft.value })); clearScheduleDraft(); }} />}
             <div className="field-grid">
               <label className="field">
                 <span>Kapsam</span>
