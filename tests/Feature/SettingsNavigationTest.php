@@ -56,7 +56,7 @@ class SettingsNavigationTest extends TestCase
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('Admin/Settings/Personal')
-                ->where('preferences.theme', 'system')
+                ->where('preferences.theme', 'dark')
                 ->where('preferences.scale', 'normal')
                 ->where('preferences.density', 'normal')
                 ->where('preferences.sidebar', 'wide'));
@@ -97,7 +97,7 @@ class SettingsNavigationTest extends TestCase
         $this->actingAs($user)->delete(route('admin.settings.personal.destroy'))->assertRedirect();
 
         $this->assertNull($user->fresh()->interface_preferences);
-        $this->assertSame('system', $user->fresh()->interfacePreferences()['theme']);
+        $this->assertSame('dark', $user->fresh()->interfacePreferences()['theme']);
     }
 
     public function test_user_without_system_permissions_cannot_open_system_settings_directly(): void

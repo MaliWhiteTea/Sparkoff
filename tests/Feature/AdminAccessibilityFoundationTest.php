@@ -51,6 +51,17 @@ class AdminAccessibilityFoundationTest extends TestCase
         $this->assertStringContainsString('@media(max-width:600px)', $styles);
     }
 
+    public function test_theme_scope_follows_inertia_navigation_and_defaults_to_dark(): void
+    {
+        $app = file_get_contents(resource_path('js/app.tsx'));
+        $settings = file_get_contents(resource_path('js/pages/Admin/Settings/Personal.tsx'));
+
+        $this->assertStringContainsString("router.on('navigate'", $app);
+        $this->assertStringContainsString("window.location.pathname.startsWith('/yonetim')", $app);
+        $this->assertStringContainsString('!isAdmin && <PublicThemeToggle />', $app);
+        $this->assertStringContainsString("theme: 'dark'", $settings);
+    }
+
     public function test_inventory_media_keeps_accessibility_and_safe_link_contracts(): void
     {
         $catalog = file_get_contents(resource_path('js/pages/Materials.tsx'));

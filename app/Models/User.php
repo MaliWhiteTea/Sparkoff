@@ -38,7 +38,7 @@ class User extends Authenticatable
     public function interfacePreferences(): array
     {
         return array_merge([
-            'theme' => 'system',
+            'theme' => 'dark',
             'scale' => 'normal',
             'density' => 'normal',
             'sidebar' => 'wide',

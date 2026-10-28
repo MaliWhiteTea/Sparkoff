@@ -19,7 +19,7 @@ const choices = {
 
 export default function PersonalSettings({ preferences }: { preferences: Preferences }) {
     const form = useForm<Preferences>(preferences);
-    const defaults: Preferences = { theme: 'system', scale: 'normal', density: 'normal', sidebar: 'wide' };
+    const defaults: Preferences = { theme: 'dark', scale: 'normal', density: 'normal', sidebar: 'wide' };
     const submit = (event: FormEvent) => { event.preventDefault(); form.put('/yonetim/ayarlar/kisisel', { preserveScroll: true, onSuccess: () => form.setDefaults() }); };
     const reset = () => {
         if (!window.confirm('Tüm görünüm ayarları varsayılana dönsün mü?')) return;
