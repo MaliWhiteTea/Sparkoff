@@ -22,6 +22,7 @@ class ActivityLogPresenterTest extends TestCase
             'Tablo tercihleri',
             'Silinen randevu',
             'Silinen model dosyası',
+            'Kayıtlı filtreler',
         ], $presenter->fields([
             'permissions',
             'target_roles',
@@ -29,6 +30,7 @@ class ActivityLogPresenterTest extends TestCase
             'table_preferences',
             'appointments_deleted',
             'files_deleted',
+            'saved_filters',
         ]));
     }
 

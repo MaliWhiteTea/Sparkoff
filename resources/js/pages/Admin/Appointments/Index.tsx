@@ -1,6 +1,7 @@
 import AdminLayout from '@/components/AdminLayout';
 import StatusBadge from '@/components/StatusBadge';
 import ListSort from '@/components/ListSort';
+import SavedFilters from '@/components/SavedFilters';
 import TableColumns, { ColumnDefinition, initialTableColumns } from '@/components/TableColumns';
 import { useRememberListUrl } from '@/hooks/useListReturnUrl';
 import { Head, Link, router, usePage } from '@inertiajs/react';
@@ -50,6 +51,7 @@ export default function AppointmentIndex({ appointments, filters, statusOptions,
                     <form onSubmit={filter}><label className="sr-only" htmlFor="appointment-search">Randevularda ara</label><input id="appointment-search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Randevu numarası, ad veya e-posta" /><button>Arayın</button></form>
                     <label className="admin-filter-field"><span>Randevu durumu</span><select value={filters.status} onChange={(event) => changeStatus(event.target.value)}><option value="">Tüm durumlar</option>{statusOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
                 </div>
+                <SavedFilters table="appointments" path="/yonetim/randevular" current={{ search: filters.search, status: filters.status }} />
                 <ListSort sort={filters.sort} direction={filters.direction} options={[{ value: 'starts_at', label: 'Başlangıç zamanı' }, { value: 'created_at', label: 'Başvuru zamanı' }, { value: 'status', label: 'Durum' }, { value: 'duration_minutes', label: 'Süre' }]} />
                 <TableColumns table="appointments" definitions={columnDefinitions} active={columns} setActive={setColumns} />
                 <div className="admin-table-wrap"><table className="admin-table"><thead><tr>{columns.map((column) => <th key={column}>{columnDefinitions.find((definition) => definition.key === column)?.label}</th>)}<th><span className="sr-only">İşlem</span></th></tr></thead><tbody>

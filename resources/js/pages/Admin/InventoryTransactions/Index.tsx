@@ -1,6 +1,7 @@
 import AdminLayout from "@/components/AdminLayout";
 import StatusBadge from "@/components/StatusBadge";
 import ListSort from "@/components/ListSort";
+import SavedFilters from "@/components/SavedFilters";
 import TableColumns, { ColumnDefinition, initialTableColumns } from "@/components/TableColumns";
 import usePermissions from "@/hooks/usePermissions";
 import { Head, Link, router, usePage } from "@inertiajs/react";
@@ -389,6 +390,7 @@ export default function Transactions({
           </button>
         ))}
       </nav>
+      <SavedFilters table="loans" path="/yonetim/teslimler" current={{ status: filter }} />
       <ListSort sort={sorting.sort} direction={sorting.direction} options={[{ value: 'issued_at', label: 'Teslim zamanı' }, { value: 'due_at', label: 'Beklenen iade' }, { value: 'quantity', label: 'Miktar' }, { value: 'status', label: 'Durum' }]} />
       <TableColumns table="loans" definitions={columnDefinitions} active={columns} setActive={setColumns} reorderable={false} />
       <section className="loan-list">

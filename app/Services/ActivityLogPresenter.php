@@ -48,6 +48,7 @@ class ActivityLogPresenter
         'roles' => 'Roller', 'sku' => 'Stok kodu', 'slug' => 'Adres adı',
         'source_file' => 'Kaynak dosya', 'staff_announcement' => 'Yönetim duyurusu',
         'status' => 'Durum', 'table_preferences' => 'Tablo tercihleri', 'target_roles' => 'Hedef roller',
+        'saved_filters' => 'Kayıtlı filtreler',
         'title' => 'Başlık', 'transactions' => 'Silinen teslim kaydı', 'type' => 'Tür', 'unit' => 'Birim',
         'appointments_deleted' => 'Silinen randevu', 'files_deleted' => 'Silinen model dosyası',
         'file_schedules_created' => 'Planlanan dosya silme işlemi', 'failures' => 'Ertelenen hata',

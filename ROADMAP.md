@@ -235,7 +235,7 @@ Sparkoff Proje Atölyesi
 
 - [x] Envanter, teslim, randevu, talep ve kullanıcı tablolarında sunucu tarafı sıralama ekle (seçim 8)
 - [x] Görünür sütun ve sütun sırası tercihlerini yalnız ilgili yetkiliye özel sakla; hassas sütunları yetkiyle sınırla (seçim 6)
-- [ ] Yetkiliye özel kayıtlı filtreler ve varsayılana dönme işlemi ekle (seçim 9)
+- [x] Yetkiliye özel kayıtlı filtreler ve varsayılana dönme işlemi ekle (seçim 9)
 - [ ] Seçim kutuları ve ortak toplu işlem çubuğu altyapısını kur (seçim 10)
 - [ ] Envanterde toplu kategori, konum, görünürlük ve arşiv işlemlerini yetki/onay/denetim kaydıyla ekle
 - [ ] Toplu işlemlerde etkilenecek kayıt özetini ve kısmi hata raporunu göster
@@ -322,4 +322,4 @@ Bu sıra ortak bileşenleri önce kurarak aynı özelliğin farklı sayfalarda t
 
 ## Sıradaki teknik adım
 
-Beta öncesinde L.1 ara paketini tamamlamak: sade kişisel görünüm ayarlarını hesaba bağlamak, tablo yoğunluğunu bu sayfaya taşımak ve ayar sekmelerini yetkilere göre kesin biçimde sınırlandırmak. Ardından tam kabul testi yapılarak cPanel beta paketi hazırlanabilir; sonraki geliştirme M paketindeki tablo sıralama ve kişisel sütun tercihleridir.
+M paketinde sıradaki adım, seçim kutuları ile ortak toplu işlem çubuğu altyapısını kurmak; ardından envanter toplu işlemlerini yetki, onay ve denetim kaydı sınırlarıyla bu altyapıya bağlamaktır.

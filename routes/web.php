@@ -16,6 +16,7 @@ use App\Http\Controllers\Admin\InventoryTransactionController as AdminInventoryT
 use App\Http\Controllers\Admin\PersonalSettingsController as AdminPersonalSettingsController;
 use App\Http\Controllers\Admin\PrinterSettingsController as AdminPrinterSettingsController;
 use App\Http\Controllers\Admin\PrivacySettingsController as AdminPrivacySettingsController;
+use App\Http\Controllers\Admin\SavedFilterController as AdminSavedFilterController;
 use App\Http\Controllers\Admin\SettingsController as AdminSettingsController;
 use App\Http\Controllers\Admin\WorkshopSettingsController as AdminWorkshopSettingsController;
 use App\Http\Controllers\AppointmentController;
@@ -52,6 +53,8 @@ Route::prefix('yonetim')->name('admin.')->group(function () {
 
     Route::middleware(['auth', 'admin.active'])->group(function () {
         Route::post('/cikis', [AdminAuthController::class, 'destroy'])->name('logout');
+        Route::post('/kisisel-filtreler', [AdminSavedFilterController::class, 'store'])->name('saved-filters.store');
+        Route::delete('/kisisel-filtreler/{table}/{filterId}', [AdminSavedFilterController::class, 'destroy'])->name('saved-filters.destroy');
         Route::get('/islem-gecmisi', AdminActivityLogController::class)->middleware('permission:audit_logs.view')->name('activity-logs');
         Route::get('/talepler', [AdminFeedbackController::class, 'index'])->middleware('permission:feedback.view')->name('feedback.index');
         Route::patch('/talepler/{feedback}', [AdminFeedbackController::class, 'update'])->middleware('permission:feedback.update')->name('feedback.update');

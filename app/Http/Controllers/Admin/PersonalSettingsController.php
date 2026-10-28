@@ -34,7 +34,11 @@ class PersonalSettingsController extends Controller
 
     public function destroy(Request $request): RedirectResponse
     {
-        $request->user()->update(['interface_preferences' => null, 'table_preferences' => null]);
+        $request->user()->update([
+            'interface_preferences' => null,
+            'table_preferences' => null,
+            'saved_filters' => null,
+        ]);
 
         return back()->with('success', 'Kişisel görünüm ayarlarınız varsayılanlara döndürüldü.');
     }

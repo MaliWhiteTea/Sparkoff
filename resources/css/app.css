@@ -498,3 +498,12 @@ svg { width: 1.15em; fill: none; stroke: currentColor; stroke-width: 1.7; stroke
 
 html.theme-transitioning *,html.theme-transitioning *::before,html.theme-transitioning *::after{transition:background-color .22s ease,color .22s ease,border-color .22s ease,box-shadow .22s ease!important}
 @media(prefers-reduced-motion:reduce){html.theme-transitioning *,html.theme-transitioning *::before,html.theme-transitioning *::after{transition-duration:.01ms!important}}
+
+.saved-filters{margin:0 0 14px;padding:12px 18px;display:flex;align-items:flex-end;justify-content:space-between;gap:14px;border:1px solid var(--border);border-radius:8px;background:var(--surface)}
+.admin-panel>.saved-filters{margin:0;border-width:0 0 1px;border-radius:0}
+.saved-filter-picker,.saved-filters form{display:flex;align-items:flex-end;gap:8px}
+.saved-filters label{display:grid;gap:4px}
+.saved-filters label span{color:var(--muted);font-size:.54rem;font-weight:800}
+.saved-filters select,.saved-filters input,.saved-filters button{min-height:36px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-size:.61rem}
+.saved-filters select{min-width:180px;padding:0 28px 0 10px}.saved-filters input{width:180px;padding:0 10px}.saved-filters button{padding:0 11px;color:var(--navy);font-weight:800;cursor:pointer}.saved-filters button:disabled{opacity:.45;cursor:not-allowed}
+@media(max-width:800px){.saved-filters,.saved-filter-picker,.saved-filters form{align-items:stretch;flex-direction:column}.saved-filters select,.saved-filters input,.saved-filters button{width:100%}}

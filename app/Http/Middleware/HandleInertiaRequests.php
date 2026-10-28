@@ -34,6 +34,7 @@ class HandleInertiaRequests extends Middleware
                         : $user->roles()->with('permissions:id,key')->get()->flatMap->permissions->pluck('key')->unique()->values(),
                     'interfacePreferences' => $user->interfacePreferences(),
                     'tablePreferences' => $user->table_preferences ?? [],
+                    'savedFilters' => $user->saved_filters ?? [],
                 ] : null,
             ],
             'staffAnnouncements' => $staffAnnouncements,
