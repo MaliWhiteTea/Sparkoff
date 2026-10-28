@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\AppointmentController as AdminAppointmentControll
 use App\Http\Controllers\Admin\AuthController as AdminAuthController;
 use App\Http\Controllers\Admin\BookingSettingsController as AdminBookingSettingsController;
 use App\Http\Controllers\Admin\CalendarController as AdminCalendarController;
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\FeedbackController as AdminFeedbackController;
 use App\Http\Controllers\Admin\FilamentSettingsController as AdminFilamentSettingsController;
 use App\Http\Controllers\Admin\InventoryController as AdminInventoryController;
@@ -52,6 +53,7 @@ Route::prefix('yonetim')->name('admin.')->group(function () {
     Route::post('/giris', [AdminAuthController::class, 'store'])->middleware('throttle:5,1')->name('login.store');
 
     Route::middleware(['auth', 'admin.active'])->group(function () {
+        Route::get('/genel-bakis', AdminDashboardController::class)->name('dashboard');
         Route::post('/cikis', [AdminAuthController::class, 'destroy'])->name('logout');
         Route::post('/kisisel-filtreler', [AdminSavedFilterController::class, 'store'])->name('saved-filters.store');
         Route::delete('/kisisel-filtreler/{table}/{filterId}', [AdminSavedFilterController::class, 'destroy'])->name('saved-filters.destroy');

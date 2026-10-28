@@ -157,12 +157,12 @@ class AdminInventoryTest extends TestCase
         $this->assertDatabaseCount('stock_movements', 0);
     }
 
-    public function test_inventory_only_user_lands_on_inventory_after_login(): void
+    public function test_inventory_only_user_lands_on_permission_filtered_dashboard_after_login(): void
     {
         $staff = $this->userWithPermissions(['inventory.view'], 'envanter@example.com', 'guvenli-test-parolasi');
 
         $this->post(route('admin.login.store'), ['email' => $staff->email, 'password' => 'guvenli-test-parolasi'])
-            ->assertRedirect(route('admin.inventory.index'));
+            ->assertRedirect(route('admin.dashboard'));
     }
 
     public function test_category_and_location_managers_can_edit_and_deactivate_definitions(): void

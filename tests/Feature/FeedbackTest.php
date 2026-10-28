@@ -100,7 +100,7 @@ class FeedbackTest extends TestCase
         $this->actingAs($staff)->get(route('admin.feedback.index'))->assertForbidden();
     }
 
-    public function test_feedback_only_staff_is_sent_to_feedback_after_login(): void
+    public function test_feedback_only_staff_is_sent_to_permission_filtered_dashboard_after_login(): void
     {
         $role = Role::query()->create(['name' => 'Talep Görüntüleyici', 'slug' => 'talep-goruntuleyici']);
         $role->permissions()->attach(Permission::query()->where('key', 'feedback.view')->value('id'));
@@ -115,6 +115,6 @@ class FeedbackTest extends TestCase
         $this->post(route('admin.login.store'), [
             'email' => $staff->email,
             'password' => 'guvenli-test-parolasi',
-        ])->assertRedirect(route('admin.feedback.index'));
+        ])->assertRedirect(route('admin.dashboard'));
     }
 }

@@ -24,6 +24,7 @@ const storedSidebarWidth = () => {
 
 function MenuIcon({ name }: { name: string }) {
     const paths: Record<string, ReactElement> = {
+        dashboard: <><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /></>,
         inventory: <><path d="M4 7h16v13H4z" /><path d="M7 4h10v3M8 11h8" /></>,
         loans: <><path d="M5 6h14v14H5z" /><path d="M8 3v6M16 3v6M8 13h8" /></>,
         appointments: <><rect x="4" y="5" width="16" height="15" rx="2" /><path d="M8 3v4M16 3v4M4 10h16" /></>,
@@ -88,16 +89,9 @@ export default function AdminLayout({ children }: PropsWithChildren) {
         if (event.key === 'Home') { event.preventDefault(); saveWidth(DEFAULT_WIDTH); }
     };
 
-    const home = can('appointments.view') && features.onlineBooking ? '/yonetim/randevular'
-        : can('printers.manage_schedule') && features.onlineBooking ? '/yonetim/takvim'
-            : can('loans.view') ? '/yonetim/teslimler'
-                : can('inventory.view') ? '/yonetim/envanter'
-                    : can('feedback.view') ? '/yonetim/talepler'
-                        : can('announcements.view') || can('staff_announcements.view') ? '/yonetim/duyurular'
-                            : can('roles.view') || can('users.view') ? '/yonetim/yetkiler'
-                                : can('audit_logs.view') ? '/yonetim/islem-gecmisi'
-                                    : '/yonetim/ayarlar';
+    const home = '/yonetim/genel-bakis';
     const navItems: NavItem[] = [
+        { href: home, label: 'Genel bakış', icon: 'dashboard', active: path === home },
         can('inventory.view') && { href: '/yonetim/envanter', label: 'Malzeme envanteri', icon: 'inventory', active: path.includes('/envanter') },
         can('loans.view') && { href: '/yonetim/teslimler', label: 'Teslim ve iadeler', icon: 'loans', active: path.includes('/teslimler') },
         features.onlineBooking && can('appointments.view') && { href: '/yonetim/randevular', label: 'Randevular', icon: 'appointments', active: path.includes('/randevular') },

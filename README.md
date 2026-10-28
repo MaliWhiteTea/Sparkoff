@@ -169,6 +169,7 @@ Aktif veya gecikmiş teslimlerde kişi bilgileri kayıt sonuçlanana kadar korun
 
 ## Yönetim arayüzü
 
+- Giriş sonrasında yalnız yetkili olunan modülleri gösteren kişisel bir genel bakış ekranı açılır.
 - Varsayılan görünüm koyu temadır; açık, koyu ve sistem seçenekleri bulunur.
 - Yazı/arayüz ölçeği, tablo yoğunluğu ve sol menü genişliği kullanıcı hesabına özel saklanır.
 - Masaüstü sol menüsü daraltılabilir ve sürüklenerek yeniden boyutlandırılabilir.
@@ -221,7 +222,8 @@ TypeScript tip denetimi, üretim derlemesi ve PHP kod biçimi kontrolleri de yay
 | Kaydedilmemiş değişiklik ve güvenli taslaklar | Kullanılabilir |
 | Çevrimiçi randevu kodu | Hazır; canlı SMTP kabulü bekleniyor |
 | Google Sheets/XLSX aktarımı | Planlandı |
-| Yönetim genel bakış, hızlı arama ve bildirim merkezi | Planlandı |
+| Yetkiye göre yönetim genel bakış ekranı | Kullanılabilir |
+| Hızlı arama ve bildirim merkezi | Planlandı |
 | Güvenli geri alma/ters hareket paketi | Planlandı |
 
 ## Ortam ve yayın notları

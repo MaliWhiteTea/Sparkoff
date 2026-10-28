@@ -32,7 +32,7 @@ class AdminPanelTest extends TestCase
 
         $admin = User::factory()->systemAdministrator()->create();
 
-        $this->actingAs($admin)->get(route('admin.index'))->assertRedirect(route('admin.appointments.index'));
+        $this->actingAs($admin)->get(route('admin.index'))->assertRedirect(route('admin.dashboard'));
     }
 
     protected function setUp(): void
@@ -55,7 +55,7 @@ class AdminPanelTest extends TestCase
         $this->post(route('admin.login.store'), [
             'email' => $admin->email,
             'password' => 'guvenli-test-parolasi',
-        ])->assertRedirect(route('admin.appointments.index'));
+        ])->assertRedirect(route('admin.dashboard'));
 
         $this->get(route('admin.appointments.index'))
             ->assertOk()
@@ -71,7 +71,7 @@ class AdminPanelTest extends TestCase
         $this->post(route('admin.login.store'), [
             'email' => '  '.strtoupper($admin->email).' ',
             'password' => 'guvenli-test-parolasi',
-        ])->assertRedirect(route('admin.appointments.index'));
+        ])->assertRedirect(route('admin.dashboard'));
 
         $this->assertAuthenticatedAs($admin);
     }

@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -17,7 +16,7 @@ class AuthController extends Controller
     public function create(): Response|RedirectResponse
     {
         if (Auth::check()) {
-            return redirect()->to($this->landingUrl(Auth::user()));
+            return to_route('admin.dashboard');
         }
 
         return Inertia::render('Admin/Login');
@@ -50,7 +49,7 @@ class AuthController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended($this->landingUrl($request->user()));
+        return redirect()->intended(route('admin.dashboard'));
     }
 
     public function destroy(Request $request): RedirectResponse
@@ -60,34 +59,5 @@ class AuthController extends Controller
         $request->session()->regenerateToken();
 
         return to_route('admin.login');
-    }
-
-    private function landingUrl(User $user): string
-    {
-        $destinations = [
-            'appointments.view' => 'admin.appointments.index',
-            'printers.manage_schedule' => 'admin.calendar.index',
-            'loans.view' => 'admin.loans.index',
-            'inventory.view' => 'admin.inventory.index',
-            'feedback.view' => 'admin.feedback.index',
-            'users.view' => 'admin.access.index',
-            'roles.view' => 'admin.access.index',
-            'printers.view' => 'admin.settings.printers.index',
-            'printers.manage_filaments' => 'admin.settings.filaments.index',
-            'printers.manage_hours' => 'admin.settings.booking.edit',
-            'announcements.view' => 'admin.announcements.index',
-            'staff_announcements.view' => 'admin.announcements.index',
-            'audit_logs.view' => 'admin.activity-logs',
-        ];
-
-        foreach ($destinations as $permission => $route) {
-            $requiresBooking = in_array($route, ['admin.appointments.index', 'admin.calendar.index', 'admin.settings.booking.edit'], true);
-            if ($user->hasPermissionTo($permission)
-                && (! $requiresBooking || config('features.online_booking'))) {
-                return route($route);
-            }
-        }
-
-        return route('home');
     }
 }
