@@ -3,9 +3,11 @@
 namespace Tests\Feature;
 
 use App\Enums\AppointmentStatus;
+use App\Enums\PrinterStatus;
 use App\Mail\AppointmentVerificationMail;
 use App\Models\Appointment;
 use App\Models\Filament;
+use App\Models\Printer;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -63,6 +65,54 @@ class CreateAppointmentTest extends TestCase
             ->assertSessionHasErrors('date');
 
         $this->assertDatabaseCount('appointments', 1);
+    }
+
+    public function test_a_request_is_saved_for_the_selected_active_printer(): void
+    {
+        Storage::fake('local');
+        Mail::fake();
+        $secondPrinter = Printer::query()->where('code', 'P-02')->firstOrFail();
+        $secondPrinter->update(['status' => PrinterStatus::Active]);
+        $payload = $this->validPayload();
+        $payload['printer_id'] = $secondPrinter->id;
+
+        $this->post(route('booking.store'), $payload)->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('appointments', ['printer_id' => $secondPrinter->id]);
+    }
+
+    public function test_a_printer_that_becomes_busy_is_rejected_without_reassignment(): void
+    {
+        Storage::fake('local');
+        Mail::fake();
+        $firstPrinter = Printer::query()->where('code', 'P-01')->firstOrFail();
+        $secondPrinter = Printer::query()->where('code', 'P-02')->firstOrFail();
+        $secondPrinter->update(['status' => PrinterStatus::Active]);
+
+        $firstPayload = $this->validPayload();
+        $firstPayload['printer_id'] = $secondPrinter->id;
+        $this->post(route('booking.store'), $firstPayload)->assertSessionHasNoErrors();
+
+        $secondPayload = $this->validPayload();
+        $secondPayload['printer_id'] = $secondPrinter->id;
+        $this->post(route('booking.store'), $secondPayload)->assertSessionHasErrors('date');
+
+        $this->assertDatabaseCount('appointments', 1);
+        $this->assertDatabaseMissing('appointments', ['printer_id' => $firstPrinter->id]);
+    }
+
+    public function test_an_inactive_or_unknown_printer_cannot_be_submitted(): void
+    {
+        Storage::fake('local');
+        $maintenancePrinter = Printer::query()->where('code', 'P-02')->firstOrFail();
+        $payload = $this->validPayload();
+        $payload['printer_id'] = $maintenancePrinter->id;
+
+        $this->post(route('booking.store'), $payload)->assertSessionHasErrors('printer_id');
+
+        $payload['printer_id'] = 999999;
+        $this->post(route('booking.store'), $payload)->assertSessionHasErrors('printer_id');
+        $this->assertDatabaseCount('appointments', 0);
     }
 
     public function test_an_unsupported_file_extension_is_rejected(): void
@@ -126,6 +176,7 @@ class CreateAppointmentTest extends TestCase
         $date = CarbonImmutable::now('Europe/Istanbul')->next(CarbonImmutable::MONDAY);
 
         return [
+            'printer_id' => Printer::query()->where('code', 'P-01')->value('id'),
             'date' => $date->format('Y-m-d'),
             'start_time' => '10:00',
             'duration_minutes' => 120,

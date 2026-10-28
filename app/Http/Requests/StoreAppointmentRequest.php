@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\PrinterStatus;
 use App\Models\Setting;
 use Closure;
 use Illuminate\Foundation\Http\FormRequest;
@@ -24,6 +25,11 @@ class StoreAppointmentRequest extends FormRequest
         $allowedExtensions = Setting::valueOf('uploads.allowed_extensions', ['gcode', '3mf', 'stl', 'step', 'stp', 'obj']);
 
         return [
+            'printer_id' => [
+                'required',
+                'integer',
+                Rule::exists('printers', 'id')->where(fn ($query) => $query->where('status', PrinterStatus::Active->value)),
+            ],
             'date' => ['required', 'date_format:Y-m-d', 'after_or_equal:today'],
             'start_time' => ['required', 'date_format:H:i'],
             'duration_minutes' => ['required', 'integer', "min:{$slotMinutes}", "max:{$maximumDuration}"],
@@ -72,12 +78,14 @@ class StoreAppointmentRequest extends FormRequest
             'email' => 'Geçerli bir e-posta adresi girin.',
             'rules_accepted.accepted' => 'Randevu kurallarını onaylamalısınız.',
             'privacy_notice_seen.accepted' => 'Aydınlatma metnine eriştiğinizi belirtmelisiniz.',
+            'printer_id.exists' => 'Seçtiğiniz yazıcı artık randevuya açık değil. Lütfen başka bir yazıcı seçin.',
         ];
     }
 
     public function attributes(): array
     {
         return [
+            'printer_id' => 'Yazıcı',
             'date' => 'Randevu tarihi',
             'start_time' => 'Başlangıç saati',
             'duration_minutes' => 'Baskı süresi',

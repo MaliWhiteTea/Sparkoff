@@ -143,15 +143,54 @@ class AppointmentAvailabilityTest extends TestCase
     {
         $this->createAppointment('2026-10-05 10:00:00', '2026-10-05 12:00:00');
 
-        $this->getJson(route('booking.availability', [
+        $response = $this->getJson(route('booking.availability', [
             'date' => '2026-10-05',
             'duration_minutes' => 60,
-        ]))
+        ]));
+
+        $response
             ->assertOk()
-            ->assertJsonPath('printer.code', 'P-01')
-            ->assertJsonMissing(['10:00'])
-            ->assertJsonMissing(['11:30'])
+            ->assertJsonPath('printers.0.code', 'P-01')
+            ->assertJsonPath('printers.0.slots.0', '09:00')
             ->assertJsonFragment(['12:00']);
+
+        $slots = $response->json('printers.0.slots');
+
+        $this->assertNotContains('10:00', $slots);
+        $this->assertNotContains('11:30', $slots);
+    }
+
+    public function test_availability_is_returned_for_each_active_printer_independently(): void
+    {
+        $secondPrinter = Printer::query()->create([
+            'code' => 'P-02',
+            'name' => 'İkinci Yazıcı',
+            'status' => PrinterStatus::Active,
+            'sort_order' => 2,
+        ]);
+        $maintenancePrinter = Printer::query()->create([
+            'code' => 'P-03',
+            'name' => 'Bakımdaki Yazıcı',
+            'status' => PrinterStatus::Maintenance,
+            'sort_order' => 3,
+        ]);
+        $this->createAppointment('2026-10-05 10:00:00', '2026-10-05 12:00:00');
+
+        $response = $this->getJson(route('booking.availability', [
+            'date' => '2026-10-05',
+            'duration_minutes' => 60,
+        ]));
+
+        $response->assertOk()
+            ->assertJsonCount(2, 'printers')
+            ->assertJsonPath('printers.0.id', $this->printer->id)
+            ->assertJsonPath('printers.1.id', $secondPrinter->id)
+            ->assertJsonMissing(['id' => $maintenancePrinter->id]);
+
+        $printers = collect($response->json('printers'))->keyBy('id');
+
+        $this->assertNotContains('10:00', $printers[$this->printer->id]['slots']);
+        $this->assertContains('10:00', $printers[$secondPrinter->id]['slots']);
     }
 
     public function test_a_blackout_period_is_rejected(): void

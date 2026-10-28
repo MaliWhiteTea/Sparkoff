@@ -82,20 +82,21 @@ class AppointmentController extends Controller
             'duration_minutes' => ['required', 'integer', "min:{$slotMinutes}", "max:{$maximumDuration}"],
         ]);
 
-        $printer = Printer::query()
+        $printers = Printer::query()
             ->where('status', PrinterStatus::Active->value)
             ->orderBy('sort_order')
-            ->first();
-
-        if (! $printer) {
-            return response()->json(['slots' => [], 'printer' => null]);
-        }
+            ->orderBy('id')
+            ->get();
 
         $date = CarbonImmutable::createFromFormat('Y-m-d', $validated['date'], config('app.timezone'))->startOfDay();
 
         return response()->json([
-            'slots' => $availability->availableStartTimes($printer, $date, (int) $validated['duration_minutes']),
-            'printer' => ['code' => $printer->code, 'name' => $printer->name],
+            'printers' => $printers->map(fn (Printer $printer) => [
+                'id' => $printer->id,
+                'code' => $printer->code,
+                'name' => $printer->name,
+                'slots' => $availability->availableStartTimes($printer, $date, (int) $validated['duration_minutes']),
+            ])->values(),
         ]);
     }
 
@@ -115,10 +116,16 @@ class AppointmentController extends Controller
         try {
             [$appointment, $verificationToken] = DB::transaction(function () use ($validated, $startsAt, $request, $availability, &$storedPath) {
                 $printer = Printer::query()
+                    ->whereKey($validated['printer_id'])
                     ->where('status', PrinterStatus::Active->value)
-                    ->orderBy('sort_order')
                     ->lockForUpdate()
-                    ->firstOrFail();
+                    ->first();
+
+                if (! $printer) {
+                    throw ValidationException::withMessages([
+                        'printer_id' => 'Seçtiğiniz yazıcı artık randevuya açık değil. Lütfen başka bir yazıcı seçin.',
+                    ]);
+                }
 
                 $endsAt = $availability->assertAvailable($printer, $startsAt, $validated['duration_minutes']);
                 $verificationToken = Str::random(64);

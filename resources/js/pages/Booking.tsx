@@ -18,6 +18,7 @@ const UploadIcon = () => <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1
 
 const steps = ["Tarih ve süre", "Baskı dosyası", "Filament", "İletişim", "Kontrol"];
 type FormData = {
+  printerId: number | null;
   date: string;
   startTime: string;
   duration: number;
@@ -33,6 +34,7 @@ type FormData = {
 };
 
 const initialData: FormData = {
+  printerId: null,
   date: "",
   startTime: "09:00",
   duration: 60,
@@ -60,14 +62,22 @@ type BookingProps = {
   filaments: { id: number; material: string; color: string; brand: string | null; diameterMm: string; nozzleTemperature: string | null; bedTemperature: string | null; technicalNotes: string | null }[];
 };
 
+type AvailablePrinter = {
+  id: number;
+  code: string;
+  name: string;
+  slots: string[];
+};
+
 export default function BookingForm({ settings, filaments }: BookingProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [data, setData] = useState<FormData>(initialData);
   const [error, setError] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [processing, setProcessing] = useState(false);
-  const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+  const [availablePrinters, setAvailablePrinters] = useState<AvailablePrinter[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
+  const [availabilityVersion, setAvailabilityVersion] = useState(0);
 
   const durations = useMemo(() => createDurations(settings.maximumDurationHours, settings.slotMinutes), [settings]);
   const today = useMemo(() => {
@@ -79,6 +89,8 @@ export default function BookingForm({ settings, filaments }: BookingProps) {
   }, []);
   const endTime = calculateEndTime(data.date, data.startTime, data.duration);
   const selectedFilament = filaments.find((filament) => filament.id === data.filamentId) ?? null;
+  const selectedPrinter = availablePrinters.find((printer) => printer.id === data.printerId) ?? null;
+  const availableSlots = selectedPrinter?.slots ?? [];
 
   useEffect(() => {
     if (data.filamentSource === "workshop" && !data.filamentId && filaments[0]) {
@@ -88,7 +100,9 @@ export default function BookingForm({ settings, filaments }: BookingProps) {
 
   useEffect(() => {
     if (!data.date) {
-      setAvailableSlots([]);
+      setAvailablePrinters([]);
+      setLoadingSlots(false);
+      setData((current) => ({ ...current, printerId: null, startTime: "" }));
       return;
     }
 
@@ -101,19 +115,30 @@ export default function BookingForm({ settings, filaments }: BookingProps) {
     })
       .then(async (response) => {
         if (!response.ok) throw new Error("Müsait saatler alınamadı.");
-        return response.json() as Promise<{ slots: string[] }>;
+        return response.json() as Promise<{ printers: AvailablePrinter[] }>;
       })
-      .then(({ slots }) => {
-        setAvailableSlots(slots);
+      .then(({ printers }) => {
+        setAvailablePrinters(printers);
         setData((current) => ({
           ...current,
-          startTime: slots.includes(current.startTime) ? current.startTime : (slots[0] ?? ""),
+          ...(() => {
+            const printer = printers.find((item) => item.id === current.printerId)
+              ?? printers.find((item) => item.slots.length > 0)
+              ?? printers[0]
+              ?? null;
+            const slots = printer?.slots ?? [];
+
+            return {
+              printerId: printer?.id ?? null,
+              startTime: slots.includes(current.startTime) ? current.startTime : (slots[0] ?? ""),
+            };
+          })(),
         }));
       })
       .catch((requestError: unknown) => {
         if (requestError instanceof DOMException && requestError.name === "AbortError") return;
-        setAvailableSlots([]);
-        setData((current) => ({ ...current, startTime: "" }));
+        setAvailablePrinters([]);
+        setData((current) => ({ ...current, printerId: null, startTime: "" }));
         setError("Müsait saatler yüklenemedi. Lütfen tekrar deneyin.");
       })
       .finally(() => {
@@ -121,15 +146,26 @@ export default function BookingForm({ settings, filaments }: BookingProps) {
       });
 
     return () => controller.abort();
-  }, [data.date, data.duration]);
+  }, [data.date, data.duration, availabilityVersion]);
 
   function update<K extends keyof FormData>(key: K, value: FormData[K]) {
     setData((current) => ({ ...current, [key]: value }));
     setError("");
   }
 
+  function selectPrinter(printerId: number) {
+    const printer = availablePrinters.find((item) => item.id === printerId) ?? null;
+    setData((current) => ({
+      ...current,
+      printerId: printer?.id ?? null,
+      startTime: printer?.slots.includes(current.startTime) ? current.startTime : (printer?.slots[0] ?? ""),
+    }));
+    setError("");
+  }
+
   function validateStep() {
     if (currentStep === 0 && !data.date) return "Lütfen randevu tarihini seçin.";
+    if (currentStep === 0 && !data.printerId) return "Lütfen kullanılabilir bir yazıcı seçin.";
     if (currentStep === 0 && (loadingSlots || !data.startTime)) return loadingSlots ? "Müsait saatler yükleniyor." : "Bu tarih ve süre için müsait başlangıç saati bulunmuyor.";
     if (currentStep === 1 && !data.file) return "Desteklenen formatlardan bir dosya yüklemelisiniz.";
     if (currentStep === 2 && data.filamentSource === "workshop" && !data.filamentId) return "Şu anda kullanılabilir atölye filamenti bulunmuyor.";
@@ -175,6 +211,7 @@ export default function BookingForm({ settings, filaments }: BookingProps) {
 
     setProcessing(true);
     router.post("/randevu", {
+      printer_id: data.printerId,
       date: data.date,
       start_time: data.startTime,
       duration_minutes: data.duration,
@@ -196,6 +233,10 @@ export default function BookingForm({ settings, filaments }: BookingProps) {
         window.scrollTo({ top: 0, behavior: "smooth" });
       },
       onError: (errors) => {
+        if (errors.date || errors.printer_id) {
+          setCurrentStep(0);
+          setAvailabilityVersion((version) => version + 1);
+        }
         setError(Object.values(errors)[0] ?? "Randevu talebi kaydedilemedi.");
       },
       onFinish: () => setProcessing(false),
@@ -211,7 +252,7 @@ export default function BookingForm({ settings, filaments }: BookingProps) {
           <span className="booking-kicker">RANDEVU TALEBİ HAZIR</span>
           <h1>E-posta doğrulaması bekleniyor</h1>
           <p><strong>{data.email}</strong> adresine gönderilecek bağlantıya tıkladığınızda randevunuz yönetici incelemesine alınacak.</p>
-          <div className="success-summary"><span>{data.date} · {data.startTime}</span><span>{formatDuration(data.duration)}</span></div>
+          <div className="success-summary"><span>{data.date} · {data.startTime}</span><span>{selectedPrinter?.code} · {selectedPrinter?.name}</span><span>{formatDuration(data.duration)}</span></div>
           <Link className="booking-primary" href="/">Ana sayfaya dön</Link>
         </div>
         <PublicFooter />
@@ -252,8 +293,9 @@ export default function BookingForm({ settings, filaments }: BookingProps) {
               <div className="form-heading"><span>01</span><div><h2>Tarih ve süre</h2><p>Baskının başlayacağı zamanı ve tahmini süresini seçin.</p></div></div>
               <div className="field-grid">
                 <label className="field full"><span>Randevu tarihi</span><input type="date" min={today} value={data.date} onChange={(e) => update("date", e.target.value)} /></label>
+                <label className="field"><span>3D yazıcı</span><select value={data.printerId ?? ""} disabled={!data.date || loadingSlots || availablePrinters.length === 0} onChange={(e) => selectPrinter(Number(e.target.value))}><option value="">{loadingSlots ? "Yazıcılar yükleniyor…" : availablePrinters.length === 0 ? "Randevuya açık yazıcı yok" : "Yazıcı seçin"}</option>{availablePrinters.map((printer) => <option value={printer.id} key={printer.id}>{printer.code} · {printer.name}</option>)}</select><small>{selectedPrinter ? `${selectedPrinter.slots.length} uygun başlangıç saati` : "Önce tarih ve süre seçin."}</small></label>
                 <label className="field"><span>Başlangıç saati</span><select value={data.startTime} disabled={!data.date || loadingSlots || availableSlots.length === 0} onChange={(e) => update("startTime", e.target.value)}><option value="">{loadingSlots ? "Müsait saatler yükleniyor…" : availableSlots.length === 0 ? "Müsait saat bulunamadı" : "Saat seçin"}</option>{availableSlots.map((time) => <option value={time} key={time}>{time}</option>)}</select><small>{data.date && !loadingSlots ? `${availableSlots.length} uygun başlangıç saati` : "Önce tarih ve süre seçin."}</small></label>
-                <label className="field"><span>Tahmini baskı süresi</span><select value={data.duration} onChange={(e) => update("duration", Number(e.target.value))}>{durations.map((minutes) => <option value={minutes} key={minutes}>{formatDuration(minutes)}</option>)}</select></label>
+                <label className="field full"><span>Tahmini baskı süresi</span><select value={data.duration} onChange={(e) => update("duration", Number(e.target.value))}>{durations.map((minutes) => <option value={minutes} key={minutes}>{formatDuration(minutes)}</option>)}</select></label>
               </div>
               <div className="time-info"><strong>Tahmini bitiş</strong><span>{endTime ?? "Tarih ve süre seçildikten sonra gösterilir"}</span><p>Baskı bitişi atölye çalışma saatlerinin dışına veya ertesi güne sarkabilir.</p><p className="long-print-note">24 saati aşan baskılar için randevu oluşturmadan önce atölye yöneticileriyle iletişime geçin.</p></div>
             </section>
@@ -301,6 +343,7 @@ export default function BookingForm({ settings, filaments }: BookingProps) {
               <div className="form-heading"><span>05</span><div><h2>Bilgileri kontrol edin</h2><p>Talebi göndermeden önce randevu ayrıntılarınızı inceleyin.</p></div></div>
               <div className="review-list">
                 <div><span>Tarih ve başlangıç</span><strong>{data.date} · {data.startTime}</strong><button type="button" onClick={() => setCurrentStep(0)}>Düzenle</button></div>
+                <div><span>3D yazıcı</span><strong>{selectedPrinter ? `${selectedPrinter.code} · ${selectedPrinter.name}` : "—"}</strong><button type="button" onClick={() => setCurrentStep(0)}>Düzenle</button></div>
                 <div><span>Süre ve bitiş</span><strong>{formatDuration(data.duration)}</strong><small>{endTime}</small></div>
                 <div><span>Baskı dosyası</span><strong>{data.file?.name}</strong><button type="button" onClick={() => setCurrentStep(1)}>Düzenle</button></div>
                 <div><span>Filament</span><strong>{data.filamentSource === "workshop" ? `Atölye filamenti · ${selectedFilament?.material ?? "—"} · ${selectedFilament?.color ?? "—"}` : `Kendi filamentim · ${data.material} · ${data.color}`}</strong><button type="button" onClick={() => setCurrentStep(2)}>Düzenle</button></div>
