@@ -1,5 +1,6 @@
 import AdminLayout from '@/components/AdminLayout';
 import SettingsTabs from '@/components/SettingsTabs';
+import { hasFormChanged, useUnsavedChanges } from '@/components/UnsavedChangesGuard';
 import usePermissions from '@/hooks/usePermissions';
 import { Head, router } from '@inertiajs/react';
 import { FormEvent, useState } from 'react';
@@ -19,6 +20,7 @@ export default function BookingRules({ hours: initialHours, settings, supportedE
     const [values, setValues] = useState(settings);
     const [error, setError] = useState('');
     const [processing, setProcessing] = useState(false);
+    useUnsavedChanges(hasFormChanged({ hours: initialHours, values: settings }, { hours, values }));
 
     function updateDay(index: number, changes: Partial<Day>) {
         setHours((current) => current.map((day, dayIndex) => dayIndex === index ? { ...day, ...changes } : day));

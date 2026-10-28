@@ -2,6 +2,7 @@ import { Head, router, useForm } from '@inertiajs/react';
 import { FormEvent } from 'react';
 import AdminLayout from '../../../components/AdminLayout';
 import SettingsTabs from '../../../components/SettingsTabs';
+import { useUnsavedChanges } from '../../../components/UnsavedChangesGuard';
 
 type Preferences = {
     theme: 'light' | 'dark' | 'system';
@@ -19,6 +20,7 @@ const choices = {
 
 export default function PersonalSettings({ preferences }: { preferences: Preferences }) {
     const form = useForm<Preferences>(preferences);
+    useUnsavedChanges(form.isDirty);
     const defaults: Preferences = { theme: 'dark', scale: 'normal', density: 'normal', sidebar: 'wide' };
     const submit = (event: FormEvent) => { event.preventDefault(); form.put('/yonetim/ayarlar/kisisel', { preserveScroll: true, onSuccess: () => form.setDefaults() }); };
     const reset = () => {

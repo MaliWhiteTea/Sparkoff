@@ -2,6 +2,7 @@ import AdminLayout from "@/components/AdminLayout";
 import { FieldError, FormErrors, FormErrorSummary } from "@/components/FormErrorSummary";
 import SettingsTabs from "@/components/SettingsTabs";
 import StatusBadge from "@/components/StatusBadge";
+import { hasFormChanged, useUnsavedChanges } from "@/components/UnsavedChangesGuard";
 import { Head, router } from "@inertiajs/react";
 import { FormEvent, useState } from "react";
 
@@ -45,6 +46,7 @@ function FilamentCard({ filament }: { filament: Filament }) {
   const [data, setData] = useState({ ...filament });
   const [errors, setErrors] = useState<FormErrors>({});
   const [processing, setProcessing] = useState(false);
+  useUnsavedChanges(hasFormChanged(filament, data));
   return (
     <form
       className="filament-admin-card"
@@ -188,6 +190,7 @@ export default function FilamentSettings({
 }) {
   const [data, setData] = useState(empty);
   const [error, setError] = useState("");
+  useUnsavedChanges(hasFormChanged(empty, data));
   function submit(event: FormEvent) {
     event.preventDefault();
     router.post("/yonetim/ayarlar/filamentler", data, {

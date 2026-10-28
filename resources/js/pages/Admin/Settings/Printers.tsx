@@ -2,6 +2,7 @@ import AdminLayout from "@/components/AdminLayout";
 import { FieldError, FormErrors, FormErrorSummary } from "@/components/FormErrorSummary";
 import SettingsTabs from "@/components/SettingsTabs";
 import StatusBadge from "@/components/StatusBadge";
+import { hasFormChanged, useUnsavedChanges } from "@/components/UnsavedChangesGuard";
 import usePermissions from "@/hooks/usePermissions";
 import { Head, router } from "@inertiajs/react";
 import { FormEvent, useState } from "react";
@@ -51,6 +52,10 @@ function PrinterCard({
   const [description, setDescription] = useState(printer.description ?? "");
   const [processing, setProcessing] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
+  useUnsavedChanges(hasFormChanged(
+    { name: printer.name, status: printer.status, description: printer.description ?? "" },
+    { name, status, description },
+  ));
 
   function save(event: FormEvent) {
     event.preventDefault();
@@ -140,16 +145,18 @@ function ScheduleItem({
   printers: Printer[];
   scheduleKinds: StatusOption[];
 }) {
-  const [editing, setEditing] = useState(false);
-  const [values, setValues] = useState({
+  const initialValues = {
     printer_id: item.printerId?.toString() ?? "",
     kind: item.kind,
     is_all_day: item.isAllDay,
     starts_at: item.startsAtInput,
     ends_at: item.endsAtInput,
     reason: item.reason,
-  });
+  };
+  const [editing, setEditing] = useState(false);
+  const [values, setValues] = useState(initialValues);
   const [processing, setProcessing] = useState(false);
+  useUnsavedChanges(editing && hasFormChanged(initialValues, values));
 
   function save(event: FormEvent) {
     event.preventDefault();
@@ -293,22 +300,26 @@ export default function PrinterSettings({
   scheduleKinds,
 }: Props) {
   const can = usePermissions();
-  const [newPrinter, setNewPrinter] = useState({
+  const emptyPrinter = {
     code: "",
     name: "",
     status: "inactive",
     description: "",
-  });
-  const [blackout, setBlackout] = useState({
+  };
+  const emptyBlackout = {
     printer_id: "",
     kind: "busy",
     is_all_day: false,
     starts_at: "",
     ends_at: "",
     reason: "",
-  });
+  };
+  const [newPrinter, setNewPrinter] = useState(emptyPrinter);
+  const [blackout, setBlackout] = useState(emptyBlackout);
   const [error, setError] = useState("");
   const [processing, setProcessing] = useState(false);
+  useUnsavedChanges(hasFormChanged(emptyPrinter, newPrinter));
+  useUnsavedChanges(hasFormChanged(emptyBlackout, blackout));
 
   function submitPrinter(event: FormEvent) {
     event.preventDefault();
@@ -316,13 +327,7 @@ export default function PrinterSettings({
     setError("");
     router.post("/yonetim/ayarlar/yazicilar", newPrinter, {
       preserveScroll: true,
-      onSuccess: () =>
-        setNewPrinter({
-          code: "",
-          name: "",
-          status: "inactive",
-          description: "",
-        }),
+      onSuccess: () => setNewPrinter(emptyPrinter),
       onError: (errors) =>
         setError(Object.values(errors)[0] ?? "Yazıcı eklenemedi."),
       onFinish: () => setProcessing(false),
@@ -338,15 +343,7 @@ export default function PrinterSettings({
       { ...blackout, printer_id: blackout.printer_id || null },
       {
         preserveScroll: true,
-        onSuccess: () =>
-          setBlackout({
-            printer_id: "",
-            kind: "busy",
-            is_all_day: false,
-            starts_at: "",
-            ends_at: "",
-            reason: "",
-          }),
+        onSuccess: () => setBlackout(emptyBlackout),
         onError: (errors) =>
           setError(Object.values(errors)[0] ?? "Kapalı zaman eklenemedi."),
         onFinish: () => setProcessing(false),

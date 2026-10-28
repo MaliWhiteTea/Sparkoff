@@ -128,6 +128,8 @@ export default function ConfirmDialog({
 
     if (!open || typeof document === 'undefined') return null;
 
+    const adminTheme = ['theme-dark', 'theme-system'].find((theme) => document.querySelector('.admin-page')?.classList.contains(theme));
+
     const submit = () => {
         if (processing || confirmDisabled || submissionRef.current) return;
         submissionRef.current = true;
@@ -137,7 +139,7 @@ export default function ConfirmDialog({
 
     return createPortal(
         <div
-            className="site-confirm-backdrop"
+            className={`site-confirm-backdrop ${adminTheme ?? ''}`}
             role="presentation"
             onMouseDown={(event) => {
                 if (event.target === event.currentTarget && !processing) onClose();

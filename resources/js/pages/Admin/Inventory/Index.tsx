@@ -5,6 +5,7 @@ import StatusBadge from "@/components/StatusBadge";
 import ListSort from "@/components/ListSort";
 import SavedFilters from "@/components/SavedFilters";
 import TableColumns, { ColumnDefinition, initialTableColumns } from "@/components/TableColumns";
+import { hasFormChanged, useUnsavedChanges } from "@/components/UnsavedChangesGuard";
 import usePermissions from "@/hooks/usePermissions";
 import { Head, Link, router, usePage } from "@inertiajs/react";
 import { FormEvent, useState } from "react";
@@ -382,14 +383,7 @@ function ItemCard({
   onSelectionChange: (checked: boolean) => void;
 }) {
   const can = usePermissions();
-  const [editing, setEditing] = useState(false);
-  const [stocking, setStocking] = useState(false);
-  const [managingMedia, setManagingMedia] = useState(false);
-  const [confirmingPurge, setConfirmingPurge] = useState(false);
-  const [purging, setPurging] = useState(false);
-  const [error, setError] = useState("");
-  const [stock, setStock] = useState({ quantity_change: "", reason: "" });
-  const [data, setData] = useState<ItemForm>({
+  const initialData: ItemForm = {
     name: item.name,
     sku: item.sku ?? "",
     category_id: item.categoryId ? String(item.categoryId) : "",
@@ -401,7 +395,17 @@ function ItemCard({
     public_visibility: item.publicVisibility,
     description: item.description ?? "",
     is_active: item.isActive,
-  });
+  };
+  const [editing, setEditing] = useState(false);
+  const [stocking, setStocking] = useState(false);
+  const [managingMedia, setManagingMedia] = useState(false);
+  const [confirmingPurge, setConfirmingPurge] = useState(false);
+  const [purging, setPurging] = useState(false);
+  const [error, setError] = useState("");
+  const [stock, setStock] = useState({ quantity_change: "", reason: "" });
+  const [data, setData] = useState<ItemForm>(initialData);
+  useUnsavedChanges(editing && hasFormChanged(initialData, data));
+  useUnsavedChanges(stocking && hasFormChanged({ quantity_change: "", reason: "" }, stock));
   const save = (e: FormEvent) => {
     e.preventDefault();
     setError("");
@@ -577,6 +581,10 @@ function MediaManager({ item, onError }: { item: Item; onError: (message: string
   const [title, setTitle] = useState('');
   const [altText, setAltText] = useState('');
   const [url, setUrl] = useState('');
+  useUnsavedChanges(hasFormChanged(
+    { kind: 'image', hasFile: false, title: '', altText: '', url: '' },
+    { kind, hasFile: file !== null, title, altText, url },
+  ));
   const submit = (event: FormEvent) => {
     event.preventDefault();
     const payload = new FormData();
@@ -598,8 +606,10 @@ function MediaManager({ item, onError }: { item: Item; onError: (message: string
 }
 
 function MediaEditor({ itemId, medium, first, last, onError }: { itemId: number; medium: Media; first: boolean; last: boolean; onError: (message: string) => void }) {
+  const initialValues = { title: medium.title ?? '', alt_text: medium.altText ?? '', external_url: medium.type === 'link' ? medium.url : '', sort_order: medium.sortOrder, is_cover: medium.isCover };
   const [editing, setEditing] = useState(false);
-  const [values, setValues] = useState({ title: medium.title ?? '', alt_text: medium.altText ?? '', external_url: medium.type === 'link' ? medium.url : '', sort_order: medium.sortOrder, is_cover: medium.isCover });
+  const [values, setValues] = useState(initialValues);
+  useUnsavedChanges(editing && hasFormChanged(initialValues, values));
   const save = (changes: Partial<typeof values> = {}) => router.patch(`/yonetim/envanter/${itemId}/medya/${medium.id}`, { ...values, ...changes }, { preserveScroll: true, onSuccess: () => setEditing(false), onError: (errors) => onError(Object.values(errors)[0] ?? 'Medya güncellenemedi.') });
   return <article>
     {medium.type === 'image' ? <img src={medium.url} alt={medium.altText ?? ''} /> : medium.type === 'video' ? <video src={medium.url} controls preload="metadata" /> : <a href={medium.url} target="_blank" rel="noopener noreferrer">Bağlantıyı aç ↗</a>}
@@ -615,12 +625,14 @@ function CategoryRow({
   item: Option;
   onError: (message: string) => void;
 }) {
-  const [editing, setEditing] = useState(false);
-  const [data, setData] = useState({
+  const initialData = {
     name: item.name,
     description: item.description ?? "",
     is_active: item.isActive,
-  });
+  };
+  const [editing, setEditing] = useState(false);
+  const [data, setData] = useState(initialData);
+  useUnsavedChanges(editing && hasFormChanged(initialData, data));
   if (!editing)
     return (
       <article className={!item.isActive ? "inactive" : ""}>
@@ -689,14 +701,16 @@ function LocationRow({
   item: Location;
   onError: (message: string) => void;
 }) {
-  const [editing, setEditing] = useState(false);
-  const [data, setData] = useState({
+  const initialData = {
     name: item.name,
     code: item.code,
     description: item.description ?? "",
     is_public: item.isPublic,
     is_active: item.isActive,
-  });
+  };
+  const [editing, setEditing] = useState(false);
+  const [data, setData] = useState(initialData);
+  useUnsavedChanges(editing && hasFormChanged(initialData, data));
   if (!editing)
     return (
       <article className={!item.isActive ? "inactive" : ""}>
@@ -803,6 +817,8 @@ function Definitions({
     is_public: true,
     is_active: true,
   });
+  useUnsavedChanges(hasFormChanged({ name: "", description: "", is_active: true }, cat));
+  useUnsavedChanges(hasFormChanged({ name: "", code: "", description: "", is_public: true, is_active: true }, loc));
   if (!can("inventory.manage_categories") && !can("inventory.manage_locations"))
     return null;
   return (
@@ -962,6 +978,7 @@ export default function Inventory({
   const [data, setData] = useState<ItemForm>(emptyItem);
   const [error, setError] = useState("");
   const [search, setSearch] = useState(filters.search);
+  useUnsavedChanges(creating && hasFormChanged(emptyItem, data));
   const canUseBulk = can("inventory.update") || can("inventory.archive");
   const selectableItems = items.data.filter((item) => !item.isArchived);
   const selection = usePageSelection(canUseBulk ? selectableItems.map((item) => item.id) : []);
