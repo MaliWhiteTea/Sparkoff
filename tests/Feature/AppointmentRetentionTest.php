@@ -27,8 +27,8 @@ class AppointmentRetentionTest extends TestCase
         Storage::fake('local');
         CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-10-28 12:00:00', 'Europe/Istanbul'));
 
-        Setting::query()->where('key', 'privacy.appointment_retention_months')->update(['value' => 2]);
-        Setting::query()->where('key', 'privacy.file_retention_days')->update(['value' => 10]);
+        Setting::query()->where('key', 'privacy.appointment_retention_months')->firstOrFail()->update(['value' => 2]);
+        Setting::query()->where('key', 'privacy.file_retention_days')->firstOrFail()->update(['value' => 10]);
     }
 
     protected function tearDown(): void

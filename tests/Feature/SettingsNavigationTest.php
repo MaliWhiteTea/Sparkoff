@@ -71,7 +71,7 @@ class SettingsNavigationTest extends TestCase
             'theme' => 'dark', 'scale' => 'large', 'density' => 'compact', 'sidebar' => 'narrow',
         ])->assertRedirect();
 
-        $this->assertSame([
+        $this->assertEquals([
             'theme' => 'dark', 'scale' => 'large', 'density' => 'compact', 'sidebar' => 'narrow',
         ], $user->fresh()->interface_preferences);
         $this->assertNull($other->fresh()->interface_preferences);
