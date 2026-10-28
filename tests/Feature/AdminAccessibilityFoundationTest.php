@@ -62,6 +62,27 @@ class AdminAccessibilityFoundationTest extends TestCase
         $this->assertStringContainsString("theme: 'dark'", $settings);
     }
 
+    public function test_dark_theme_selectors_match_the_admin_root_and_keep_readable_contrast(): void
+    {
+        $adminStyles = file_get_contents(resource_path('css/admin-shell.css'));
+        $publicStyles = file_get_contents(resource_path('css/app.css'));
+
+        $this->assertStringNotContainsString('.theme-dark .admin-page', $adminStyles);
+        $this->assertStringNotContainsString('.theme-system .admin-page', $adminStyles);
+        $this->assertStringContainsString('.admin-page.theme-dark', $adminStyles);
+        $this->assertStringContainsString('.admin-page.theme-system', $adminStyles);
+        $this->assertStringContainsString('.public-theme-dark .public-announcements article.announcement-warning', $publicStyles);
+
+        foreach ([
+            ['#edf3f7', '#101820'],
+            ['#a7b4c0', '#17232e'],
+            ['#ebc58f', '#352b1d'],
+            ['#f2a8ba', '#38212a'],
+        ] as [$foreground, $background]) {
+            $this->assertGreaterThanOrEqual(4.5, $this->contrastRatio($foreground, $background));
+        }
+    }
+
     public function test_inventory_media_keeps_accessibility_and_safe_link_contracts(): void
     {
         $catalog = file_get_contents(resource_path('js/pages/Materials.tsx'));
@@ -75,5 +96,28 @@ class AdminAccessibilityFoundationTest extends TestCase
         $this->assertStringContainsString('aria-label="Görsel açıklaması"', $manager);
         $this->assertStringContainsString('.material-image-fallback', $styles);
         $this->assertStringContainsString('@media(max-width:600px)', $styles);
+    }
+
+    private function contrastRatio(string $foreground, string $background): float
+    {
+        $luminance = function (string $hex): float {
+            $channels = array_map(
+                fn (string $channel) => hexdec($channel) / 255,
+                str_split(ltrim($hex, '#'), 2),
+            );
+            $channels = array_map(
+                fn (float $channel) => $channel <= 0.04045
+                    ? $channel / 12.92
+                    : (($channel + 0.055) / 1.055) ** 2.4,
+                $channels,
+            );
+
+            return 0.2126 * $channels[0] + 0.7152 * $channels[1] + 0.0722 * $channels[2];
+        };
+
+        $lighter = max($luminance($foreground), $luminance($background));
+        $darker = min($luminance($foreground), $luminance($background));
+
+        return ($lighter + 0.05) / ($darker + 0.05);
     }
 }

@@ -433,9 +433,10 @@ svg { width: 1.15em; fill: none; stroke: currentColor; stroke-width: 1.7; stroke
 .public-theme-dark :where(input,textarea)::placeholder { color: #7f909f; opacity: 1; }
 .public-theme-dark .upload-area:hover,.public-theme-dark .upload-area.has-file,.public-theme-dark .choice-grid label.selected,.public-theme-dark .schedule-printer-tabs button.active { background: #213746; }
 .public-theme-dark .form-actions { background: var(--surface); border-color: var(--border); }
-.public-theme-dark :where(.public-announcements article,.schedule-block) { background: #1c3240; color: var(--text); border-color: #36566a; }
-.public-theme-dark :where(.public-announcements article.announcement-warning,.schedule-block.kind-maintenance,.upload-limit-warning,.feedback-privacy-note,.legal-draft) { background: #352b1d; color: #ebc58f; border-color: #695333; }
-.public-theme-dark :where(.public-announcements article.announcement-maintenance,.public-announcements article.announcement-urgent,.schedule-block.kind-closed,.form-error) { background: #38212a; color: #f2a8ba; border-color: #744153; }
+.public-theme-dark .public-announcements article,.public-theme-dark .schedule-block { background: #1c3240; color: var(--text); border-color: #36566a; }
+.public-theme-dark .public-announcements article.announcement-warning,.public-theme-dark :where(.schedule-block.kind-maintenance,.upload-limit-warning,.feedback-privacy-note,.legal-draft) { background: #352b1d; color: #ebc58f; border-color: #695333; }
+.public-theme-dark .public-announcements article:is(.announcement-maintenance,.announcement-urgent),.public-theme-dark :where(.schedule-block.kind-closed,.form-error) { background: #38212a; color: #f2a8ba; border-color: #744153; }
+.public-theme-dark .public-announcements article p { color: var(--muted); }
 .public-theme-dark :where(.privacy-chip,.current-status,.success-icon) { background: #18352c; border-color: #356652; }
 .public-theme-dark :where(.material-group>header>strong,.material-stock.available,.open-badge,.status.active) { background: #18352c; }
 .public-theme-dark :where(.material-group.unavailable>header>strong,.status.maintenance) { background: #352b1d; }
