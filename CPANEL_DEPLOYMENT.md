@@ -2,9 +2,23 @@
 
 ## Gereksinimler
 
-- PHP 8.4.1+, MySQL/MariaDB, Composer 2 ve SSL
+- Güvenlik güncellemeleri uygulanmış PHP 8.3/8.4/8.5, MySQL/MariaDB, Composer 2 ve SSL
 - PHP: `pdo_mysql`, `mbstring`, `openssl`, `tokenizer`, `xml`, `ctype`, `json`, `fileinfo`
 - Alan adının belge kökünü Laravel `public` klasörüne yönlendirebilme
+
+PHP2Shell (`CVE-2026-109618` ve `CVE-2026-109619`) nedeniyle upstream PHP
+kullanılıyorsa en az 8.3.36, 8.4.27 veya 8.5.12 gerekir. CloudLinux/cPanel gibi
+dağıtıcılar düzeltmeyi aynı PHP sürüm numarasına geri taşıyabildiği için yalnız
+`php -v` çıktısına güvenmeyin; paket changelog'unda iki CVE'nin de kapatıldığını
+doğrulayın. cPanel EasyApache sunucusunda örnek kontrol:
+
+```bash
+rpm -q --changelog ea-php84-php-cli | grep -m1 -E 'CVE-2026-109618|CVE-2026-109619'
+```
+
+Sunucuya kabuk erişimi yoksa hosting sağlayıcısından kullanılan paket adı,
+paket sürümü ve iki CVE için yama teyidi yazılı olarak istenmelidir. Bu teyit
+alınmadan yayın yapılmamalıdır.
 
 Node.js sunucuda zorunlu değildir; `public/build` yerelde üretilebilir.
 
