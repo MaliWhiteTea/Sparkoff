@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\Announcement;
+use App\Services\AdminNotificationService;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -40,6 +41,9 @@ class HandleInertiaRequests extends Middleware
             ],
             'staffAnnouncements' => $staffAnnouncements,
             'staffAnnouncementUnreadCount' => $staffAnnouncements->where('isRead', false)->count(),
+            'notificationUnreadCount' => fn () => $user && $request->is('yonetim/*')
+                ? app(AdminNotificationService::class)->unreadCount($user)
+                : 0,
             'flash' => [
                 'bookingSubmitted' => fn () => $request->session()->get('booking_submitted'),
                 'success' => fn () => $request->session()->get('success'),

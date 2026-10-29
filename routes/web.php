@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\InventoryController as AdminInventoryController;
 use App\Http\Controllers\Admin\InventoryImportController as AdminInventoryImportController;
 use App\Http\Controllers\Admin\InventoryMediaController as AdminInventoryMediaController;
 use App\Http\Controllers\Admin\InventoryTransactionController as AdminInventoryTransactionController;
+use App\Http\Controllers\Admin\NotificationController as AdminNotificationController;
 use App\Http\Controllers\Admin\PersonalSettingsController as AdminPersonalSettingsController;
 use App\Http\Controllers\Admin\PrinterSettingsController as AdminPrinterSettingsController;
 use App\Http\Controllers\Admin\PrivacySettingsController as AdminPrivacySettingsController;
@@ -56,6 +57,9 @@ Route::prefix('yonetim')->name('admin.')->group(function () {
     Route::middleware(['auth', 'admin.active'])->group(function () {
         Route::get('/genel-bakis', AdminDashboardController::class)->name('dashboard');
         Route::get('/hizli-arama', AdminQuickSearchController::class)->middleware('throttle:60,1')->name('quick-search');
+        Route::get('/bildirimler', [AdminNotificationController::class, 'index'])->middleware('throttle:60,1')->name('notifications.index');
+        Route::post('/bildirimler/oku', [AdminNotificationController::class, 'read'])->name('notifications.read');
+        Route::post('/bildirimler/tumunu-oku', [AdminNotificationController::class, 'readAll'])->name('notifications.read-all');
         Route::post('/cikis', [AdminAuthController::class, 'destroy'])->name('logout');
         Route::post('/kisisel-filtreler', [AdminSavedFilterController::class, 'store'])->name('saved-filters.store');
         Route::delete('/kisisel-filtreler/{table}/{filterId}', [AdminSavedFilterController::class, 'destroy'])->name('saved-filters.destroy');

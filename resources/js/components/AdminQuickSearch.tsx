@@ -96,12 +96,10 @@ export default function AdminQuickSearch() {
     const handleChange = (event: ChangeEvent<HTMLInputElement>) => setQuery(event.target.value);
 
     return <>
-        <div className="admin-utility-bar">
-            <button className="admin-quick-search-trigger" type="button" onClick={() => setOpen(true)}>
-                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m16 16 5 5" /></svg>
-                <span>Modüllerde hızlı ara</span><kbd>Ctrl K</kbd>
-            </button>
-        </div>
+        <button className="admin-quick-search-trigger" type="button" onClick={() => setOpen(true)}>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m16 16 5 5" /></svg>
+            <span>Modüllerde hızlı ara</span><kbd>Ctrl K</kbd>
+        </button>
         {open && <div className="admin-search-backdrop" onMouseDown={(event) => event.target === event.currentTarget && setOpen(false)}>
             <section className="admin-search-dialog" role="dialog" aria-modal="true" aria-labelledby="admin-search-title">
                 <header>
