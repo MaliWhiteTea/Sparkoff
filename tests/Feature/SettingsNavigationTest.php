@@ -6,6 +6,7 @@ use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 class SettingsNavigationTest extends TestCase
@@ -98,6 +99,58 @@ class SettingsNavigationTest extends TestCase
 
         $this->assertNull($user->fresh()->interface_preferences);
         $this->assertSame('dark', $user->fresh()->interfacePreferences()['theme']);
+    }
+
+    public function test_panel_user_can_change_only_their_own_password(): void
+    {
+        $user = $this->panelUser([
+            'password' => 'mevcut-guvenli-parola',
+            'remember_token' => 'onceki-hatirlama-anahtari',
+        ]);
+        $other = $this->panelUser(['password' => 'diger-kullanicinin-parolasi']);
+
+        $this->actingAs($user)->put(route('admin.settings.personal.password.update'), [
+            'current_password' => 'mevcut-guvenli-parola',
+            'password' => 'yeni-guvenli-parola-2026',
+            'password_confirmation' => 'yeni-guvenli-parola-2026',
+        ])->assertRedirect()->assertSessionHas('success', 'Parolanız güvenli şekilde değiştirildi.');
+
+        $this->assertAuthenticatedAs($user);
+        $this->assertTrue(Hash::check('yeni-guvenli-parola-2026', $user->fresh()->password));
+        $this->assertNotSame('onceki-hatirlama-anahtari', $user->fresh()->remember_token);
+        $this->assertTrue(Hash::check('diger-kullanicinin-parolasi', $other->fresh()->password));
+    }
+
+    public function test_password_change_rejects_an_incorrect_current_password(): void
+    {
+        $user = $this->panelUser(['password' => 'mevcut-guvenli-parola']);
+
+        $this->actingAs($user)->put(route('admin.settings.personal.password.update'), [
+            'current_password' => 'yanlis-parola',
+            'password' => 'yeni-guvenli-parola-2026',
+            'password_confirmation' => 'yeni-guvenli-parola-2026',
+        ])->assertSessionHasErrors(['current_password'], null, 'passwordUpdate');
+
+        $this->assertTrue(Hash::check('mevcut-guvenli-parola', $user->fresh()->password));
+    }
+
+    public function test_new_password_must_be_long_different_and_confirmed(): void
+    {
+        $user = $this->panelUser(['password' => 'mevcut-guvenli-parola']);
+
+        $this->actingAs($user)->put(route('admin.settings.personal.password.update'), [
+            'current_password' => 'mevcut-guvenli-parola',
+            'password' => 'kisa',
+            'password_confirmation' => 'baska',
+        ])->assertSessionHasErrors(['password'], null, 'passwordUpdate');
+
+        $this->actingAs($user)->put(route('admin.settings.personal.password.update'), [
+            'current_password' => 'mevcut-guvenli-parola',
+            'password' => 'mevcut-guvenli-parola',
+            'password_confirmation' => 'mevcut-guvenli-parola',
+        ])->assertSessionHasErrors(['password'], null, 'passwordUpdate');
+
+        $this->assertTrue(Hash::check('mevcut-guvenli-parola', $user->fresh()->password));
     }
 
     public function test_user_without_system_permissions_cannot_open_system_settings_directly(): void

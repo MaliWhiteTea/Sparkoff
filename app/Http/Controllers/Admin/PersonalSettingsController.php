@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -41,6 +42,28 @@ class PersonalSettingsController extends Controller
         ]);
 
         return back()->with('success', 'Kişisel görünüm ayarlarınız varsayılanlara döndürüldü.');
+    }
+
+    public function updatePassword(Request $request): RedirectResponse
+    {
+        $validated = $request->validateWithBag('passwordUpdate', [
+            'current_password' => ['required', 'string', 'current_password:web'],
+            'password' => ['required', 'string', 'min:12', 'max:255', 'different:current_password', 'confirmed'],
+        ], [
+            'current_password.current_password' => 'Mevcut parola hatalı.',
+            'password.different' => 'Yeni parola mevcut parolanızdan farklı olmalıdır.',
+        ], [
+            'current_password' => 'mevcut parola',
+            'password' => 'yeni parola',
+        ]);
+
+        $request->user()->forceFill([
+            'password' => $validated['password'],
+            'remember_token' => Str::random(60),
+        ])->save();
+        $request->session()->regenerate();
+
+        return back()->with('success', 'Parolanız güvenli şekilde değiştirildi.');
     }
 
     public function updateTable(Request $request): RedirectResponse

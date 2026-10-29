@@ -44,6 +44,7 @@ return [
         'message' => 'açıklama',
         'name' => 'ad',
         'password' => 'parola',
+        'current_password' => 'mevcut parola',
         'type' => 'tür',
     ],
 ];

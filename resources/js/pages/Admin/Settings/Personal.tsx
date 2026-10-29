@@ -1,6 +1,7 @@
 import { Head, router, useForm } from '@inertiajs/react';
 import { FormEvent } from 'react';
 import AdminLayout from '../../../components/AdminLayout';
+import { FieldError, FormErrorSummary } from '../../../components/FormErrorSummary';
 import SettingsTabs from '../../../components/SettingsTabs';
 import { useUnsavedChanges } from '../../../components/UnsavedChangesGuard';
 
@@ -20,15 +21,24 @@ const choices = {
 
 export default function PersonalSettings({ preferences }: { preferences: Preferences }) {
     const form = useForm<Preferences>(preferences);
-    useUnsavedChanges(form.isDirty);
+    const passwordForm = useForm({ current_password: '', password: '', password_confirmation: '' });
+    useUnsavedChanges(form.isDirty || passwordForm.isDirty);
     const defaults: Preferences = { theme: 'dark', scale: 'normal', density: 'normal', sidebar: 'wide' };
     const submit = (event: FormEvent) => { event.preventDefault(); form.put('/yonetim/ayarlar/kisisel', { preserveScroll: true, onSuccess: () => form.setDefaults() }); };
     const reset = () => {
         if (!window.confirm('Tüm görünüm ayarları varsayılana dönsün mü?')) return;
         router.delete('/yonetim/ayarlar/kisisel', { preserveScroll: true, onSuccess: () => { form.setData(defaults); form.setDefaults(defaults); } });
     };
+    const submitPassword = (event: FormEvent) => {
+        event.preventDefault();
+        passwordForm.put('/yonetim/ayarlar/kisisel/parola', {
+            preserveScroll: true,
+            errorBag: 'passwordUpdate',
+            onSuccess: () => passwordForm.reset(),
+        });
+    };
 
-    return <AdminLayout><Head title="Kişisel Ayarlar" /><header className="admin-title"><div><span className="booking-kicker">HESAP AYARLARI</span><h1>Kişisel ayarlar</h1><p>Yönetim panelinin görünümünü yalnız kendi hesabınız için düzenleyin.</p></div></header><SettingsTabs />
+    return <AdminLayout><Head title="Kişisel Ayarlar" /><header className="admin-title"><div><span className="booking-kicker">HESAP AYARLARI</span><h1>Kişisel ayarlar</h1><p>Yönetim panelinin görünümünü ve hesap parolanızı düzenleyin.</p></div></header><SettingsTabs />
         <form className="personal-settings" onSubmit={submit}>
             <PreferenceGroup title="Tema" description="Panelin renk görünümü." name="theme" value={form.data.theme} options={choices.theme} onChange={(value) => form.setData('theme', value as Preferences['theme'])} />
             <PreferenceGroup title="Yazı ve arayüz boyutu" description="Metinleri ve arayüz öğelerini birlikte ölçekler." name="scale" value={form.data.scale} options={choices.scale} onChange={(value) => form.setData('scale', value as Preferences['scale'])} />
@@ -36,6 +46,16 @@ export default function PersonalSettings({ preferences }: { preferences: Prefere
             <PreferenceGroup title="Sol menü" description="Masaüstünde menünün başlangıç görünümünü belirler." name="sidebar" value={form.data.sidebar} options={choices.sidebar} onChange={(value) => form.setData('sidebar', value as Preferences['sidebar'])} />
             {Object.keys(form.errors).length > 0 && <div className="form-error" role="alert">Ayarlar doğrulanamadı. Seçimlerinizi kontrol edin.</div>}
             <div className="settings-save-bar"><div><strong>Tercihler hesabınıza kaydedilir.</strong><span>Oturum açtığınız diğer cihazlarda da uygulanır.</span></div><div className="personal-settings-actions"><button className="reset" type="button" onClick={reset}>Varsayılana dön</button><button disabled={form.processing || !form.isDirty}>{form.processing ? 'Kaydediliyor…' : 'Ayarları kaydet'}</button></div></div>
+        </form>
+        <form className="admin-panel settings-form personal-password-form" onSubmit={submitPassword}>
+            <div className="settings-heading"><div><h2>Parola değiştir</h2><p>Hesabınızı korumak için önce mevcut parolanızı doğrulayın. Yeni parola en az 12 karakter olmalıdır.</p></div></div>
+            <FormErrorSummary errors={passwordForm.errors} />
+            <div className="field-grid">
+                <label className="field full"><span>Mevcut parola</span><input aria-invalid={Boolean(passwordForm.errors.current_password)} autoComplete="current-password" required type="password" value={passwordForm.data.current_password} onChange={(event) => passwordForm.setData('current_password', event.target.value)} /><FieldError errors={passwordForm.errors} name="current_password" /></label>
+                <label className="field"><span>Yeni parola</span><input aria-invalid={Boolean(passwordForm.errors.password)} autoComplete="new-password" minLength={12} maxLength={255} required type="password" value={passwordForm.data.password} onChange={(event) => passwordForm.setData('password', event.target.value)} /><FieldError errors={passwordForm.errors} name="password" /></label>
+                <label className="field"><span>Yeni parola tekrarı</span><input aria-invalid={Boolean(passwordForm.errors.password_confirmation)} autoComplete="new-password" minLength={12} maxLength={255} required type="password" value={passwordForm.data.password_confirmation} onChange={(event) => passwordForm.setData('password_confirmation', event.target.value)} /><FieldError errors={passwordForm.errors} name="password_confirmation" /></label>
+            </div>
+            <button className="settings-submit" disabled={passwordForm.processing || !passwordForm.isDirty}>{passwordForm.processing ? 'Değiştiriliyor…' : 'Parolayı değiştir'}</button>
         </form>
     </AdminLayout>;
 }

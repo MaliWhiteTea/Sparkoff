@@ -149,6 +149,7 @@ Aktif veya gecikmiş teslimlerde kişi bilgileri kayıt sonuçlanana kadar korun
 - Envanter, teslim, yazıcı, randevu, içerik, geri bildirim ve sistem işlemleri ayrı izinlerle korunur.
 - Korunan **Sistem Yöneticisi** rolü tüm yetkilere sahiptir ve son sistem yöneticisinin kaldırılması engellenir.
 - Kullanıcı oluşturma, parola sıfırlama, rol atama ve hesap pasifleştirme hassas izinlerdir.
+- Her panel kullanıcısı kişisel ayarlardan mevcut parolasını doğrulayarak kendi parolasını değiştirebilir; yeni parola en az 12 karakter olmalı ve doğrulamasıyla eşleşmelidir.
 - Kişisel veri görüntüleme, model dosyası indirme ve dışa aktarma işlemleri ayrıca yetkilendirilir.
 - Arayüzde bir işlemin gizlenmesi yeterli kabul edilmez; tüm sınırlar sunucu tarafında da denetlenir.
 

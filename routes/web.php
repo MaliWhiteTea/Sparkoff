@@ -116,6 +116,7 @@ Route::prefix('yonetim')->name('admin.')->group(function () {
             Route::get('/kisisel', [AdminPersonalSettingsController::class, 'edit'])->name('personal.edit');
             Route::put('/kisisel', [AdminPersonalSettingsController::class, 'update'])->name('personal.update');
             Route::delete('/kisisel', [AdminPersonalSettingsController::class, 'destroy'])->name('personal.destroy');
+            Route::put('/kisisel/parola', [AdminPersonalSettingsController::class, 'updatePassword'])->middleware('throttle:6,1')->name('personal.password.update');
             Route::put('/kisisel/tablo', [AdminPersonalSettingsController::class, 'updateTable'])->name('personal.table.update');
             Route::get('/test-araclari', [AdminInventoryController::class, 'testTools'])->middleware('system.admin')->name('test-tools.index');
             Route::delete('/test-araclari/malzemeler', [AdminInventoryController::class, 'destroyAll'])->middleware('system.admin')->name('test-tools.inventory.destroy-all');
