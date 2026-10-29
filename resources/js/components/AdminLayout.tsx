@@ -84,7 +84,7 @@ export default function AdminLayout({ children, quickActions = [] }: PropsWithCh
     const toggleCollapsed = () => {
         const next = !collapsed;
         setCollapsed(next);
-        router.put('/yonetim/ayarlar/kisisel', { ...preferences, sidebar: next ? 'narrow' : 'wide' }, { preserveScroll: true, preserveState: true });
+        router.put('/yonetim/ayarlar/kisisel/sol-menu', { sidebar: next ? 'narrow' : 'wide' }, { preserveScroll: true, preserveState: true });
     };
     const resizeMove = (event: PointerEvent<HTMLDivElement>) => { if (resizing) { widthRef.current = clamp(event.clientX); setSidebarWidth(widthRef.current); } };
     const resizeEnd = (event: PointerEvent<HTMLDivElement>) => { if (!resizing) return; setResizing(false); event.currentTarget.releasePointerCapture(event.pointerId); saveWidth(widthRef.current); };

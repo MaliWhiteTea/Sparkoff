@@ -78,6 +78,21 @@ class SettingsNavigationTest extends TestCase
         $this->assertNull($other->fresh()->interface_preferences);
     }
 
+    public function test_sidebar_toggle_is_saved_without_a_success_flash(): void
+    {
+        $user = $this->panelUser([
+            'interface_preferences' => ['theme' => 'light', 'scale' => 'large', 'density' => 'compact', 'sidebar' => 'wide'],
+        ]);
+
+        $this->actingAs($user)->put(route('admin.settings.personal.sidebar.update'), [
+            'sidebar' => 'narrow',
+        ])->assertRedirect()->assertSessionMissing('success');
+
+        $this->assertEquals([
+            'theme' => 'light', 'scale' => 'large', 'density' => 'compact', 'sidebar' => 'narrow',
+        ], $user->fresh()->interface_preferences);
+    }
+
     public function test_invalid_interface_preferences_are_rejected(): void
     {
         $user = $this->panelUser();

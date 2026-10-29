@@ -117,6 +117,7 @@ Route::prefix('yonetim')->name('admin.')->group(function () {
             Route::get('/', AdminSettingsController::class)->name('index');
             Route::get('/kisisel', [AdminPersonalSettingsController::class, 'edit'])->name('personal.edit');
             Route::put('/kisisel', [AdminPersonalSettingsController::class, 'update'])->name('personal.update');
+            Route::put('/kisisel/sol-menu', [AdminPersonalSettingsController::class, 'updateSidebar'])->name('personal.sidebar.update');
             Route::delete('/kisisel', [AdminPersonalSettingsController::class, 'destroy'])->name('personal.destroy');
             Route::put('/kisisel/parola', [AdminPersonalSettingsController::class, 'updatePassword'])->middleware('throttle:6,1')->name('personal.password.update');
             Route::put('/kisisel/tablo', [AdminPersonalSettingsController::class, 'updateTable'])->name('personal.table.update');

@@ -33,6 +33,19 @@ class PersonalSettingsController extends Controller
         return back()->with('success', 'Kişisel görünüm ayarlarınız kaydedildi.');
     }
 
+    public function updateSidebar(Request $request): RedirectResponse
+    {
+        $sidebar = $request->validate([
+            'sidebar' => ['required', Rule::in(['wide', 'narrow'])],
+        ])['sidebar'];
+        $preferences = $request->user()->interfacePreferences();
+        $preferences['sidebar'] = $sidebar;
+
+        $request->user()->update(['interface_preferences' => $preferences]);
+
+        return back();
+    }
+
     public function destroy(Request $request): RedirectResponse
     {
         $request->user()->update([

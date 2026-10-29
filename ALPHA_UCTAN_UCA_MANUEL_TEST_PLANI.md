@@ -234,7 +234,7 @@ Güvenlik ve veri kuralları:
 - [ ] SHELL-03 — Her sol menü bağlantısı doğru aktif durumu gösteriyor ve yatay
   kayma animasyonu oluşturmuyor.
 - [ ] SHELL-04 — Menüyü daralt/genişlet butonu çalışıyor ve tercih hesaba
-  kaydediliyor.
+  kaydediliyor; bu hızlı işlem için başarı mesajı gösterilmiyor.
 - [ ] SHELL-05 — Menü ayırıcı fareyle 210–380 px arasında yeniden boyutlanıyor;
   çift tıklama varsayılana döndürüyor.
 - [ ] SHELL-06 — Ayırıcıda Sol/Sağ oklar 10 px değiştiriyor, Home varsayılan
