@@ -20,6 +20,12 @@ Sunucuya kabuk erişimi yoksa hosting sağlayıcısından kullanılan paket adı
 paket sürümü ve iki CVE için yama teyidi yazılı olarak istenmelidir. Bu teyit
 alınmadan yayın yapılmamalıdır.
 
+PHP'nin 23 Ekim 2026 tarihli `CVE-2026-115560` bilgilendirmesi için yeni düzenli
+sürüm yüklenene kadar web SAPI yapılandırmasında
+`session.upload_progress.enabled=0` uygulanmalı ve PHP çalışanları yeniden
+başlatılmalıdır. CLI çıktısı web çalışanının ayarını kanıtlamaz; hosting
+sağlayıcısından web SAPI değeri ayrıca doğrulanmalıdır.
+
 Node.js sunucuda zorunlu değildir; `public/build` yerelde üretilebilir.
 
 ## 1. Üretim paketini hazırla

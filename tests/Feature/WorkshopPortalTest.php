@@ -55,7 +55,8 @@ class WorkshopPortalTest extends TestCase
             ->assertHeader('X-Content-Type-Options', 'nosniff')
             ->assertHeader('X-Frame-Options', 'SAMEORIGIN')
             ->assertHeader('Referrer-Policy', 'strict-origin-when-cross-origin')
-            ->assertHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+            ->assertHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
+            ->assertHeaderMissing('X-Powered-By');
     }
 
     public function test_public_portal_shows_anonymous_schedule_blocks(): void

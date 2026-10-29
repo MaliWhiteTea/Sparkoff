@@ -9,6 +9,9 @@ denemek içindir. Üretim kabulünün veya çevrimiçi randevu kabulünün yerin
   `CVE-2026-109619` düzeltmelerini içerdiğini yazılı veya paket changelog'u ile
   doğruladı.
 - [ ] PHP web çalışanları güncellemeden sonra yeniden başlatıldı.
+- [ ] Web SAPI için `session.upload_progress.enabled=0` uygulandı ve çalışanlar
+  yeniden başlatıldı; `CVE-2026-115560` düzeltmesi yayımlandığında paket durumu
+  yeniden değerlendirilecek.
 - [ ] `APP_ENV=production`, `APP_DEBUG=false` ve `SESSION_SECURE_COOKIE=true`.
 - [ ] SSL, HSTS ve güvenli oturum çerezleri doğrulandı.
 - [ ] Günlük veritabanı yedeği etkin ve en az bir geri yükleme denemesi yapıldı.
