@@ -3,6 +3,10 @@
 Bu liste Sparkoff'u yalnız davetli kullanıcılarla, sentetik veriler kullanarak
 denemek içindir. Üretim kabulünün veya çevrimiçi randevu kabulünün yerine geçmez.
 
+Ekran, buton, bağlantı, doğrulama, yetki ve hata yollarının ayrıntılı manuel
+testleri için [ALPHA_UCTAN_UCA_MANUEL_TEST_PLANI.md](./ALPHA_UCTAN_UCA_MANUEL_TEST_PLANI.md)
+kullanılır.
+
 ## 1. Güvenlik kapısı
 
 - [ ] Hosting sağlayıcısı PHP paketinin `CVE-2026-109618` ve
