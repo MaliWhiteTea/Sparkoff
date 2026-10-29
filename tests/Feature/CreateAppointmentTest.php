@@ -35,6 +35,7 @@ class CreateAppointmentTest extends TestCase
         $payload['phone'] = '0555 000 00 00';
         $payload['note'] = 'Bu iki alan sunucu tarafından kaydedilmemeli.';
 
+        $requestStartedAt = now();
         $response = $this->post(route('booking.store'), $payload);
 
         $response->assertRedirect(route('booking.create'));
@@ -48,10 +49,9 @@ class CreateAppointmentTest extends TestCase
         $this->assertNull($appointment->user_note);
         $this->assertCount(1, $appointment->files);
         $this->assertCount(1, $appointment->statusHistory);
-        $this->assertSame(
-            now()->addDays(30)->timestamp,
-            $appointment->files->first()->scheduled_deletion_at->timestamp,
-        );
+        $scheduledDeletionAt = $appointment->files->first()->scheduled_deletion_at->timestamp;
+        $this->assertGreaterThanOrEqual($requestStartedAt->copy()->addDays(30)->timestamp, $scheduledDeletionAt);
+        $this->assertLessThanOrEqual(now()->addDays(30)->timestamp, $scheduledDeletionAt);
         Storage::disk('local')->assertExists($appointment->files->first()->path);
         Mail::assertSent(AppointmentVerificationMail::class, fn ($mail) => $mail->hasTo('test@example.com'));
     }
