@@ -170,6 +170,7 @@ Aktif veya gecikmiş teslimlerde kişi bilgileri kayıt sonuçlanana kadar korun
 ## Yönetim arayüzü
 
 - Giriş sonrasında yalnız yetkili olunan modülleri gösteren kişisel bir genel bakış ekranı açılır.
+- Genel bakışta kritik stok, geciken teslim, onay bekleyen randevu, bakımda yazıcı ve açık talep sayıları yalnız ilgili görüntüleme yetkisine sahip kullanıcılara gösterilir.
 - Varsayılan görünüm koyu temadır; açık, koyu ve sistem seçenekleri bulunur.
 - Yazı/arayüz ölçeği, tablo yoğunluğu ve sol menü genişliği kullanıcı hesabına özel saklanır.
 - Masaüstü sol menüsü daraltılabilir ve sürüklenerek yeniden boyutlandırılabilir.

@@ -17,7 +17,7 @@ class FeedbackController extends Controller
     public function index(Request $request): Response
     {
         $validated = $request->validate([
-            'status' => ['nullable', Rule::enum(FeedbackStatus::class)],
+            'status' => ['nullable', Rule::in([...array_column(FeedbackStatus::cases(), 'value'), 'open'])],
             'sort' => ['nullable', Rule::in(['created_at', 'handled_at', 'status', 'type'])],
             'direction' => ['nullable', Rule::in(['asc', 'desc'])],
         ]);
@@ -26,7 +26,8 @@ class FeedbackController extends Controller
         $direction = $validated['direction'] ?? 'desc';
         $reports = FeedbackReport::query()
             ->with('handler:id,name')
-            ->when($status, fn ($query) => $query->where('status', $status))
+            ->when($status === 'open', fn ($query) => $query->whereIn('status', [FeedbackStatus::New, FeedbackStatus::Reviewing]))
+            ->when($status && $status !== 'open', fn ($query) => $query->where('status', $status))
             ->orderBy($sort, $direction)->orderBy('id', $direction)
             ->paginate(30)
             ->withQueryString()

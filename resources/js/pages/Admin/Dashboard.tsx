@@ -10,6 +10,15 @@ type Module = {
     icon: string;
 };
 
+type Summary = {
+    key: string;
+    title: string;
+    description: string;
+    href: string;
+    count: number;
+    tone: 'info' | 'warning' | 'danger';
+};
+
 function ModuleIcon({ name }: { name: string }) {
     const paths: Record<string, ReactElement> = {
         inventory: <><path d="M4 7h16v13H4z" /><path d="M7 4h10v3M8 11h8" /></>,
@@ -28,7 +37,7 @@ function ModuleIcon({ name }: { name: string }) {
     return <svg viewBox="0 0 24 24" aria-hidden="true">{paths[name]}</svg>;
 }
 
-export default function Dashboard({ modules }: { modules: Module[] }) {
+export default function Dashboard({ modules, summaries }: { modules: Module[]; summaries: Summary[] }) {
     const page = usePage<{ auth: { user: { name: string; roles: string[] } } }>();
     const user = page.props.auth.user;
 
@@ -42,6 +51,19 @@ export default function Dashboard({ modules }: { modules: Module[] }) {
             </div>
             <span>{user.roles.join(' · ')}</span>
         </header>
+        {summaries.length > 0 && <section className="admin-overview-alerts" aria-labelledby="overview-alerts-title">
+            <div className="admin-overview-heading">
+                <div><h2 id="overview-alerts-title">Dikkat gerekenler</h2><p>Yetkiniz kapsamındaki güncel kayıt özetleri.</p></div>
+            </div>
+            <div className="admin-summary-grid">
+                {summaries.map((summary) => <Link className={`admin-summary-card tone-${summary.tone}`} href={summary.href} key={summary.key}>
+                    <span>{summary.title}</span>
+                    <strong>{summary.count}</strong>
+                    <small>{summary.description}</small>
+                    <b>Kayıtları incele <span aria-hidden="true">→</span></b>
+                </Link>)}
+            </div>
+        </section>}
         <section className="admin-overview-heading">
             <div><h2>Çalışma alanların</h2><p>{modules.length} modüle erişiminiz bulunuyor.</p></div>
         </section>

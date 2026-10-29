@@ -184,7 +184,7 @@ svg { width: 1.15em; fill: none; stroke: currentColor; stroke-width: 1.7; stroke
 .booking-sidebar > p { margin: 0; color: var(--muted); font-size: .79rem; line-height: 1.65; }
 .booking-steps { margin: 38px 0 0; padding: 0; list-style: none; }
 .booking-steps li { min-height: 47px; display: flex; align-items: center; gap: 12px; color: #8a96a3; position: relative; }
-.booking-steps li:not(:last-child)::after { content: ""; position: absolute; width: 1px; height: 15px; left: 14px; bottom: -1px; background: var(--border); }
+.booking-steps li:not(:last-child)::after { content: ""; position: absolute; width: 1px; height: 15px; left: 14px; top: calc(50% + 16px); background: var(--border); }
 .booking-steps li > span { width: 29px; height: 29px; flex: 0 0 auto; display: grid; place-items: center; border: 1px solid var(--border); border-radius: 50%; background: var(--surface); font: 700 .65rem monospace; }
 .booking-steps li strong { font-size: .76rem; }
 .booking-steps li.current { color: var(--navy); }.booking-steps li.current > span { border-color: var(--navy); background: var(--navy); color: white; }

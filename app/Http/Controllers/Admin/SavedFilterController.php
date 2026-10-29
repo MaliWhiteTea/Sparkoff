@@ -113,7 +113,7 @@ class SavedFilterController extends Controller
                 'filters.status' => ['nullable', Rule::enum(AppointmentStatus::class)],
             ],
             'feedback' => [
-                'filters.status' => ['nullable', Rule::enum(FeedbackStatus::class)],
+                'filters.status' => ['nullable', Rule::in([...array_column(FeedbackStatus::cases(), 'value'), 'open'])],
             ],
         };
     }
