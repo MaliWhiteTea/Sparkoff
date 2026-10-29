@@ -100,6 +100,16 @@ class AdminAccessibilityFoundationTest extends TestCase
         $this->assertStringContainsString('body.public-menu-open', $styles);
     }
 
+    public function test_public_contact_navigation_always_has_a_home_page_target(): void
+    {
+        $header = file_get_contents(resource_path('js/components/PublicHeader.tsx'));
+        $home = file_get_contents(resource_path('js/pages/Home.tsx'));
+
+        $this->assertStringContainsString("sectionHref('iletisim')", $header);
+        $this->assertStringContainsString('<section className="portal-contact" id="iletisim">', $home);
+        $this->assertStringContainsString('!hasContactMethod && <div className="contact-method-empty">', $home);
+    }
+
     public function test_printer_page_constrains_horizontal_scrollers_without_clipping_the_document(): void
     {
         $page = file_get_contents(resource_path('js/pages/Printers.tsx'));

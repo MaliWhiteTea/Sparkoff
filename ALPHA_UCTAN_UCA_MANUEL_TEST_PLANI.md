@@ -84,7 +84,8 @@ Güvenlik ve veri kuralları:
   Geri bildirim ve İletişim bağlantıları ana sayfada ve bütün alt sayfalarda
   görünüyor; doğru hedefe gidiyor.
 - [ ] PUB-GLOBAL-03 — Atölye/Hizmetler/İletişim çapa bağlantıları doğru bölüme
-  kayıyor ve tarayıcı geri tuşu çalışıyor.
+  kayıyor ve tarayıcı geri tuşu çalışıyor; iletişim ayarları boşken bağlantı
+  kırılmıyor, bölümde anlaşılır boş durum gösteriliyor.
 - [ ] PUB-GLOBAL-04 — Telefon genişliğinde menü açma butonu menüyü açıyor;
   etiketi ve `aria-expanded` değişiyor.
 - [ ] PUB-GLOBAL-05 — Mobil menü bağlantısı, dış katmana tıklama ve `Esc` menüyü
