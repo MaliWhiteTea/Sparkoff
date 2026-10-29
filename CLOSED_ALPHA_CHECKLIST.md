@@ -19,10 +19,15 @@ denemek içindir. Üretim kabulünün veya çevrimiçi randevu kabulünün yerin
 PHP paket doğrulaması tamamlanmadan dağıtım yapılmaz. Laravel bakım modu PHP
 çalışma zamanı açıklarını engellemez.
 
+## 1.1. Bilinen alpha engelleri
+
+- [ ] `ALPHA_KNOWN_ISSUES.md` içindeki A-001 kaydedilmemiş değişiklik koruması
+  hatası düzeltildi ve regresyon testi geçti.
+
 ## 2. Alpha kapsamı
 
-- [ ] Alpha ortamı davet kodu, HTTP Basic Auth veya cPanel Directory Privacy ile
-  yalnız davetlilere kapatıldı.
+- [ ] `www.sparkoff.tr` ve aynı içeriği sunan `sparkoff.tr`, cPanel Directory
+  Privacy ile yalnız davetlilere kapatıldı.
 - [ ] `ONLINE_BOOKING_ENABLED=false`; SMTP kabulü tamamlanana kadar randevu
   başvurusu açılmadı.
 - [ ] `ALLOW_DESTRUCTIVE_DATABASE_COMMANDS=false`.
@@ -31,9 +36,10 @@ PHP paket doğrulaması tamamlanmadan dağıtım yapılmaz. Laravel bakım modu 
 - [ ] Her test kullanıcısına ayrı hesap ve yalnız gereken roller verildi.
 - [ ] Test bitince hesapları pasifleştirecek sorumlu belirlendi.
 
-Önerilen kurulum `alpha.sparkoff.tr` gibi ayrı bir alt alan adı ve sunucu
-seviyesinde erişim korumasıdır. Ana alan adı kullanılacaksa erişim koruması
-dağıtımdan önce etkinleştirilmelidir.
+Bu alpha için seçilen hedef doğrudan `www.sparkoff.tr` alan adıdır. Koruma,
+cPanel **Domains** ekranında bu alan adının gösterdiği gerçek document root
+dizinine dağıtımdan önce uygulanır. `www` ve çıplak alan adının ikisi de ayrı
+gizli pencerede kullanıcı adı/parola istemelidir.
 
 ## 3. Dağıtım
 
@@ -48,7 +54,8 @@ dağıtımdan önce etkinleştirilmelidir.
 
 ## 4. Canlı duman testi
 
-- [ ] `/up`, `/`, `/3d-yazicilar`, `/filamentler` ve `/malzemeler` HTTP 200.
+- [ ] Directory Privacy kimliğiyle `/up`, `/`, `/3d-yazicilar`, `/filamentler`
+  ve `/malzemeler` HTTP 200; kimlik olmadan 401 döndürüyor.
 - [ ] `/randevu`, randevu kapalıyken güvenli biçimde 3D yazıcı sayfasına dönüyor.
 - [ ] Yetkisiz ziyaretçi yönetim sayfalarına erişemiyor.
 - [ ] Test yöneticisi giriş yapabiliyor ve kendi parolasını değiştirebiliyor.

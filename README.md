@@ -247,6 +247,7 @@ TypeScript tip denetimi, üretim derlemesi ve PHP kod biçimi kontrolleri de yay
 - Ayrıntılı geliştirme planı: [ROADMAP.md](./ROADMAP.md)
 - cPanel dağıtım ve canlı kabul rehberi: [CPANEL_DEPLOYMENT.md](./CPANEL_DEPLOYMENT.md)
 - Davetli kullanıcılarla kapalı alpha kontrol listesi: [CLOSED_ALPHA_CHECKLIST.md](./CLOSED_ALPHA_CHECKLIST.md)
+- Alpha öncesi bilinen sorunlar: [ALPHA_KNOWN_ISSUES.md](./ALPHA_KNOWN_ISSUES.md)
 - Son üretim kabul kaydı: [DEPLOYMENT_ACCEPTANCE_2026-10-28.md](./DEPLOYMENT_ACCEPTANCE_2026-10-28.md)
 
 ## Lisans
