@@ -89,6 +89,29 @@ class FeedbackTest extends TestCase
         $this->assertDatabaseCount('feedback_reports', 0);
     }
 
+    public function test_php_upload_failure_has_a_readable_turkish_message(): void
+    {
+        $failedUpload = new UploadedFile(
+            __FILE__,
+            'buyuk-ekran-goruntusu.png',
+            'image/png',
+            UPLOAD_ERR_INI_SIZE,
+            true,
+        );
+
+        $this->from(route('feedback.create'))->post(route('feedback.store'), [
+            'type' => FeedbackType::Bug->value,
+            'message' => 'PHP yükleme sınırı hatası kullanıcıya anlaşılır gösterilmelidir.',
+            'image' => $failedUpload,
+            'website' => '',
+        ])->assertRedirect(route('feedback.create'))
+            ->assertSessionHasErrors([
+                'image' => 'Görsel yüklenemedi. Dosyanın 5 MB sınırını aşmadığını kontrol edin.',
+            ]);
+
+        $this->assertDatabaseCount('feedback_reports', 0);
+    }
+
     public function test_only_authorized_staff_can_view_feedback_images(): void
     {
         Storage::fake('local');

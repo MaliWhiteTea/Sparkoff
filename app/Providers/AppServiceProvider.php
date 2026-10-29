@@ -18,6 +18,7 @@ use App\Models\Setting;
 use App\Models\User;
 use App\Observers\AuditableObserver;
 use Illuminate\Console\Events\CommandStarting;
+use Illuminate\Foundation\DevCommands;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 
@@ -36,6 +37,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        DevCommands::register(
+            'php -d upload_max_filesize=8M -d post_max_size=10M artisan serve',
+            'server',
+        )->blue();
+
         Event::listen(CommandStarting::class, PreventDestructiveDatabaseCommands::class);
 
         foreach ([Announcement::class, BlackoutPeriod::class, FeedbackReport::class, Filament::class, InventoryCategory::class, InventoryItem::class, InventoryLocation::class, InventoryMedia::class, InventoryTransaction::class, Printer::class, Role::class, Setting::class, User::class] as $model) {

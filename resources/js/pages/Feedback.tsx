@@ -82,9 +82,17 @@ export default function Feedback() {
                 id="feedback-image"
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
-                onChange={(event) =>
-                  form.setData("image", event.target.files?.[0] ?? null)
-                }
+                onChange={(event) => {
+                  const image = event.target.files?.[0] ?? null;
+                  if (image && image.size > 5 * 1024 * 1024) {
+                    form.setData("image", null);
+                    form.setError("image", "Fotoğraf en fazla 5 MB olabilir.");
+                    event.target.value = "";
+                    return;
+                  }
+                  form.clearErrors("image");
+                  form.setData("image", image);
+                }}
               />
             </label>
             <small>JPG, PNG veya WebP · en fazla 5 MB</small>

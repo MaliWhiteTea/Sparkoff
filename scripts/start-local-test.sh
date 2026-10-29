@@ -21,7 +21,7 @@ if ! php artisan admin:check >>"$LOG_FILE" 2>&1; then
 fi
 
 if ! curl --silent --fail --max-time 1 http://127.0.0.1:8000/up >/dev/null 2>&1; then
-    setsid env ONLINE_BOOKING_ENABLED=true php artisan serve --host=127.0.0.1 --port=8000 >>"$LOG_FILE" 2>&1 &
+    setsid env ONLINE_BOOKING_ENABLED=true php -d upload_max_filesize=8M -d post_max_size=10M artisan serve --host=127.0.0.1 --port=8000 >>"$LOG_FILE" 2>&1 &
     echo "$!" >"$SERVER_PID_FILE"
 fi
 

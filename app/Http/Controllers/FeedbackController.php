@@ -43,6 +43,7 @@ class FeedbackController extends Controller
             'image.mimes' => 'Görsel JPG, PNG veya WebP biçiminde olmalıdır.',
             'image.mimetypes' => 'Görsel JPG, PNG veya WebP biçiminde olmalıdır.',
             'image.max' => 'Görsel en fazla 5 MB olabilir.',
+            'image.uploaded' => 'Görsel yüklenemedi. Dosyanın 5 MB sınırını aşmadığını kontrol edin.',
             'image.dimensions' => 'Görsel en fazla 6000 × 6000 piksel olabilir.',
             'website.max' => 'Bildirim gönderilemedi. Lütfen tekrar deneyin.',
         ]);
