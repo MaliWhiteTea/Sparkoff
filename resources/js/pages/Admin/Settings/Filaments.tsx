@@ -1,4 +1,5 @@
 import AdminLayout from "@/components/AdminLayout";
+import { type AdminQuickAction, focusAdminActionTarget } from "@/components/AdminQuickActions";
 import DraftRecoveryNotice from "@/components/DraftRecoveryNotice";
 import { FieldError, FormErrors, FormErrorSummary } from "@/components/FormErrorSummary";
 import SettingsTabs from "@/components/SettingsTabs";
@@ -224,8 +225,13 @@ export default function FilamentSettings({
       { preserveScroll: true },
     );
   }
+  const quickActions: AdminQuickAction[] = [{
+    label: "Yeni filament",
+    description: "Yeni renk, marka veya filament malzemesi ekleyin.",
+    onSelect: () => focusAdminActionTarget("yeni-filament"),
+  }];
   return (
-    <AdminLayout>
+    <AdminLayout quickActions={quickActions}>
       <Head title="Filament Ayarları" />
       <header className="admin-title">
         <div>
@@ -288,6 +294,7 @@ export default function FilamentSettings({
         </div>
       </section>
       <form
+        id="yeni-filament"
         className="admin-panel rules-panel filament-create-form"
         onSubmit={submit}
       >

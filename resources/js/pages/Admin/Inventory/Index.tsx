@@ -1,4 +1,5 @@
 import AdminLayout from "@/components/AdminLayout";
+import { type AdminQuickAction, focusAdminActionTarget } from "@/components/AdminQuickActions";
 import BulkSelection, { SelectionCheckbox, usePageSelection } from "@/components/BulkSelection";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import DraftRecoveryNotice from "@/components/DraftRecoveryNotice";
@@ -999,8 +1000,16 @@ export default function Inventory({
       { preserveState: true, preserveScroll: true, replace: true },
     );
   const exportUrl = `/yonetim/envanter-disa-aktar?${new URLSearchParams(filters).toString()}`;
+  const openCreateForm = () => {
+    setCreating(true);
+    focusAdminActionTarget("yeni-malzeme");
+  };
+  const quickActions: AdminQuickAction[] = [
+    ...(can("inventory.create") ? [{ label: "Yeni malzeme", description: "Yeni bir envanter kaydı ve ilk stok hareketini oluşturun.", onSelect: openCreateForm }] : []),
+    ...(can("inventory.import") ? [{ label: "CSV içe aktar", description: "Toplu malzeme kaydı için içe aktarma ekranını açın.", href: "/yonetim/envanter-ice-aktar" }] : []),
+  ];
   return (
-    <AdminLayout>
+    <AdminLayout quickActions={quickActions}>
       <Head title="Malzeme Envanteri" />
       <header className="admin-title inventory-title">
         <div>
@@ -1014,7 +1023,7 @@ export default function Inventory({
           )}
           {can("inventory.export") && <a href={exportUrl}>CSV indir</a>}
           {can("inventory.create") && (
-            <button onClick={() => setCreating(!creating)}>
+            <button onClick={() => creating ? setCreating(false) : openCreateForm()}>
               {creating ? "Formu kapat" : "Yeni malzeme"}
             </button>
           )}
@@ -1044,6 +1053,7 @@ export default function Inventory({
       </section>
       {creating && (
         <form
+          id="yeni-malzeme"
           className="admin-panel inventory-create"
           onSubmit={(e) => {
             e.preventDefault();

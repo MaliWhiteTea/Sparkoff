@@ -245,6 +245,18 @@ Güvenlik ve veri kuralları:
 - [ ] SEARCH-06 — Sonuç açılınca doğru kayıt sayfasına gidiyor ve “Son
   görüntülenenler”e ekleniyor; erişilemeyen kayıt sızmıyor.
 - [ ] SEARCH-07 — Sonuç yok, yükleniyor ve ağ hatası durumları doğru gösteriliyor.
+- [ ] QUICK-01 — “Hızlı işlem” yalnız bulunduğu sayfada kullanılabilir en az bir
+  işlem varsa görünüyor; işlem yetkisi olmayan kullanıcıda hiç görünmüyor.
+- [ ] QUICK-02 — Menü butonla açılıp kapanıyor; dışarı tıklama ve `Esc` ile
+  kapanıyor, `Esc` sonrasında odak menü düğmesine dönüyor.
+- [ ] QUICK-03 — Yukarı/Aşağı oklar ile İlk/Son (`Home`/`End`) tuşları menü
+  seçenekleri arasında dolaşıyor; Tab sırası ve görünür odak korunuyor.
+- [ ] QUICK-04 — Envanter, teslimler, kullanıcı/roller, duyurular, yazıcılar ve
+  filamentler sayfalarında yalnız ilgili izinlerin eylemleri listeleniyor.
+- [ ] QUICK-05 — Form hedefli işlem doğru formu görünür alana getirip ilk etkin
+  alana odaklıyor; “Yeni malzeme” kapalı oluşturma formunu önce açıyor.
+- [ ] QUICK-06 — “CSV içe aktar” doğru sayfaya gidiyor; mobilde ikon düğmesi ve
+  menü ekran dışına taşmıyor, açık/koyu/sistem temalarında okunuyor.
 - [ ] NOTIF-01 — Zil butonu paneli açıp kapatıyor; sayaç `99+` sınırını uyguluyor.
 - [ ] NOTIF-02 — Dışarı tıklama ve `Esc` bildirim panelini kapatıyor.
 - [ ] NOTIF-03 — Bildirime tıklama kaydı okundu yapıp doğru filtreli sayfaya

@@ -1,4 +1,5 @@
 import AdminLayout from "@/components/AdminLayout";
+import { type AdminQuickAction, focusAdminActionTarget } from "@/components/AdminQuickActions";
 import DraftRecoveryNotice from "@/components/DraftRecoveryNotice";
 import { FieldError, FormErrors, FormErrorSummary } from "@/components/FormErrorSummary";
 import SettingsTabs from "@/components/SettingsTabs";
@@ -364,8 +365,13 @@ export default function PrinterSettings({
     );
   }
 
+  const quickActions: AdminQuickAction[] = [
+    ...(can("printers.create") ? [{ label: "Yeni yazıcı", description: "Atölyeye yeni bir yazıcı kaydı ekleyin.", onSelect: () => focusAdminActionTarget("yeni-yazici") }] : []),
+    ...(can("printers.manage_schedule") ? [{ label: "Kapalı zaman ekle", description: "Bakım veya başka bir nedenle takvimde zaman kapatın.", onSelect: () => focusAdminActionTarget("yeni-kapali-zaman") }] : []),
+  ];
+
   return (
-    <AdminLayout>
+    <AdminLayout quickActions={quickActions}>
       <Head title="Yazıcı ve Bakım Ayarları" />
       <header className="admin-title">
         <div>
@@ -404,7 +410,7 @@ export default function PrinterSettings({
       </section>
       <section className="settings-grid-two">
         {can("printers.create") && (
-          <form className="admin-panel settings-form" onSubmit={submitPrinter}>
+          <form id="yeni-yazici" className="admin-panel settings-form" onSubmit={submitPrinter}>
             <h2>Yeni yazıcı ekle</h2>
             {printerDraft && <DraftRecoveryNotice updatedAt={printerDraft.updatedAt} onDiscard={clearPrinterDraft} onRestore={() => { setNewPrinter((current) => ({ ...current, ...printerDraft.value })); clearPrinterDraft(); }} />}
             <div className="field-grid">
@@ -464,7 +470,7 @@ export default function PrinterSettings({
           </form>
         )}
         {can("printers.manage_schedule") && (
-          <form className="admin-panel settings-form" onSubmit={submitBlackout}>
+          <form id="yeni-kapali-zaman" className="admin-panel settings-form" onSubmit={submitBlackout}>
             <h2>Takvime zaman ekle</h2>
             {scheduleDraft && <DraftRecoveryNotice updatedAt={scheduleDraft.updatedAt} onDiscard={clearScheduleDraft} onRestore={() => { setBlackout((current) => ({ ...current, ...scheduleDraft.value })); clearScheduleDraft(); }} />}
             <div className="field-grid">

@@ -1,4 +1,5 @@
 import AdminLayout from "@/components/AdminLayout";
+import { type AdminQuickAction, focusAdminActionTarget } from "@/components/AdminQuickActions";
 import StatusBadge from "@/components/StatusBadge";
 import ListSort from "@/components/ListSort";
 import SavedFilters from "@/components/SavedFilters";
@@ -268,8 +269,11 @@ export default function Transactions({
       onError: (e) => setError(Object.values(e)[0] ?? "Teslim kaydedilemedi."),
     });
   };
+  const quickActions: AdminQuickAction[] = can("loans.create")
+    ? [{ label: "Yeni teslim", description: "Sarf, ödünç veya demirbaş teslimi kaydedin.", onSelect: () => focusAdminActionTarget("yeni-teslim") }]
+    : [];
   return (
-    <AdminLayout>
+    <AdminLayout quickActions={quickActions}>
       <Head title="Teslim ve İadeler" />
       <header className="admin-title">
         <div>
@@ -279,7 +283,7 @@ export default function Transactions({
         </div>
       </header>
       {can("loans.create") && (
-        <form className="admin-panel loan-create" onSubmit={submit}>
+        <form id="yeni-teslim" className="admin-panel loan-create" onSubmit={submit}>
           <div className="settings-heading">
             <div>
               <h2>Yeni teslim</h2>

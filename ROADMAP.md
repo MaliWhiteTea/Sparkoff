@@ -254,7 +254,7 @@ Sparkoff Proje Atölyesi
 - [x] Modüller arası hızlı arama altyapısı kur; kişisel sonuçları ayrı izinlerle sınırla (seçim 5)
 - [x] Yetkiye bağlı sistem bildirimleri, bildirim zili ve okunmamış sayacı ekle (seçim 16)
 - [x] Son görüntülenen kayıtları kişisel veri saklamadan yetkiliye özel tut (seçim 15)
-- [ ] Bulunulan sayfaya ve yetkiye göre hızlı işlem düğmesi göster (seçim 4)
+- [x] Bulunulan sayfaya ve yetkiye göre hızlı işlem düğmesi göster (seçim 4)
 
 ### P. Güvenli geri alma ve ters işlemler — beşinci uygulama paketi
 
@@ -322,4 +322,5 @@ Bu sıra ortak bileşenleri önce kurarak aynı özelliğin farklı sayfalarda t
 
 ## Sıradaki teknik adım
 
-O paketinde sıradaki adım, bulunulan sayfaya ve yetkiye göre hızlı işlem düğmesi göstermektir.
+P paketinde sıradaki adım, teslim ve stok işlemleri için silme yerine bağlantılı
+ters hareket altyapısını tamamlamaktır.
