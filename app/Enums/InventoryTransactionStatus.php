@@ -8,4 +8,5 @@ enum InventoryTransactionStatus: string
     case Completed = 'completed';
     case Damaged = 'damaged';
     case Lost = 'lost';
+    case Reversed = 'reversed';
 }

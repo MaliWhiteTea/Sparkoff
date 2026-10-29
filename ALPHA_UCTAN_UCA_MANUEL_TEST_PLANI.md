@@ -415,14 +415,28 @@ Güvenlik ve veri kuralları:
   `loans.report_lost` yetkisiyle mümkün.
 - [ ] LOAN-12 — Hasarlı yetkisine sahip ama Kayıp yetkisi olmayan hesap Kayıp
   butonunu/endpoint'ini kullanamıyor ve tersi.
-- [ ] LOAN-13 — Aktif, Gecikmiş, Tamamlanan, Hasarlı ve Kayıp filtre butonlarının
-  her biri doğru liste/sayacı gösteriyor.
+- [ ] LOAN-13 — Aktif, Gecikmiş, Tamamlanan, Hasarlı, Kayıp ve Geri alınan filtre
+  butonlarının her biri doğru liste/sayacı gösteriyor.
 - [ ] LOAN-14 — Kayıtlı filtre, sıralama, görünür alanlar ve sayfalama ortak liste
   testleri burada da geçiyor.
 - [ ] LOAN-15 — Kişisel veri yetkisi olmayan kullanıcı adı yerine “Gizli
   kullanıcı” görüyor; e-posta ayrı `loans.view_email` yetkisi olmadan görünmüyor.
 - [ ] LOAN-16 — Tamamlanmış kaydın saklama süresi dolunca zamanlayıcı kişi/e-posta
   ve notları anonimleştiriyor; aktif kayda dokunmuyor.
+- [ ] LOAN-17 — `loans.reverse_transaction` yetkisi olmayan kullanıcı “Teslimi
+  geri al” butonunu görmüyor ve endpoint 403 dönüyor.
+- [ ] LOAN-18 — Hiç iade görmemiş aktif ödünç teslimi zorunlu gerekçe ve temalı
+  onay penceresiyle geri alınıyor; kayıt silinmeden “Geri alındı” oluyor.
+- [ ] LOAN-19 — Ödünç teslim geri alındığında ilk teslim stok hareketine bağlı,
+  ters miktarlı tek bir karşı hareket oluşuyor ve stok ilk bakiyeye dönüyor.
+- [ ] LOAN-20 — Sarf teslim geri alındığında tüketilen miktar stoka geri geliyor;
+  demirbaş kullanımında fiziksel stok değişmeden kullanılabilir kapasite açılıyor.
+- [ ] LOAN-21 — Aynı teslim ikinci kez geri alınamıyor; ikinci istek stok veya
+  işlem geçmişinde yeni kayıt oluşturmuyor.
+- [ ] LOAN-22 — Kısmi/tam iade görmüş, Hasarlı, Kayıp, anonimleştirilmiş veya stok
+  hareketleri sonradan değişmiş teslim geri alınamıyor.
+- [ ] LOAN-23 — Geri alma gerekçesi, işlemi yapan kullanıcı, teslim kaydı güncellemesi
+  ve asıl harekete bağlı karşı stok hareketi denetim geçmişinde izlenebiliyor.
 
 ## 12. Yönetim talepleri
 
@@ -704,8 +718,8 @@ yeniden kapatılır ve cache yenilenir.
 
 ## 22. Bilinen sınırlar ve test edilemeyen tanımlar
 
-- [ ] GAP-01 — `loans.extend_due_date`, `loans.reverse_transaction`,
-  `loans.export` ve `appointments.export` izinleri yapılandırmada tanımlı ancak
+- [ ] GAP-01 — `loans.extend_due_date`, `loans.export` ve `appointments.export`
+  izinleri yapılandırmada tanımlı ancak
   mevcut rotalarda/arayüzde karşılıkları yok. Bunlar özellik olarak bekleniyorsa
   geliştirme işi açılmalı; beklenmiyorsa izin listesinden kaldırılmalı.
 - [ ] GAP-02 — Yenileme/sekme kapatma `beforeunload` penceresinin dili ve görünümü

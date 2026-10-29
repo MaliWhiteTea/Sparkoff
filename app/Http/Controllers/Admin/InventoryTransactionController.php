@@ -19,10 +19,10 @@ use LogicException;
 
 class InventoryTransactionController extends Controller
 {
-    public function index(Request $request): Response
+    public function index(Request $request, InventoryTransactionService $service): Response
     {
         $filters = $request->validate([
-            'status' => ['nullable', Rule::in(['active', 'overdue', 'completed', 'damaged', 'lost'])],
+            'status' => ['nullable', Rule::in(['active', 'overdue', 'completed', 'damaged', 'lost', 'reversed'])],
             'sort' => ['nullable', Rule::in(['issued_at', 'due_at', 'quantity', 'status'])],
             'direction' => ['nullable', Rule::in(['asc', 'desc'])],
         ]);
@@ -31,7 +31,9 @@ class InventoryTransactionController extends Controller
         $direction = $filters['direction'] ?? 'desc';
         $canSeeName = $this->can($request, 'loans.view_personal_data');
         $canSeeEmail = $this->can($request, 'loans.view_email');
+        $canReverse = $this->can($request, 'loans.reverse_transaction');
         $transactions = InventoryTransaction::query()->with(['item:id,name,unit', 'issuer:id,name'])
+            ->when($canReverse, fn ($query) => $query->with('stockMovements.reversals'))
             ->when($status === 'active', fn ($query) => $query->where('status', InventoryTransactionStatus::Active))
             ->when($status === 'overdue', fn ($query) => $query->where('status', InventoryTransactionStatus::Active)->whereNotNull('due_at')->where('due_at', '<', now()))
             ->when(! in_array($status, ['active', 'overdue'], true), fn ($query) => $query->where('status', $status))
@@ -48,6 +50,7 @@ class InventoryTransactionController extends Controller
                 'completedAt' => $transaction->completed_at?->format('d.m.Y H:i'),
                 'notes' => $canSeeName ? $transaction->notes : null, 'closureNote' => $canSeeName ? $transaction->closure_note : null,
                 'issuer' => $transaction->issuer?->name ?? 'Sistem',
+                'canReverse' => $canReverse && $service->canReverse($transaction),
             ]);
 
         return Inertia::render('Admin/InventoryTransactions/Index', [
@@ -114,6 +117,19 @@ class InventoryTransactionController extends Controller
         }
 
         return back()->with('success', 'Teslim kaydı kapatıldı.');
+    }
+
+    public function reverse(Request $request, InventoryTransaction $transaction, InventoryTransactionService $service): RedirectResponse
+    {
+        $data = $request->validate(['reason' => ['required', 'string', 'min:5', 'max:450']]);
+
+        try {
+            $service->reverse($transaction, $request->user(), $data['reason']);
+        } catch (LogicException $exception) {
+            throw ValidationException::withMessages(['reason' => $exception->getMessage()]);
+        }
+
+        return back()->with('success', 'Teslim kaydı stok karşı hareketiyle geri alındı.');
     }
 
     private function can(Request $request, string $permission): bool

@@ -7,6 +7,7 @@ use App\Enums\InventoryTransactionStatus;
 use App\Enums\StockMovementType;
 use App\Models\InventoryItem;
 use App\Models\InventoryTransaction;
+use App\Models\StockMovement;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
@@ -95,5 +96,83 @@ class InventoryTransactionService
 
             return $transaction->refresh();
         });
+    }
+
+    public function canReverse(InventoryTransaction $transaction): bool
+    {
+        try {
+            $this->reversibleDeliveryMovement($transaction);
+
+            return true;
+        } catch (LogicException) {
+            return false;
+        }
+    }
+
+    public function reverse(InventoryTransaction $transaction, User $actor, string $reason): InventoryTransaction
+    {
+        return DB::transaction(function () use ($transaction, $actor, $reason) {
+            $transaction = InventoryTransaction::query()->lockForUpdate()->findOrFail($transaction->id);
+            $transaction->setRelation(
+                'stockMovements',
+                $transaction->stockMovements()->with('reversals')->lockForUpdate()->get(),
+            );
+            $deliveryMovement = $this->reversibleDeliveryMovement($transaction);
+
+            if ($deliveryMovement) {
+                $this->stock->reverse($deliveryMovement, $actor, "Teslim kaydı geri alındı: {$reason}");
+            }
+
+            $transaction->update([
+                'status' => InventoryTransactionStatus::Reversed,
+                'completed_at' => now(),
+                'closed_by' => $actor->id,
+                'closure_note' => $reason,
+            ]);
+
+            return $transaction->refresh();
+        }, 3);
+    }
+
+    private function reversibleDeliveryMovement(InventoryTransaction $transaction): ?StockMovement
+    {
+        if ($transaction->anonymized_at) {
+            throw new LogicException('Anonimleştirilmiş teslim kaydı geri alınamaz.');
+        }
+        if ((float) $transaction->quantity_returned > 0) {
+            throw new LogicException('İade hareketi bulunan teslim kaydı geri alınamaz.');
+        }
+
+        $expectedStatus = $transaction->item_type === InventoryItemType::Consumable
+            ? InventoryTransactionStatus::Completed
+            : InventoryTransactionStatus::Active;
+        if ($transaction->status !== $expectedStatus) {
+            throw new LogicException('Yalnız henüz değiştirilmemiş teslim kayıtları geri alınabilir.');
+        }
+
+        $movements = $transaction->relationLoaded('stockMovements')
+            ? $transaction->stockMovements
+            : $transaction->stockMovements()->with('reversals')->get();
+
+        if ($transaction->item_type === InventoryItemType::FixedAsset) {
+            if ($movements->isNotEmpty()) {
+                throw new LogicException('Stok hareketi bulunan demirbaş kaydı otomatik geri alınamaz.');
+            }
+
+            return null;
+        }
+
+        if ($movements->count() !== 1 || $movements->first()->movement_type !== StockMovementType::Delivery) {
+            throw new LogicException('Teslimin stok hareketleri değiştiği için kayıt geri alınamaz.');
+        }
+
+        $deliveryMovement = $movements->first();
+        if ($deliveryMovement->relationLoaded('reversals')
+            ? $deliveryMovement->reversals->isNotEmpty()
+            : $deliveryMovement->reversals()->exists()) {
+            throw new LogicException('Bu teslimin stok hareketi daha önce geri alınmış.');
+        }
+
+        return $deliveryMovement;
     }
 }

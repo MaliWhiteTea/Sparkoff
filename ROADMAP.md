@@ -258,7 +258,7 @@ Sparkoff Proje Atölyesi
 
 ### P. Güvenli geri alma ve ters işlemler — beşinci uygulama paketi
 
-- [ ] Teslim ve stok işlemleri için silme yerine ters hareket altyapısını tamamla
+- [x] Teslim ve stok işlemleri için silme yerine ters hareket altyapısını tamamla
 - [ ] Hangi işlemlerin kısa süreli doğrudan geri alınabileceğini merkezi kurallarla belirle (seçim 11)
 - [ ] Stok, kategori, konum, görünürlük ve duyuru durumu için güvenli geri alma bildirimi ekle
 - [ ] Parola, kullanıcı yetkisi, teslim/iade, hasar/kayıp ve içe aktarmada doğrudan geri almayı engelle
@@ -322,5 +322,5 @@ Bu sıra ortak bileşenleri önce kurarak aynı özelliğin farklı sayfalarda t
 
 ## Sıradaki teknik adım
 
-P paketinde sıradaki adım, teslim ve stok işlemleri için silme yerine bağlantılı
-ters hareket altyapısını tamamlamaktır.
+P paketinde sıradaki adım, hangi düşük riskli işlemlerin kısa süre içinde doğrudan
+geri alınabileceğini merkezi kurallarla belirlemektir.

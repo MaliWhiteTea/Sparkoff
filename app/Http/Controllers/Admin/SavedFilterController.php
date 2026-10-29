@@ -106,7 +106,7 @@ class SavedFilterController extends Controller
                 'filters.status' => ['required', Rule::in(['all', 'active', 'inactive', 'low', 'out', 'archived'])],
             ],
             'loans' => [
-                'filters.status' => ['required', Rule::in(['active', 'overdue', 'completed', 'damaged', 'lost'])],
+                'filters.status' => ['required', Rule::in(['active', 'overdue', 'completed', 'damaged', 'lost', 'reversed'])],
             ],
             'appointments' => [
                 'filters.search' => ['nullable', 'string', 'max:100'],

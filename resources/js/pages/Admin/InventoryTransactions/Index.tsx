@@ -1,5 +1,6 @@
 import AdminLayout from "@/components/AdminLayout";
 import { type AdminQuickAction, focusAdminActionTarget } from "@/components/AdminQuickActions";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import StatusBadge from "@/components/StatusBadge";
 import ListSort from "@/components/ListSort";
 import SavedFilters from "@/components/SavedFilters";
@@ -33,6 +34,7 @@ type Transaction = {
   notes: string | null;
   closureNote: string | null;
   issuer: string;
+  canReverse: boolean;
 };
 type PageData = {
   data: Transaction[];
@@ -48,6 +50,7 @@ const statusLabels: Record<string, string> = {
   completed: "Tamamlandı",
   damaged: "Hasarlı",
   lost: "Kayıp",
+  reversed: "Geri alındı",
 };
 
 function TransactionCard({ transaction, columns }: { transaction: Transaction; columns: string[] }) {
@@ -57,6 +60,8 @@ function TransactionCard({ transaction, columns }: { transaction: Transaction; c
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
   const [processing, setProcessing] = useState(false);
+  const [reversing, setReversing] = useState(false);
+  const [reverseReason, setReverseReason] = useState("");
   const remaining = Number(transaction.remaining);
   const openMode = (nextMode: "return" | "damaged" | "lost") => {
     setMode(nextMode);
@@ -107,6 +112,25 @@ function TransactionCard({ transaction, columns }: { transaction: Transaction; c
         },
       );
     }
+  };
+  const openReversal = () => {
+    setReverseReason("");
+    setError("");
+    setReversing(true);
+  };
+  const reverseTransaction = () => {
+    setError("");
+    setProcessing(true);
+    router.patch(
+      `/yonetim/teslimler/${transaction.id}/geri-al`,
+      { reason: reverseReason },
+      {
+        preserveScroll: true,
+        onSuccess: () => setReversing(false),
+        onError: (e) => setError(Object.values(e)[0] ?? "Teslim kaydı geri alınamadı."),
+        onFinish: () => setProcessing(false),
+      },
+    );
   };
   return (
     <article
@@ -191,25 +215,46 @@ function TransactionCard({ transaction, columns }: { transaction: Transaction; c
           </button>
         </form>
       )}
-      {transaction.status === "active" && (
+      {(transaction.status === "active" || transaction.canReverse) && (
         <footer>
-          {can("loans.receive_return") && (
-            <button onClick={() => openMode("return")}>
+          {transaction.status === "active" && can("loans.receive_return") && (
+            <button type="button" onClick={() => openMode("return")}>
               {transaction.itemType === "fixed_asset"
                 ? "Kullanımı bitir"
                 : "İade al"}
             </button>
           )}
-          {can("loans.report_damage") && (
-            <button onClick={() => openMode("damaged")}>Hasarlı</button>
+          {transaction.status === "active" && can("loans.report_damage") && (
+            <button type="button" onClick={() => openMode("damaged")}>Hasarlı</button>
           )}
-          {can("loans.report_lost") && (
-            <button className="danger" onClick={() => openMode("lost")}>
+          {transaction.status === "active" && can("loans.report_lost") && (
+            <button type="button" className="danger" onClick={() => openMode("lost")}>
               Kayıp
             </button>
           )}
+          {transaction.canReverse && can("loans.reverse_transaction") && (
+            <button type="button" className="danger" onClick={openReversal}>Teslimi geri al</button>
+          )}
         </footer>
       )}
+      <ConfirmDialog
+        open={reversing}
+        eyebrow="HASSAS İŞLEM"
+        title="Teslim kaydı geri alınsın mı?"
+        description="Kayıt silinmeyecek; geri alındı durumuna geçecek ve varsa teslim stok hareketinin karşı hareketi oluşturulacak."
+        confirmLabel="Teslimi geri al"
+        tone="danger"
+        processing={processing}
+        confirmDisabled={reverseReason.trim().length < 5}
+        onClose={() => setReversing(false)}
+        onConfirm={reverseTransaction}
+      >
+        <label className="field">
+          <span>Geri alma gerekçesi</span>
+          <textarea rows={3} minLength={5} maxLength={450} value={reverseReason} onChange={(event) => setReverseReason(event.target.value)} required />
+        </label>
+        {error && <div className="form-error" role="alert">{error}</div>}
+      </ConfirmDialog>
     </article>
   );
 }
@@ -378,6 +423,7 @@ export default function Transactions({
           ["completed", "Tamamlanan"],
           ["damaged", "Hasarlı"],
           ["lost", "Kayıp"],
+          ["reversed", "Geri alınan"],
         ].map(([value, label]) => (
           <button
             className={filter === value ? "active" : ""}

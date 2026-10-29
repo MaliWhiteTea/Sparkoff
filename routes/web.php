@@ -92,6 +92,7 @@ Route::prefix('yonetim')->name('admin.')->group(function () {
         Route::post('/teslimler', [AdminInventoryTransactionController::class, 'store'])->middleware('permission:loans.create')->name('loans.store');
         Route::post('/teslimler/{transaction}/iade', [AdminInventoryTransactionController::class, 'receiveReturn'])->middleware('permission:loans.receive_return')->name('loans.return');
         Route::patch('/teslimler/{transaction}/kapat', [AdminInventoryTransactionController::class, 'close'])->middleware('permission.any:loans.report_damage,loans.report_lost')->name('loans.close');
+        Route::patch('/teslimler/{transaction}/geri-al', [AdminInventoryTransactionController::class, 'reverse'])->middleware('permission:loans.reverse_transaction')->name('loans.reverse');
         Route::get('/yetkiler', [AdminAccessController::class, 'index'])->middleware('permission.any:roles.view,users.view')->name('access.index');
         Route::post('/roller', [AdminAccessController::class, 'storeRole'])->middleware('permission:roles.create')->name('roles.store');
         Route::put('/roller/{role}', [AdminAccessController::class, 'updateRole'])->middleware('permission:roles.update')->name('roles.update');

@@ -7,6 +7,7 @@ use App\Enums\InventoryTransactionStatus;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 #[Fillable(['inventory_item_id', 'issued_by', 'closed_by', 'item_type', 'status', 'recipient_name', 'recipient_email', 'quantity', 'quantity_returned', 'issued_at', 'due_at', 'completed_at', 'anonymized_at', 'notes', 'closure_note'])]
 class InventoryTransaction extends Model
@@ -40,6 +41,11 @@ class InventoryTransaction extends Model
     public function closer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'closed_by');
+    }
+
+    public function stockMovements(): MorphMany
+    {
+        return $this->morphMany(StockMovement::class, 'source');
     }
 
     public function remainingQuantity(): float

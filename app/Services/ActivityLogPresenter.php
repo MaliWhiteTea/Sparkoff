@@ -38,7 +38,7 @@ class ActivityLogPresenter
 
     private const FIELDS = [
         'archived_at' => 'Arşivlenme zamanı', 'audience' => 'Hedef kitle', 'body' => 'İçerik', 'category_id' => 'Kategori',
-        'closed_by' => 'Kapatan kullanıcı', 'completed_at' => 'Tamamlanma zamanı',
+        'closed_by' => 'Kapatan kullanıcı', 'closure_note' => 'Kapanış gerekçesi', 'completed_at' => 'Tamamlanma zamanı',
         'created_count' => 'Eklenen malzeme', 'description' => 'Açıklama', 'due_at' => 'Beklenen iade',
         'email' => 'E-posta', 'id' => 'Kayıt numarası', 'interface_preferences' => 'Arayüz tercihleri',
         'failure_count' => 'Atlanan kayıt',

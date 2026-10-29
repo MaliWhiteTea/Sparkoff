@@ -10,6 +10,7 @@ use App\Models\InventoryTransaction;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\Setting;
+use App\Models\StockMovement;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -259,6 +260,145 @@ class InventoryTransactionTest extends TestCase
 
         $this->assertDatabaseCount('inventory_transactions', 0);
         $this->assertSame('2.000', $item->fresh()->quantity);
+    }
+
+    public function test_unmodified_loan_delivery_can_be_reversed_with_a_linked_stock_movement(): void
+    {
+        $admin = User::factory()->systemAdministrator()->create();
+        $item = $this->item(InventoryItemType::Loanable, 5);
+        $this->actingAs($admin)->post(route('admin.loans.store'), [
+            'inventory_item_id' => $item->id,
+            'recipient_name' => 'Test Kullanıcı',
+            'quantity' => 2,
+            'due_at' => now()->addDay()->format('Y-m-d\TH:i'),
+        ])->assertSessionHas('success');
+        $transaction = InventoryTransaction::query()->firstOrFail();
+        $delivery = StockMovement::query()->whereMorphedTo('source', $transaction)->firstOrFail();
+
+        $this->actingAs($admin)->patch(route('admin.loans.reverse', $transaction), [
+            'reason' => 'Yanlış kişiye teslim kaydı açıldı.',
+        ])->assertSessionHas('success');
+
+        $reversal = StockMovement::query()->where('reversed_movement_id', $delivery->id)->firstOrFail();
+        $this->assertSame('5.000', $item->fresh()->quantity);
+        $this->assertSame(InventoryTransactionStatus::Reversed, $transaction->fresh()->status);
+        $this->assertSame('Yanlış kişiye teslim kaydı açıldı.', $transaction->fresh()->closure_note);
+        $this->assertSame('2.000', $reversal->quantity_change);
+        $this->assertSame($admin->id, $reversal->user_id);
+
+        $this->actingAs($admin)->patch(route('admin.loans.reverse', $transaction), [
+            'reason' => 'İkinci kez geri alma denemesi.',
+        ])->assertSessionHasErrors('reason');
+        $this->assertDatabaseCount('stock_movements', 2);
+    }
+
+    public function test_consumable_delivery_reversal_restores_stock(): void
+    {
+        $admin = User::factory()->systemAdministrator()->create();
+        $item = $this->item(InventoryItemType::Consumable, 10);
+        $this->actingAs($admin)->post(route('admin.loans.store'), [
+            'inventory_item_id' => $item->id,
+            'recipient_name' => 'Test Kullanıcı',
+            'quantity' => 3,
+        ]);
+        $transaction = InventoryTransaction::query()->firstOrFail();
+
+        $this->actingAs($admin)->patch(route('admin.loans.reverse', $transaction), [
+            'reason' => 'Sarf teslim miktarı yanlış kaydedildi.',
+        ])->assertSessionHas('success');
+
+        $this->assertSame('10.000', $item->fresh()->quantity);
+        $this->assertSame(InventoryTransactionStatus::Reversed, $transaction->fresh()->status);
+    }
+
+    public function test_fixed_asset_reversal_releases_usage_without_changing_physical_stock(): void
+    {
+        $admin = User::factory()->systemAdministrator()->create();
+        $item = $this->item(InventoryItemType::FixedAsset, 2);
+        $this->actingAs($admin)->post(route('admin.loans.store'), [
+            'inventory_item_id' => $item->id,
+            'recipient_name' => 'Test Kullanıcı',
+            'quantity' => 1,
+        ]);
+        $transaction = InventoryTransaction::query()->firstOrFail();
+        $this->assertSame('1.000', $item->fresh()->availableQuantity());
+
+        $this->actingAs($admin)->patch(route('admin.loans.reverse', $transaction), [
+            'reason' => 'Demirbaş kullanım kaydı yanlış açıldı.',
+        ])->assertSessionHas('success');
+
+        $this->assertSame('2.000', $item->fresh()->quantity);
+        $this->assertSame('2.000', $item->fresh()->availableQuantity());
+        $this->assertSame(InventoryTransactionStatus::Reversed, $transaction->fresh()->status);
+        $this->assertDatabaseCount('stock_movements', 0);
+    }
+
+    public function test_delivery_with_a_return_cannot_be_reversed(): void
+    {
+        $admin = User::factory()->systemAdministrator()->create();
+        $item = $this->item(InventoryItemType::Loanable, 5);
+        $this->actingAs($admin)->post(route('admin.loans.store'), [
+            'inventory_item_id' => $item->id,
+            'recipient_name' => 'Test Kullanıcı',
+            'quantity' => 2,
+            'due_at' => now()->addDay()->format('Y-m-d\TH:i'),
+        ]);
+        $transaction = InventoryTransaction::query()->firstOrFail();
+        $this->actingAs($admin)->post(route('admin.loans.return', $transaction), ['quantity' => 1]);
+
+        $this->actingAs($admin)->patch(route('admin.loans.reverse', $transaction), [
+            'reason' => 'Kısmi iadeden sonra geri alma denemesi.',
+        ])->assertSessionHasErrors('reason');
+
+        $this->assertSame(InventoryTransactionStatus::Active, $transaction->fresh()->status);
+        $this->assertSame('4.000', $item->fresh()->quantity);
+        $this->assertDatabaseCount('stock_movements', 2);
+    }
+
+    public function test_delivery_reversal_requires_the_sensitive_permission(): void
+    {
+        $viewer = $this->userWithPermissions(['loans.view']);
+        $admin = User::factory()->systemAdministrator()->create();
+        $item = $this->item(InventoryItemType::Loanable, 3);
+        $this->actingAs($admin)->post(route('admin.loans.store'), [
+            'inventory_item_id' => $item->id,
+            'recipient_name' => 'Test Kullanıcı',
+            'quantity' => 1,
+            'due_at' => now()->addDay()->format('Y-m-d\TH:i'),
+        ]);
+        $transaction = InventoryTransaction::query()->firstOrFail();
+
+        $this->actingAs($viewer)->patch(route('admin.loans.reverse', $transaction), [
+            'reason' => 'Yetkisiz geri alma denemesi.',
+        ])->assertForbidden();
+
+        $this->assertSame(InventoryTransactionStatus::Active, $transaction->fresh()->status);
+        $this->assertSame('2.000', $item->fresh()->quantity);
+    }
+
+    public function test_reversal_action_is_only_exposed_when_permission_and_business_rules_allow_it(): void
+    {
+        $viewer = $this->userWithPermissions(['loans.view']);
+        $admin = User::factory()->systemAdministrator()->create();
+        $item = $this->item(InventoryItemType::Loanable, 3);
+        $this->actingAs($admin)->post(route('admin.loans.store'), [
+            'inventory_item_id' => $item->id,
+            'recipient_name' => 'Test Kullanıcı',
+            'quantity' => 1,
+            'due_at' => now()->addDay()->format('Y-m-d\TH:i'),
+        ]);
+        $transaction = InventoryTransaction::query()->firstOrFail();
+
+        $this->actingAs($admin)->get(route('admin.loans.index'))->assertInertia(fn (Assert $page) => $page
+            ->where('transactions.data.0.id', $transaction->id)
+            ->where('transactions.data.0.canReverse', true));
+        $this->actingAs($viewer)->get(route('admin.loans.index'))->assertInertia(fn (Assert $page) => $page
+            ->where('transactions.data.0.id', $transaction->id)
+            ->where('transactions.data.0.canReverse', false));
+
+        $transaction->update(['anonymized_at' => now(), 'recipient_name' => null, 'recipient_email' => null]);
+        $this->actingAs($admin)->get(route('admin.loans.index'))->assertInertia(fn (Assert $page) => $page
+            ->where('transactions.data.0.canReverse', false));
     }
 
     private function item(InventoryItemType $type, float $quantity): InventoryItem
