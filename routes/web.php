@@ -17,6 +17,7 @@ use App\Http\Controllers\Admin\InventoryTransactionController as AdminInventoryT
 use App\Http\Controllers\Admin\PersonalSettingsController as AdminPersonalSettingsController;
 use App\Http\Controllers\Admin\PrinterSettingsController as AdminPrinterSettingsController;
 use App\Http\Controllers\Admin\PrivacySettingsController as AdminPrivacySettingsController;
+use App\Http\Controllers\Admin\QuickSearchController as AdminQuickSearchController;
 use App\Http\Controllers\Admin\SavedFilterController as AdminSavedFilterController;
 use App\Http\Controllers\Admin\SettingsController as AdminSettingsController;
 use App\Http\Controllers\Admin\WorkshopSettingsController as AdminWorkshopSettingsController;
@@ -54,6 +55,7 @@ Route::prefix('yonetim')->name('admin.')->group(function () {
 
     Route::middleware(['auth', 'admin.active'])->group(function () {
         Route::get('/genel-bakis', AdminDashboardController::class)->name('dashboard');
+        Route::get('/hizli-arama', AdminQuickSearchController::class)->middleware('throttle:60,1')->name('quick-search');
         Route::post('/cikis', [AdminAuthController::class, 'destroy'])->name('logout');
         Route::post('/kisisel-filtreler', [AdminSavedFilterController::class, 'store'])->name('saved-filters.store');
         Route::delete('/kisisel-filtreler/{table}/{filterId}', [AdminSavedFilterController::class, 'destroy'])->name('saved-filters.destroy');

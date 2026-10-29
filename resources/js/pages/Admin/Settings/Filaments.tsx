@@ -55,6 +55,7 @@ function FilamentCard({ filament }: { filament: Filament }) {
   return (
     <form
       className="filament-admin-card"
+      id={`filament-${filament.id}`}
       onSubmit={(event) => {
         event.preventDefault();
         router.patch(`/yonetim/ayarlar/filamentler/${filament.id}`, data, {

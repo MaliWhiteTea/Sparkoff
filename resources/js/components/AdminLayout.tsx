@@ -1,5 +1,6 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import { CSSProperties, KeyboardEvent as ReactKeyboardEvent, PointerEvent, PropsWithChildren, ReactElement, useEffect, useRef, useState } from 'react';
+import AdminQuickSearch from './AdminQuickSearch';
 
 type Preferences = { theme: 'light' | 'dark' | 'system'; scale: 'small' | 'normal' | 'large'; density: 'comfortable' | 'normal' | 'compact'; sidebar: 'wide' | 'narrow' };
 type SharedProps = {
@@ -113,6 +114,7 @@ export default function AdminLayout({ children }: PropsWithChildren) {
             <div className="admin-sidebar-resizer" role="separator" aria-label="Menü genişliğini ayarla" aria-orientation="vertical" aria-valuemin={MIN_WIDTH} aria-valuemax={MAX_WIDTH} aria-valuenow={sidebarWidth} tabIndex={collapsed ? -1 : 0} onDoubleClick={() => saveWidth(DEFAULT_WIDTH)} onKeyDown={resizeKey} onPointerDown={(event) => { if (collapsed) return; setResizing(true); event.currentTarget.setPointerCapture(event.pointerId); }} onPointerMove={resizeMove} onPointerUp={resizeEnd} onPointerCancel={resizeEnd} />
         </aside>
         <main className="admin-content">
+            <AdminQuickSearch />
             {flash.success && <div className="admin-flash success">{flash.success}</div>}{flash.warning && <div className="admin-flash warning">{flash.warning}</div>}
             {staffAnnouncements.filter((announcement) => !announcement.isRead).map((announcement) => <section className={`staff-announcement staff-${announcement.type}`} key={announcement.id}><div><span>{announcement.isPinned ? 'SABİTLENMİŞ DUYURU' : 'YÖNETİM DUYURUSU'}</span><strong>{announcement.title}</strong><p>{announcement.body}</p></div><button type="button" onClick={() => router.post(`/yonetim/duyurular/${announcement.id}/okundu`, {}, { preserveScroll: true })}>{announcement.requiresAcknowledgement ? 'Okudum, onaylıyorum' : 'Okundu işaretle'}</button></section>)}
             {children}

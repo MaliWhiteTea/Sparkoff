@@ -79,7 +79,7 @@ function PrinterCard({
   }
 
   return (
-    <form className="printer-settings-card" onSubmit={save}>
+    <form className="printer-settings-card" id={`printer-${printer.id}`} onSubmit={save}>
       <header>
         <div>
           <span>{printer.code}</span>

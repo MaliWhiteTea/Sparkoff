@@ -251,7 +251,7 @@ Sparkoff Proje Atölyesi
 
 - [x] Yetkiye göre şekillenen yönetim genel bakış ekranı oluştur (seçim 3)
 - [x] Kritik stok, geciken teslim, bekleyen randevu, bakımda yazıcı ve açık talep özetlerini ekle
-- [ ] Modüller arası hızlı arama altyapısı kur; kişisel sonuçları ayrı izinlerle sınırla (seçim 5)
+- [x] Modüller arası hızlı arama altyapısı kur; kişisel sonuçları ayrı izinlerle sınırla (seçim 5)
 - [ ] Yetkiye bağlı sistem bildirimleri, bildirim zili ve okunmamış sayacı ekle (seçim 16)
 - [ ] Son görüntülenen kayıtları kişisel veri saklamadan yetkiliye özel tut (seçim 15)
 - [ ] Bulunulan sayfaya ve yetkiye göre hızlı işlem düğmesi göster (seçim 4)
@@ -322,4 +322,4 @@ Bu sıra ortak bileşenleri önce kurarak aynı özelliğin farklı sayfalarda t
 
 ## Sıradaki teknik adım
 
-O paketinde sıradaki adım, modüller arası hızlı arama altyapısını kişisel veri izinlerini gözeterek kurmaktır.
+O paketinde sıradaki adım, yetkiye bağlı sistem bildirimleri, bildirim zili ve okunmamış sayacını eklemektir.
