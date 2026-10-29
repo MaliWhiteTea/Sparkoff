@@ -22,8 +22,7 @@ PHP paket doğrulaması tamamlanmadan dağıtım yapılmaz. Laravel bakım modu 
 ## 1.1. Bilinen alpha engelleri
 
 - [x] `ALPHA_KNOWN_ISSUES.md` içindeki A-001 kaydedilmemiş değişiklik koruması
-  hatası düzeltildi ve regresyon testi geçti; canlı duman testinde tekrar
-  doğrulanacak.
+  hatası düzeltildi, regresyon testi geçti ve canlı alpha ortamında doğrulandı.
 
 ## 2. Alpha kapsamı
 

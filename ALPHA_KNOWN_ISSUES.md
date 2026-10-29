@@ -2,8 +2,8 @@
 
 ## A-001 — Değişiklik yapılmadan ayrılma uyarısı ve kilitlenen onay düğmesi
 
-- **Durum:** Düzeltildi; alpha dağıtımında canlı kabul bekliyor
-- **Öncelik:** Yüksek — yönetim paneli alpha kabulünden önce düzeltilmeli
+- **Durum:** Düzeltildi; 29 Ekim 2026 canlı alpha kabulü tamamlandı
+- **Öncelik:** Çözüldü
 - **Bileşen:** Yönetim paneli / kaydedilmemiş değişiklik koruması
 - **Bildirildi:** 29 Ekim 2026
 
@@ -39,3 +39,31 @@
   kilitlemez.
 - Aynı menü öğesine tekrar tıklama ve art arda iki ayrılma denemesi için
   regresyon testi eklenir.
+
+## A-002 — Sayfa yenilemede tarayıcının yerel ayrılma uyarısı
+
+- **Durum:** Not edildi; platform kısıtı olarak değerlendirilecek
+- **Öncelik:** Düşük — veri kaybını önleyen işlev çalışıyor, yalnızca görünüm uyumsuz
+- **Bileşen:** Yönetim paneli / kaydedilmemiş değişiklik koruması
+- **Bildirildi:** 29 Ekim 2026
+
+### Gözlenen davranış
+
+Formda kaydedilmemiş gerçek bir değişiklik varken sayfa yenilendiğinde veya
+sekme kapatıldığında, site temasındaki özel modal yerine tarayıcının kendi
+İngilizce `beforeunload` onay penceresi gösteriliyor.
+
+### Teknik sınır
+
+Modern tarayıcılar yenileme, sekme kapatma ve adres çubuğuyla ayrılma
+işlemlerinde güvenlik amacıyla yalnızca tarayıcının yerel onay penceresine izin
+verir. Bu pencerenin metni, dili, renkleri veya düğmeleri site CSS'i ve
+JavaScript'i ile özelleştirilemez.
+
+### Değerlendirilebilecek seçenekler
+
+- Yerel uyarıyı veri kaybı koruması olarak kabul etmek.
+- Form taslaklarını otomatik kaydedip yenileme uyarısına duyulan ihtiyacı
+  azaltmak.
+- Uyarıyı kaldırmak; bu seçenek yenilemede kaydedilmemiş verilerin sessizce
+  kaybolmasına neden olacağı için önerilmez.
