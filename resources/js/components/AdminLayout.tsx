@@ -102,7 +102,7 @@ export default function AdminLayout({ children }: PropsWithChildren) {
         can('feedback.view') && { href: '/yonetim/talepler', label: 'Talepler', icon: 'feedback', active: path.includes('/talepler') },
         (can('announcements.view') || can('staff_announcements.view')) && { href: '/yonetim/duyurular', label: 'Duyurular', icon: 'announcements', active: path.includes('/duyurular'), count: staffAnnouncementUnreadCount },
         can('audit_logs.view') && { href: '/yonetim/islem-gecmisi', label: 'İşlem geçmişi', icon: 'history', active: path.includes('/islem-gecmisi') },
-        { href: '/yonetim/ayarlar', label: 'Ayarlar', icon: 'settings', active: path.startsWith('/yonetim/ayarlar') || path.includes('/yetkiler') },
+        { href: '/yonetim/ayarlar/kisisel', label: 'Ayarlar', icon: 'settings', active: path.startsWith('/yonetim/ayarlar') || path.includes('/yetkiler') },
     ].filter(Boolean) as NavItem[];
     const style = { '--admin-sidebar-width': `${collapsed ? 82 : sidebarWidth}px` } as CSSProperties;
 

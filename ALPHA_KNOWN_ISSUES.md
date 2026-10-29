@@ -2,7 +2,7 @@
 
 ## A-001 — Değişiklik yapılmadan ayrılma uyarısı ve kilitlenen onay düğmesi
 
-- **Durum:** Açık
+- **Durum:** Düzeltildi; alpha dağıtımında canlı kabul bekliyor
 - **Öncelik:** Yüksek — yönetim paneli alpha kabulünden önce düzeltilmeli
 - **Bileşen:** Yönetim paneli / kaydedilmemiş değişiklik koruması
 - **Bildirildi:** 29 Ekim 2026

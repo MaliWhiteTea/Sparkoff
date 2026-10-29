@@ -22,7 +22,8 @@ const choices = {
 export default function PersonalSettings({ preferences }: { preferences: Preferences }) {
     const form = useForm<Preferences>(preferences);
     const passwordForm = useForm({ current_password: '', password: '', password_confirmation: '' });
-    useUnsavedChanges(form.isDirty || passwordForm.isDirty);
+    const passwordChanged = Boolean(passwordForm.data.password || passwordForm.data.password_confirmation);
+    useUnsavedChanges(form.isDirty || passwordChanged);
     const defaults: Preferences = { theme: 'dark', scale: 'normal', density: 'normal', sidebar: 'wide' };
     const submit = (event: FormEvent) => { event.preventDefault(); form.put('/yonetim/ayarlar/kisisel', { preserveScroll: true, onSuccess: () => form.setDefaults() }); };
     const reset = () => {

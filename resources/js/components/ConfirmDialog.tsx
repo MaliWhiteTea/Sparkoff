@@ -62,6 +62,14 @@ export default function ConfirmDialog({
     }, [processing]);
 
     useEffect(() => {
+        if (open) return;
+
+        submissionRef.current = false;
+        sawProcessingRef.current = false;
+        setSubmissionLocked(false);
+    }, [open]);
+
+    useEffect(() => {
         if (!open) return;
 
         const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;

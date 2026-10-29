@@ -19,6 +19,14 @@ class UnsavedChangesGuardTest extends TestCase
         $this->assertStringContainsString("visit.url.pathname === '/yonetim/cikis'", $guard);
         $this->assertStringContainsString('<ConfirmDialog', $guard);
         $this->assertStringContainsString('Değişiklikleri bırak ve ayrıl', $guard);
+
+        $dialog = file_get_contents(resource_path('js/components/ConfirmDialog.tsx'));
+        $personalSettings = file_get_contents(resource_path('js/pages/Admin/Settings/Personal.tsx'));
+        $adminLayout = file_get_contents(resource_path('js/components/AdminLayout.tsx'));
+        $this->assertStringContainsString('submissionRef.current = false', $dialog);
+        $this->assertStringContainsString('setSubmissionLocked(false)', $dialog);
+        $this->assertStringContainsString('form.isDirty || passwordChanged', $personalSettings);
+        $this->assertStringContainsString("href: '/yonetim/ayarlar/kisisel', label: 'Ayarlar'", $adminLayout);
     }
 
     public function test_long_admin_forms_report_dirty_state_to_the_shared_guard(): void

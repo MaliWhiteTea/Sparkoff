@@ -21,12 +21,13 @@ PHP paket doğrulaması tamamlanmadan dağıtım yapılmaz. Laravel bakım modu 
 
 ## 1.1. Bilinen alpha engelleri
 
-- [ ] `ALPHA_KNOWN_ISSUES.md` içindeki A-001 kaydedilmemiş değişiklik koruması
-  hatası düzeltildi ve regresyon testi geçti.
+- [x] `ALPHA_KNOWN_ISSUES.md` içindeki A-001 kaydedilmemiş değişiklik koruması
+  hatası düzeltildi ve regresyon testi geçti; canlı duman testinde tekrar
+  doğrulanacak.
 
 ## 2. Alpha kapsamı
 
-- [ ] `www.sparkoff.tr` ve aynı içeriği sunan `sparkoff.tr`, cPanel Directory
+- [x] `www.sparkoff.tr` ve aynı içeriği sunan `sparkoff.tr`, cPanel Directory
   Privacy ile yalnız davetlilere kapatıldı.
 - [ ] `ONLINE_BOOKING_ENABLED=false`; SMTP kabulü tamamlanana kadar randevu
   başvurusu açılmadı.
