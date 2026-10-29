@@ -19,6 +19,15 @@ type Summary = {
     tone: 'info' | 'warning' | 'danger';
 };
 
+type RecentRecord = {
+    type: string;
+    label: string;
+    title: string;
+    description: string;
+    href: string;
+    viewedAt: string;
+};
+
 function ModuleIcon({ name }: { name: string }) {
     const paths: Record<string, ReactElement> = {
         inventory: <><path d="M4 7h16v13H4z" /><path d="M7 4h10v3M8 11h8" /></>,
@@ -37,7 +46,7 @@ function ModuleIcon({ name }: { name: string }) {
     return <svg viewBox="0 0 24 24" aria-hidden="true">{paths[name]}</svg>;
 }
 
-export default function Dashboard({ modules, summaries }: { modules: Module[]; summaries: Summary[] }) {
+export default function Dashboard({ modules, summaries, recentRecords }: { modules: Module[]; summaries: Summary[]; recentRecords: RecentRecord[] }) {
     const page = usePage<{ auth: { user: { name: string; roles: string[] } } }>();
     const user = page.props.auth.user;
 
@@ -61,6 +70,19 @@ export default function Dashboard({ modules, summaries }: { modules: Module[]; s
                     <strong>{summary.count}</strong>
                     <small>{summary.description}</small>
                     <b>Kayıtları incele <span aria-hidden="true">→</span></b>
+                </Link>)}
+            </div>
+        </section>}
+        {recentRecords.length > 0 && <section className="admin-recent-section" aria-labelledby="recent-records-title">
+            <div className="admin-overview-heading">
+                <div><h2 id="recent-records-title">Son görüntülenenler</h2><p>Size özel, içerik saklamayan kayıt geçmişi.</p></div>
+            </div>
+            <div className="admin-recent-grid">
+                {recentRecords.map((record, index) => <Link className="admin-recent-card" href={record.href} key={`${record.type}-${record.href}-${index}`}>
+                    <span className={`type-${record.type}`}>{record.label}</span>
+                    <strong>{record.title}</strong>
+                    <small>{record.description}</small>
+                    <time>{record.viewedAt}</time>
                 </Link>)}
             </div>
         </section>}

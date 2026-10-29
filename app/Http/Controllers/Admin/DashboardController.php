@@ -12,13 +12,14 @@ use App\Models\FeedbackReport;
 use App\Models\InventoryItem;
 use App\Models\InventoryTransaction;
 use App\Models\Printer;
+use App\Services\AdminRecentRecordService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function __invoke(Request $request): Response
+    public function __invoke(Request $request, AdminRecentRecordService $recent): Response
     {
         $user = $request->user();
         $permissions = $user->isSystemAdministrator()
@@ -120,6 +121,7 @@ class DashboardController extends Controller
         return Inertia::render('Admin/Dashboard', [
             'modules' => $modules,
             'summaries' => $summaries,
+            'recentRecords' => $recent->recent($user),
         ]);
     }
 

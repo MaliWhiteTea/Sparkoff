@@ -173,6 +173,7 @@ Aktif veya gecikmiş teslimlerde kişi bilgileri kayıt sonuçlanana kadar korun
 - Genel bakışta kritik stok, geciken teslim, onay bekleyen randevu, bakımda yazıcı ve açık talep sayıları yalnız ilgili görüntüleme yetkisine sahip kullanıcılara gösterilir.
 - `Ctrl/Cmd + K` ile açılan hızlı arama; malzeme, randevu, yazıcı, filament, talep ve yetkili kullanıcı kayıtlarını modül izinlerine göre tarar. Randevu ve kullanıcı kimlikleri ayrıca kişisel veri izinleriyle korunur.
 - Bildirim zili; kritik stok, geciken teslim, onay bekleyen randevu, bakımda yazıcı ve açık talepleri yetkilere göre gösterir. Okundu durumu kullanıcıya özeldir; uyarının kayıt kümesi değiştiğinde bildirim yeniden okunmamış olur.
+- Genel bakıştaki son görüntülenen kayıtlar kullanıcıya özeldir. Geçmiş tablosunda içerik, ad veya e-posta tutulmaz; yalnız kayıt türü, sayısal kimlik ve görüntülenme zamanı saklanır, başlıklar güncel yetkiye göre anlık üretilir.
 - Varsayılan görünüm koyu temadır; açık, koyu ve sistem seçenekleri bulunur.
 - Yazı/arayüz ölçeği, tablo yoğunluğu ve sol menü genişliği kullanıcı hesabına özel saklanır.
 - Masaüstü sol menüsü daraltılabilir ve sürüklenerek yeniden boyutlandırılabilir.
@@ -228,6 +229,7 @@ TypeScript tip denetimi, üretim derlemesi ve PHP kod biçimi kontrolleri de yay
 | Yetkiye göre yönetim genel bakış ekranı | Kullanılabilir |
 | Yetki ve kişisel veri sınırlarına bağlı hızlı arama | Kullanılabilir |
 | Yetkiye bağlı bildirim merkezi ve okunmamış sayacı | Kullanılabilir |
+| Kişisel veri saklamayan son görüntülenen kayıtlar | Kullanılabilir |
 | Güvenli geri alma/ters hareket paketi | Planlandı |
 
 ## Ortam ve yayın notları

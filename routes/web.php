@@ -19,6 +19,7 @@ use App\Http\Controllers\Admin\PersonalSettingsController as AdminPersonalSettin
 use App\Http\Controllers\Admin\PrinterSettingsController as AdminPrinterSettingsController;
 use App\Http\Controllers\Admin\PrivacySettingsController as AdminPrivacySettingsController;
 use App\Http\Controllers\Admin\QuickSearchController as AdminQuickSearchController;
+use App\Http\Controllers\Admin\RecentRecordController as AdminRecentRecordController;
 use App\Http\Controllers\Admin\SavedFilterController as AdminSavedFilterController;
 use App\Http\Controllers\Admin\SettingsController as AdminSettingsController;
 use App\Http\Controllers\Admin\WorkshopSettingsController as AdminWorkshopSettingsController;
@@ -60,6 +61,7 @@ Route::prefix('yonetim')->name('admin.')->group(function () {
         Route::get('/bildirimler', [AdminNotificationController::class, 'index'])->middleware('throttle:60,1')->name('notifications.index');
         Route::post('/bildirimler/oku', [AdminNotificationController::class, 'read'])->name('notifications.read');
         Route::post('/bildirimler/tumunu-oku', [AdminNotificationController::class, 'readAll'])->name('notifications.read-all');
+        Route::post('/son-goruntulenenler', [AdminRecentRecordController::class, 'store'])->name('recent-records.store');
         Route::post('/cikis', [AdminAuthController::class, 'destroy'])->name('logout');
         Route::post('/kisisel-filtreler', [AdminSavedFilterController::class, 'store'])->name('saved-filters.store');
         Route::delete('/kisisel-filtreler/{table}/{filterId}', [AdminSavedFilterController::class, 'destroy'])->name('saved-filters.destroy');

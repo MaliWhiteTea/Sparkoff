@@ -18,7 +18,7 @@ class AdminQuickSearchService
 {
     private const MODULE_LIMIT = 5;
 
-    /** @return Collection<int, array{id: string, module: string, title: string, description: string, href: string}> */
+    /** @return Collection<int, array{id: string, module: string, title: string, description: string, href: string, recordType: string, recordId: int}> */
     public function search(User $user, string $query): Collection
     {
         $terms = collect(preg_split('/\s+/u', $query, -1, PREG_SPLIT_NO_EMPTY))
@@ -190,9 +190,15 @@ class AdminQuickSearchService
         };
     }
 
-    /** @return array{id: string, module: string, title: string, description: string, href: string} */
+    /** @return array{id: string, module: string, title: string, description: string, href: string, recordType: string, recordId: int} */
     private function result(string $id, string $module, string $title, string $description, string $href): array
     {
-        return compact('id', 'module', 'title', 'description', 'href');
+        [$recordType, $recordId] = explode('-', $id, 2);
+
+        return [
+            ...compact('id', 'module', 'title', 'description', 'href'),
+            'recordType' => $recordType,
+            'recordId' => (int) $recordId,
+        ];
     }
 }

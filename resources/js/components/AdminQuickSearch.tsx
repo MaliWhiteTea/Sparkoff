@@ -1,7 +1,7 @@
 import { Link, router } from '@inertiajs/react';
 import { ChangeEvent, KeyboardEvent, useEffect, useMemo, useState } from 'react';
 
-type SearchResult = { id: string; module: string; title: string; description: string; href: string };
+type SearchResult = { id: string; module: string; title: string; description: string; href: string; recordType: string; recordId: number };
 
 export default function AdminQuickSearch() {
     const [open, setOpen] = useState(false);
@@ -75,11 +75,13 @@ export default function AdminQuickSearch() {
         };
     }, [open, query]);
 
+    const openResult = (result: SearchResult) => {
+        setOpen(false);
+        router.post('/yonetim/son-goruntulenenler', { record_type: result.recordType, record_id: result.recordId });
+    };
     const selectResult = () => {
         const result = results[activeIndex];
-        if (!result) return;
-        setOpen(false);
-        router.visit(result.href);
+        if (result) openResult(result);
     };
     const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
         if (event.key === 'ArrowDown') {
@@ -120,7 +122,7 @@ export default function AdminQuickSearch() {
                         <h2>{module}</h2>
                         {items.map((result) => {
                             const index = results.findIndex((item) => item.id === result.id);
-                            return <Link id={`quick-${result.id}`} className={index === activeIndex ? 'active' : ''} href={result.href} onFocus={() => setActiveIndex(index)} onClick={() => setOpen(false)} key={result.id}>
+                            return <Link id={`quick-${result.id}`} className={index === activeIndex ? 'active' : ''} href={result.href} onFocus={() => setActiveIndex(index)} onClick={(event) => { event.preventDefault(); openResult(result); }} key={result.id}>
                                 <span><strong>{result.title}</strong><small>{result.description}</small></span><b aria-hidden="true">→</b>
                             </Link>;
                         })}

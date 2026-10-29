@@ -9,6 +9,7 @@ use App\Mail\AppointmentStatusMail;
 use App\Models\Appointment;
 use App\Models\AppointmentFile;
 use App\Models\Printer;
+use App\Services\AdminRecentRecordService;
 use App\Services\AppointmentAvailabilityService;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
@@ -79,9 +80,10 @@ class AppointmentController extends Controller
         ]);
     }
 
-    public function show(Request $request, string $publicId): Response
+    public function show(Request $request, string $publicId, AdminRecentRecordService $recent): Response
     {
         $appointment = $this->findAppointment($publicId);
+        $recent->track($request->user(), 'appointment', $appointment->id);
         $canViewPersonalData = $this->can($request, 'appointments.view_personal_data');
         $canDownloadFiles = $this->can($request, 'appointments.download_file');
         $canReview = $this->can($request, 'appointments.review');

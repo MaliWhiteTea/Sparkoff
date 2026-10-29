@@ -49,6 +49,8 @@ class AdminQuickSearchTest extends TestCase
             ->assertOk()
             ->assertJsonPath('results.0.module', 'Malzemeler')
             ->assertJsonPath('results.0.title', 'Gizli Motor Malzemesi')
+            ->assertJsonPath('results.0.recordType', 'inventory')
+            ->assertJsonPath('results.0.recordId', InventoryItem::query()->where('name', 'Gizli Motor Malzemesi')->value('id'))
             ->assertJsonCount(1, 'results');
     }
 
