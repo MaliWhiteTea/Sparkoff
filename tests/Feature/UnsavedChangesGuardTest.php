@@ -11,7 +11,7 @@ class UnsavedChangesGuardTest extends TestCase
         $app = file_get_contents(resource_path('js/app.tsx'));
         $guard = file_get_contents(resource_path('js/components/UnsavedChangesGuard.tsx'));
 
-        $this->assertStringContainsString('<UnsavedChangesProvider enabled={isAdmin}>', $app);
+        $this->assertStringContainsString('<UnsavedChangesProvider enabled={isAdmin && !isAdminLogin}>', $app);
         $this->assertStringContainsString("window.addEventListener('beforeunload'", $guard);
         $this->assertStringContainsString("router.on('before'", $guard);
         $this->assertStringContainsString("visit.method !== 'get'", $guard);

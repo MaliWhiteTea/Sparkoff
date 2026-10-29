@@ -8,7 +8,18 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['type', 'message', 'status', 'admin_note', 'handled_by', 'handled_at'])]
+#[Fillable([
+    'type',
+    'message',
+    'image_path',
+    'image_original_name',
+    'image_mime_type',
+    'image_size',
+    'status',
+    'admin_note',
+    'handled_by',
+    'handled_at',
+])]
 class FeedbackReport extends Model
 {
     protected function casts(): array
@@ -16,6 +27,7 @@ class FeedbackReport extends Model
         return [
             'type' => FeedbackType::class,
             'status' => FeedbackStatus::class,
+            'image_size' => 'integer',
             'handled_at' => 'datetime',
         ];
     }

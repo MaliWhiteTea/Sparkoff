@@ -81,7 +81,8 @@ Güvenlik ve veri kuralları:
 - [ ] PUB-GLOBAL-01 — Logo ve marka bağlantısı her genel sayfadan ana sayfaya
   dönüyor; logo yuvarlatılmış ve bozulmadan görünüyor.
 - [ ] PUB-GLOBAL-02 — Üst menüde Atölye, Hizmetler, 3D Yazıcılar, Malzemeler,
-  Geri bildirim ve koşullu İletişim bağlantıları doğru hedefe gidiyor.
+  Geri bildirim ve İletişim bağlantıları ana sayfada ve bütün alt sayfalarda
+  görünüyor; doğru hedefe gidiyor.
 - [ ] PUB-GLOBAL-03 — Atölye/Hizmetler/İletişim çapa bağlantıları doğru bölüme
   kayıyor ve tarayıcı geri tuşu çalışıyor.
 - [ ] PUB-GLOBAL-04 — Telefon genişliğinde menü açma butonu menüyü açıyor;
@@ -104,6 +105,9 @@ Güvenlik ve veri kuralları:
   sayfa taşması, kesilen buton veya üst üste binen metin yok.
 - [ ] PUB-GLOBAL-13 — Tarayıcı geri/ileri, yenileme ve doğrudan URL açma Inertia
   sayfalarında doğru içeriği ve temayı koruyor.
+- [ ] PUB-GLOBAL-14 — Ana sayfadaki Telefon, WhatsApp ve E-posta iletişim kartları
+  ayrı ayrı doğru `tel:`, WhatsApp ve `mailto:` hedefini açıyor; klavyeyle
+  erişiliyor ve mobilde taşmıyor.
 
 ## 3. Ana sayfa
 
@@ -150,6 +154,9 @@ Güvenlik ve veri kuralları:
   telefon/WhatsApp/e-posta seçenekleri doğru çalışıyor.
 - [ ] PRN-PUB-11 — Yalnız yazıcı sayfası hedefli duyuru burada görünüyor; ana
   sayfa hedefli duyuru görünmüyor.
+- [ ] PRN-PUB-12 — Yazıcı kartı açıklamaları, yazıcı sekmeleri, yedi günlük
+  takvim, haftalık saatler ve desteklenen formatlar açık/koyu temada okunabilir
+  punto ve kontrasta sahip.
 - [ ] FIL-PUB-01 — Filament sayfası marka logosu ana sayfaya, “3D Yazıcılar”
   butonu yazıcı sayfasına gidiyor.
 - [ ] FIL-PUB-02 — Her malzeme türü ve renk için marka, çap, makara, nozzle,
@@ -194,6 +201,12 @@ Güvenlik ve veri kuralları:
 - [ ] FB-PUB-06 — Hız sınırı aşılınca güvenli hata dönüyor, 500 oluşmuyor.
 - [ ] FB-PUB-07 — Form ad/e-posta/telefon istemiyor ve kişisel bilgi uyarısı
   görünür.
+- [ ] FB-PUB-08 — İsteğe bağlı Fotoğraf alanı JPG, PNG ve WebP kabul ediyor;
+  seçilen dosya adı görünüyor ve “Fotoğrafı kaldır” seçimi temizliyor.
+- [ ] FB-PUB-09 — SVG, farklı dosya türü, 5 MB üstü veya 6000 × 6000 piksel üstü
+  fotoğraf Türkçe hata veriyor; talep kaydı ve artık dosya oluşturmuyor.
+- [ ] FB-PUB-10 — Fotoğraflı geçerli bildirim başarıyla gönderiliyor; başarı
+  mesajı ve form açık/koyu temaya uyuyor, açıklama ile dosya alanı temizleniyor.
 - [ ] KVKK-01 — Logo ve “Ana sayfaya dön” bağlantısı çalışıyor.
 - [ ] KVKK-02 — Kurum adı, adres, e-posta, sürüm ve saklama süreleri ayarlarla
   eşleşiyor.
@@ -214,6 +227,8 @@ Güvenlik ve veri kuralları:
 - [ ] AUTH-08 — Giriş hız sınırı tekrar eden başarısız denemeleri engelliyor.
 - [ ] AUTH-09 — “Çıkış yap” oturumu kapatıp giriş sayfasına götürüyor; geri
   tuşuyla korumalı sayfa açılamıyor.
+- [ ] AUTH-10 — Yönetici giriş ekranında Açık/Koyu tema düğmesi çalışıyor;
+  kart, alanlar, metinler ve doğrulama hatası iki temada okunuyor.
 - [ ] SHELL-01 — Logo ve Genel bakış bağlantısı çalışma alanını açıyor.
 - [ ] SHELL-02 — Sol menü yalnız kullanıcının yetkili olduğu modülleri gösteriyor.
 - [ ] SHELL-03 — Her sol menü bağlantısı doğru aktif durumu gösteriyor ve yatay
@@ -448,6 +463,10 @@ Güvenlik ve veri kuralları:
   doğrudan PATCH 403.
 - [ ] FB-ADM-04 — Kayıtlı filtre, sıralama, görünür alanlar ve sayfalama çalışıyor.
 - [ ] FB-ADM-05 — Talep metninde HTML/script çalışmıyor; düz metin gösteriliyor.
+- [ ] FB-ADM-06 — Fotoğraflı talepte küçük önizleme, özgün dosya adı ve boyut
+  görünüyor; tıklanınca tam görsel yeni sekmede açılıyor.
+- [ ] FB-ADM-07 — Geri bildirim fotoğrafı doğrudan genel URL ile açılamıyor;
+  yalnız `feedback.view` yetkili oturum görüntüleyebiliyor ve yanıt özel/no-store.
 
 ## 13. Duyurular
 

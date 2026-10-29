@@ -1,19 +1,35 @@
 import { Head, useForm, usePage } from "@inertiajs/react";
 import PublicFooter from "@/components/PublicFooter";
 import PublicHeader from "@/components/PublicHeader";
-import { FormEvent } from "react";
+import { FormEvent, useRef } from "react";
 
 type PageProps = { flash: { success?: string } };
+type FeedbackForm = {
+  type: string;
+  message: string;
+  image: File | null;
+  website: string;
+};
 
 export default function Feedback() {
   const { flash } = usePage<PageProps>().props;
-  const form = useForm({ type: "suggestion", message: "", website: "" });
+  const imageInput = useRef<HTMLInputElement>(null);
+  const form = useForm<FeedbackForm>({
+    type: "suggestion",
+    message: "",
+    image: null,
+    website: "",
+  });
 
   function submit(event: FormEvent) {
     event.preventDefault();
     form.post("/geri-bildirim", {
       preserveScroll: true,
-      onSuccess: () => form.reset("message"),
+      forceFormData: true,
+      onSuccess: () => {
+        form.reset("message", "image");
+        if (imageInput.current) imageInput.current.value = "";
+      },
     });
   }
 
@@ -32,7 +48,9 @@ export default function Feedback() {
         </div>
         <form className="feedback-form" onSubmit={submit}>
           {flash.success && (
-            <div className="admin-flash success">{flash.success}</div>
+            <div className="public-flash success" role="status">
+              {flash.success}
+            </div>
           )}
           <label className="field">
             <span>Bildirim türü</span>
@@ -56,6 +74,35 @@ export default function Feedback() {
               required
             />
           </label>
+          <div className="feedback-upload">
+            <label className="field" htmlFor="feedback-image">
+              <span>Fotoğraf (isteğe bağlı)</span>
+              <input
+                ref={imageInput}
+                id="feedback-image"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={(event) =>
+                  form.setData("image", event.target.files?.[0] ?? null)
+                }
+              />
+            </label>
+            <small>JPG, PNG veya WebP · en fazla 5 MB</small>
+            {form.data.image && (
+              <div className="feedback-selected-file">
+                <span>{form.data.image.name}</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    form.setData("image", null);
+                    if (imageInput.current) imageInput.current.value = "";
+                  }}
+                >
+                  Fotoğrafı kaldır
+                </button>
+              </div>
+            )}
+          </div>
           <input
             className="feedback-honeypot"
             tabIndex={-1}
@@ -65,10 +112,10 @@ export default function Feedback() {
             onChange={(event) => form.setData("website", event.target.value)}
           />
           <div className="feedback-privacy-note">
-            <strong>Kişisel bilgi yazmayın.</strong>
+            <strong>Ad, e-posta ve telefon numarası istemiyoruz.</strong>
             <span>
-              Bu form ad, e-posta veya telefon istemez. Mesajınıza kendinizin ya
-              da başka birinin kişisel bilgilerini eklemeyin.
+              Mesajınıza veya fotoğrafa size ya da başka birine ait kişisel bilgi
+              eklemeyin.
             </span>
           </div>
           {Object.keys(form.errors).length > 0 && (

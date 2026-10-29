@@ -67,6 +67,7 @@ Route::prefix('yonetim')->name('admin.')->group(function () {
         Route::delete('/kisisel-filtreler/{table}/{filterId}', [AdminSavedFilterController::class, 'destroy'])->name('saved-filters.destroy');
         Route::get('/islem-gecmisi', AdminActivityLogController::class)->middleware('permission:audit_logs.view')->name('activity-logs');
         Route::get('/talepler', [AdminFeedbackController::class, 'index'])->middleware('permission:feedback.view')->name('feedback.index');
+        Route::get('/talepler/{feedback}/gorsel', [AdminFeedbackController::class, 'image'])->middleware('permission:feedback.view')->name('feedback.image');
         Route::patch('/talepler/{feedback}', [AdminFeedbackController::class, 'update'])->middleware('permission:feedback.update')->name('feedback.update');
         Route::get('/envanter', [AdminInventoryController::class, 'index'])->middleware('permission:inventory.view')->name('inventory.index');
         Route::get('/envanter-disa-aktar', [AdminInventoryController::class, 'export'])->middleware('permission:inventory.export')->name('inventory.export');

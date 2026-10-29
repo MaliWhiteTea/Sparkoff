@@ -3,10 +3,9 @@ import { KeyboardEvent, useEffect, useRef, useState } from 'react';
 
 type Props = {
     isHome?: boolean;
-    hasContact?: boolean;
 };
 
-export default function PublicHeader({ isHome = false, hasContact = false }: Props) {
+export default function PublicHeader({ isHome = false }: Props) {
     const [mobileOpen, setMobileOpen] = useState(false);
     const menuRef = useRef<HTMLElement>(null);
     const toggleRef = useRef<HTMLButtonElement>(null);
@@ -56,6 +55,6 @@ export default function PublicHeader({ isHome = false, hasContact = false }: Pro
         <Link className="brand" href={isHome ? '#ust' : '/'} aria-label="Sparkoff Proje Atölyesi ana sayfa"><img src="/logo.jpg" alt="Sparkoff logosu" width={56} height={56} /><span><strong>Sparkoff</strong><small>Proje Atölyesi</small></span></Link>
         <button ref={toggleRef} className="public-menu-toggle" type="button" aria-expanded={mobileOpen} aria-controls="public-navigation" aria-label={mobileOpen ? 'Menüyü kapat' : 'Menüyü aç'} onClick={() => setMobileOpen((open) => !open)}><span /><span /><span /></button>
         {mobileOpen && <button className="public-menu-overlay" type="button" aria-label="Menüyü kapat" onClick={() => closeMobileMenu(true)} />}
-        <nav ref={menuRef} id="public-navigation" className={`desktop-nav ${mobileOpen ? 'mobile-open' : ''}`} aria-label="Ana menü" onKeyDown={trapFocus}><a href={sectionHref('icerik')} onClick={() => closeMobileMenu(true)}>Atölye</a><a href={sectionHref('hizmetler')} onClick={() => closeMobileMenu(true)}>Hizmetler</a><Link href="/3d-yazicilar" onClick={() => closeMobileMenu(true)}>3D Yazıcılar</Link><Link href="/malzemeler" onClick={() => closeMobileMenu(true)}>Malzemeler</Link><Link href="/geri-bildirim" onClick={() => closeMobileMenu(true)}>Geri bildirim</Link>{hasContact && <a href={sectionHref('iletisim')} onClick={() => closeMobileMenu(true)}>İletişim</a>}</nav>
+        <nav ref={menuRef} id="public-navigation" className={`desktop-nav ${mobileOpen ? 'mobile-open' : ''}`} aria-label="Ana menü" onKeyDown={trapFocus}><a href={sectionHref('icerik')} onClick={() => closeMobileMenu(true)}>Atölye</a><a href={sectionHref('hizmetler')} onClick={() => closeMobileMenu(true)}>Hizmetler</a><Link href="/3d-yazicilar" onClick={() => closeMobileMenu(true)}>3D Yazıcılar</Link><Link href="/malzemeler" onClick={() => closeMobileMenu(true)}>Malzemeler</Link><Link href="/geri-bildirim" onClick={() => closeMobileMenu(true)}>Geri bildirim</Link><a href={sectionHref('iletisim')} onClick={() => closeMobileMenu(true)}>İletişim</a></nav>
     </div></header>;
 }

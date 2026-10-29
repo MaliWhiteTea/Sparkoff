@@ -8,9 +8,11 @@ use App\Http\Controllers\Controller;
 use App\Models\FeedbackReport;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class FeedbackController extends Controller
 {
@@ -40,6 +42,9 @@ class FeedbackController extends Controller
                     FeedbackType::Bug => 'Hata bildirimi',
                 },
                 'message' => $report->message,
+                'imageUrl' => $report->image_path ? route('admin.feedback.image', $report) : null,
+                'imageName' => $report->image_original_name,
+                'imageSize' => $report->image_size,
                 'status' => $report->status->value,
                 'adminNote' => $report->admin_note,
                 'handler' => $report->handler?->name,
@@ -56,6 +61,27 @@ class FeedbackController extends Controller
                 'resolved' => FeedbackReport::query()->where('status', FeedbackStatus::Resolved)->count(),
             ],
         ]);
+    }
+
+    public function image(FeedbackReport $feedback): StreamedResponse
+    {
+        abort_unless(
+            $feedback->image_path && Storage::disk('local')->exists($feedback->image_path),
+            404,
+        );
+
+        $extension = pathinfo($feedback->image_path, PATHINFO_EXTENSION) ?: 'jpg';
+
+        return Storage::disk('local')->response(
+            $feedback->image_path,
+            "geri-bildirim-{$feedback->id}.{$extension}",
+            [
+                'Content-Type' => $feedback->image_mime_type ?: 'application/octet-stream',
+                'Content-Disposition' => "inline; filename=\"geri-bildirim-{$feedback->id}.{$extension}\"",
+                'X-Content-Type-Options' => 'nosniff',
+                'Cache-Control' => 'private, no-store',
+            ],
+        );
     }
 
     public function update(Request $request, FeedbackReport $feedback): RedirectResponse

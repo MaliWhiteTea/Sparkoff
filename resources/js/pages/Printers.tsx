@@ -108,9 +108,7 @@ export default function Printers({
         İçeriğe geç
       </a>
       <Head title="3D Yazıcılar" />
-      <PublicHeader
-        hasContact={Boolean(contact.phone || contact.whatsapp || contact.email)}
-      />
+      <PublicHeader />
       <section className="printer-module-hero" id="icerik">
         <div>
           <h1>3D Yazıcılar</h1>
@@ -137,7 +135,7 @@ export default function Printers({
       <section className="printer-module-section">
         <div className="module-section-heading">
           <div>
-            <h2>Anlık durum</h2>
+            <h2>Anlık Durum</h2>
           </div>
         </div>
         <div className="public-printer-grid" role="region" aria-label="Yazıcı durumları" tabIndex={0}>
@@ -163,7 +161,7 @@ export default function Printers({
       <section className="printer-module-section public-schedule">
         <div className="module-section-heading">
           <div>
-            <h2>7 günlük takvim</h2>
+            <h2>7 Günlük Takvim</h2>
           </div>
           <p>
             Kayıt olmayan saatler olası boş zamanı gösterir. Kesin kullanım için
@@ -240,7 +238,7 @@ export default function Printers({
       <section className="printer-info-grid">
         <article>
           <span className="eyebrow">KULLANIM BAŞLANGICI</span>
-          <h2>Haftalık saat aralığı</h2>
+          <h2>Haftalık Saat Aralığı</h2>
           <div className="public-hours-list">
             {hours.map((item) => (
               <div key={item.weekday}>
@@ -254,7 +252,7 @@ export default function Printers({
         </article>
         <article>
           <span className="eyebrow">BASKI HAZIRLIĞI</span>
-          <h2>Desteklenen formatlar</h2>
+          <h2>Desteklenen Formatlar</h2>
           <div className="format-pills">
             {supportedFormats.map((format) => (
               <span key={format}>.{format.toUpperCase()}</span>

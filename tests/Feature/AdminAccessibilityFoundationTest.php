@@ -57,8 +57,9 @@ class AdminAccessibilityFoundationTest extends TestCase
         $settings = file_get_contents(resource_path('js/pages/Admin/Settings/Personal.tsx'));
 
         $this->assertStringContainsString("router.on('navigate'", $app);
-        $this->assertStringContainsString("window.location.pathname.startsWith('/yonetim')", $app);
-        $this->assertStringContainsString('!isAdmin && <PublicThemeToggle />', $app);
+        $this->assertStringContainsString("pathname.startsWith('/yonetim')", $app);
+        $this->assertStringContainsString("pathname === '/yonetim/giris'", $app);
+        $this->assertStringContainsString('(!isAdmin || isAdminLogin) && <PublicThemeToggle />', $app);
         $this->assertStringContainsString("theme: 'dark'", $settings);
     }
 

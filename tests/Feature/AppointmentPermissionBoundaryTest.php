@@ -49,9 +49,11 @@ class AppointmentPermissionBoundaryTest extends TestCase
     public function test_calendar_manager_without_personal_data_or_appointment_view_permission_gets_anonymous_unlinked_events(): void
     {
         $manager = $this->userWithPermissions(['printers.manage_schedule']);
-        $this->appointment();
+        $appointment = $this->appointment();
 
-        $this->actingAs($manager)->get(route('admin.calendar.index'))
+        $this->actingAs($manager)->get(route('admin.calendar.index', [
+            'date' => $appointment->starts_at->format('Y-m-d'),
+        ]))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->where('days', function ($days) {

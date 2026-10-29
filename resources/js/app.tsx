@@ -15,14 +15,16 @@ createInertiaApp({
     resolve: (name) => pages[`./pages/${name}.tsx`],
     setup({ el, App, props }) {
         function AppRoot() {
-            const [isAdmin, setIsAdmin] = useState(() => window.location.pathname.startsWith('/yonetim'));
+            const [pathname, setPathname] = useState(() => window.location.pathname);
+            const isAdmin = pathname.startsWith('/yonetim');
+            const isAdminLogin = pathname === '/yonetim' || pathname === '/yonetim/giris';
 
             useEffect(() => router.on('navigate', () => {
-                setIsAdmin(window.location.pathname.startsWith('/yonetim'));
+                setPathname(window.location.pathname);
             }), []);
 
-            return <UnsavedChangesProvider enabled={isAdmin}>
-                {!isAdmin && <PublicThemeToggle />}
+            return <UnsavedChangesProvider enabled={isAdmin && !isAdminLogin}>
+                {(!isAdmin || isAdminLogin) && <PublicThemeToggle />}
                 <App {...props} />
             </UnsavedChangesProvider>;
         }
