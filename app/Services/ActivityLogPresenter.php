@@ -16,6 +16,8 @@ class ActivityLogPresenter
         'inventory_bulk_location_updated' => 'Malzeme konumlarını toplu güncelledi',
         'inventory_bulk_visibility_updated' => 'Katalog görünürlüğünü toplu güncelledi',
         'inventory_bulk_archive_updated' => 'Malzemeleri toplu arşivledi',
+        'inventory_stock_adjusted' => 'Stok düzeltmesi yaptı',
+        'undo_applied' => 'Değişikliği geri aldı',
         'retention_applied' => 'Veri saklama politikasını uyguladı',
     ];
 
@@ -33,6 +35,7 @@ class ActivityLogPresenter
         'Printer' => 'Yazıcı',
         'Role' => 'Rol',
         'Setting' => 'Ayar',
+        'StockMovement' => 'Stok hareketi',
         'User' => 'Kullanıcı',
     ];
 
@@ -60,6 +63,8 @@ class ActivityLogPresenter
         'file_schedules_created' => 'Planlanan dosya silme işlemi', 'failures' => 'Ertelenen hata',
         'appointment_retention_months' => 'Randevu saklama süresi (ay)',
         'file_retention_days' => 'Dosya saklama süresi (gün)',
+        'movement_id' => 'Stok hareketi', 'original_log_id' => 'Bağlı ilk işlem kaydı',
+        'undo_type' => 'Geri alma türü',
     ];
 
     private const SENSITIVE_FIELDS = [

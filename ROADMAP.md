@@ -144,7 +144,7 @@ Sparkoff Proje Atölyesi
 - [x] Tam ve kısmi iade
 - [x] Hasarlı ve kayıp işlemleri
 - [x] Aktif ve gecikmiş teslim listeleri
-- [ ] İşlem geri alma/ters hareket
+- [x] İşlem geri alma/ters hareket
 - [x] Kişisel alanlar için ayrı görüntüleme yetkileri
 - [x] Tamamlanan kayıtlarda otomatik anonimleştirme
 
@@ -259,10 +259,10 @@ Sparkoff Proje Atölyesi
 ### P. Güvenli geri alma ve ters işlemler — beşinci uygulama paketi
 
 - [x] Teslim ve stok işlemleri için silme yerine ters hareket altyapısını tamamla
-- [ ] Hangi işlemlerin kısa süreli doğrudan geri alınabileceğini merkezi kurallarla belirle (seçim 11)
-- [ ] Stok, kategori, konum, görünürlük ve duyuru durumu için güvenli geri alma bildirimi ekle
-- [ ] Parola, kullanıcı yetkisi, teslim/iade, hasar/kayıp ve içe aktarmada doğrudan geri almayı engelle
-- [ ] Her geri alma ve ters hareketi işlem geçmişine bağlantılı biçimde kaydet
+- [x] Hangi işlemlerin kısa süreli doğrudan geri alınabileceğini merkezi kurallarla belirle (seçim 11)
+- [x] Stok, kategori, konum, görünürlük ve duyuru durumu için güvenli geri alma bildirimi ekle
+- [x] Parola, kullanıcı yetkisi, teslim/iade, hasar/kayıp ve içe aktarmada doğrudan geri almayı engelle
+- [x] Her geri alma ve ters hareketi işlem geçmişine bağlantılı biçimde kaydet
 
 ### Q. Ziyaretçi malzeme kataloğu — altıncı uygulama paketi
 
@@ -322,5 +322,5 @@ Bu sıra ortak bileşenleri önce kurarak aynı özelliğin farklı sayfalarda t
 
 ## Sıradaki teknik adım
 
-P paketinde sıradaki adım, hangi düşük riskli işlemlerin kısa süre içinde doğrudan
-geri alınabileceğini merkezi kurallarla belirlemektir.
+Q paketinde sıradaki adım, ziyaretçi malzeme kataloğuna sıralama, sonuç sayısı ve
+mobil hızlı filtre altyapısını eklemektir.

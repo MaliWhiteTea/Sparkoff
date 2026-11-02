@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\UndoActionType;
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\Announcement;
 use App\Models\Role;
+use App\Models\UndoAction;
 use App\Models\User;
+use App\Services\AdminUndoService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -82,20 +85,42 @@ class AnnouncementController extends Controller
         return back()->with('success', 'Duyuru oluşturuldu.');
     }
 
-    public function update(Request $request, Announcement $announcement): RedirectResponse
+    public function update(Request $request, Announcement $announcement, AdminUndoService $undo): RedirectResponse
     {
         $data = $this->validated($request);
         $this->authorizeAudience($request, $announcement->audience, 'update');
         $this->authorizeAudience($request, $data['audience'], 'update');
         $roleIds = $data['role_ids'];
         unset($data['role_ids']);
-        DB::transaction(function () use ($announcement, $data, $roleIds) {
+        $undoActionId = DB::transaction(function () use ($announcement, $data, $roleIds, $request, $undo) {
+            $beforePublished = $announcement->is_published;
+            $beforeRoles = $announcement->targetRoles()->pluck('roles.id')->sort()->values()->all();
             $announcement->update($data);
             $announcement->targetRoles()->sync(in_array($data['audience'], ['staff', 'both'], true) ? $roleIds : []);
-            $this->recordAction($announcement, 'updated', ['target_roles']);
+            $changed = collect(array_keys($announcement->getChanges()))->reject(fn (string $field) => $field === 'updated_at')->values();
+            $afterRoles = $announcement->targetRoles()->pluck('roles.id')->sort()->values()->all();
+            $fields = $changed->all();
+            if ($beforeRoles !== $afterRoles) {
+                $fields[] = 'target_roles';
+            }
+            $log = $this->recordAction($announcement, 'updated', $fields ?: ['staff_announcement']);
+
+            if ($changed->all() !== ['is_published'] || $beforeRoles !== $afterRoles) {
+                return null;
+            }
+
+            return $undo->create($request->user(), UndoActionType::AnnouncementPublication, [
+                'announcement_id' => $announcement->id,
+                'before' => $beforePublished,
+                'after' => $announcement->is_published,
+            ], $log)->id;
         });
 
-        return back()->with('success', 'Duyuru güncellendi.');
+        $response = back()->with('success', 'Duyuru güncellendi.');
+
+        return $undoActionId
+            ? $response->with('undo', $undo->flash(UndoAction::query()->findOrFail($undoActionId)))
+            : $response;
     }
 
     public function destroy(Request $request, Announcement $announcement): RedirectResponse
@@ -166,9 +191,9 @@ class AnnouncementController extends Controller
             || $announcement->targetRoles()->whereIn('roles.id', $user->roles()->pluck('roles.id'))->exists();
     }
 
-    private function recordAction(Announcement $announcement, string $action, array $fields): void
+    private function recordAction(Announcement $announcement, string $action, array $fields): ActivityLog
     {
-        ActivityLog::query()->create([
+        return ActivityLog::query()->create([
             'user_id' => auth()->id(), 'action' => $action,
             'subject_type' => $announcement->getMorphClass(), 'subject_id' => $announcement->id,
             'changed_fields' => $fields, 'created_at' => now(),

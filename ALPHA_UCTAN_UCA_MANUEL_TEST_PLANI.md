@@ -736,7 +736,35 @@ yeniden kapatılır ve cache yenilenir.
 - [ ] UI-10 — İşlem sırasında butonlar disabled/işlem metni gösteriyor; çift
   tıklama yinelenen kayıt oluşturmuyor.
 
-## 22. Bilinen sınırlar ve test edilemeyen tanımlar
+## 22. Güvenli geri alma
+
+- [ ] UNDO-01 — Stok düzeltmesinden sonra görünen “Geri al” bildirimi açık ve
+  koyu temada okunuyor; işlem stoku önceki bakiyeye bağlantılı ters hareketle
+  döndürüyor.
+- [ ] UNDO-02 — Toplu kategori değişikliği seçilen bütün malzemelerin önceki
+  kategorisini ayrı ayrı geri yüklüyor.
+- [ ] UNDO-03 — Toplu konum değişikliği seçilen bütün malzemelerin önceki
+  konumunu ayrı ayrı geri yüklüyor.
+- [ ] UNDO-04 — Toplu katalog görünürlüğü değişikliği her malzemenin önceki
+  görünürlük değerini geri yüklüyor.
+- [ ] UNDO-05 — Yalnız duyurunun yayın/taslak durumu değiştirildiğinde geri alma
+  sunuluyor; başlık veya içerik de değiştiğinde doğrudan geri alma sunulmuyor.
+- [ ] UNDO-06 — Bildirim 60 saniye sonra kayboluyor ve süresi dolan sunucu
+  isteği veriyi değiştirmeden Türkçe uyarı gösteriyor.
+- [ ] UNDO-07 — Geri alma düğmesine iki kez basıldığında işlem yalnız bir kez
+  uygulanıyor.
+- [ ] UNDO-08 — Başka kullanıcıya ait geri alma adresi 404; işlemi yapan
+  kullanıcının yetkisi kaldırıldıysa istek 403 dönüyor.
+- [ ] UNDO-09 — İlk işlemden sonra aynı alan başka bir işlemle değiştirildiyse
+  eski geri alma yeni değerin üzerine yazmıyor.
+- [ ] UNDO-10 — Parola, rol/yetki, teslim/iade, hasar/kayıp, içe aktarma ve
+  arşivleme sonrasında doğrudan “Geri al” bildirimi gösterilmiyor.
+- [ ] UNDO-11 — İşlem geçmişinde ilk işlem ve “Değişikliği geri aldı” kayıtları
+  bağlantı numarasıyla görünüyor; hassas değer taşımıyor.
+- [ ] UNDO-12 — Mobilde bildirim metni ve düğme taşmıyor; işlem sırasında düğme
+  devre dışı kalıp “Geri alınıyor…” metnini gösteriyor.
+
+## 23. Bilinen sınırlar ve test edilemeyen tanımlar
 
 - [ ] GAP-01 — `loans.extend_due_date`, `loans.export` ve `appointments.export`
   izinleri yapılandırmada tanımlı ancak
@@ -753,7 +781,7 @@ yeniden kapatılır ve cache yenilenir.
 - [ ] GAP-05 — PHP güvenlik paketi/backport doğrulaması hosting sağlayıcısından
   alınmadan güvenlik kapısı tamamlanmış sayılmaz.
 
-## 23. Test turu kapanışı
+## 24. Test turu kapanışı
 
 - [ ] CLOSE-01 — Başarısız bütün testler hata kaydına dönüştürüldü; engelli
   maddelerin nedeni ve sahibi belli.

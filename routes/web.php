@@ -22,6 +22,7 @@ use App\Http\Controllers\Admin\QuickSearchController as AdminQuickSearchControll
 use App\Http\Controllers\Admin\RecentRecordController as AdminRecentRecordController;
 use App\Http\Controllers\Admin\SavedFilterController as AdminSavedFilterController;
 use App\Http\Controllers\Admin\SettingsController as AdminSettingsController;
+use App\Http\Controllers\Admin\UndoController as AdminUndoController;
 use App\Http\Controllers\Admin\WorkshopSettingsController as AdminWorkshopSettingsController;
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\FeedbackController;
@@ -62,6 +63,7 @@ Route::prefix('yonetim')->name('admin.')->group(function () {
         Route::post('/bildirimler/oku', [AdminNotificationController::class, 'read'])->name('notifications.read');
         Route::post('/bildirimler/tumunu-oku', [AdminNotificationController::class, 'readAll'])->name('notifications.read-all');
         Route::post('/son-goruntulenenler', [AdminRecentRecordController::class, 'store'])->name('recent-records.store');
+        Route::post('/geri-al/{undoAction}', AdminUndoController::class)->name('undo');
         Route::post('/cikis', [AdminAuthController::class, 'destroy'])->name('logout');
         Route::post('/kisisel-filtreler', [AdminSavedFilterController::class, 'store'])->name('saved-filters.store');
         Route::delete('/kisisel-filtreler/{table}/{filterId}', [AdminSavedFilterController::class, 'destroy'])->name('saved-filters.destroy');

@@ -159,6 +159,14 @@ Aktif veya gecikmiş teslimlerde kişi bilgileri kayıt sonuçlanana kadar korun
 - Kayıtlar işlemi yapan yetkiliyi, zamanı, eylemi ve güvenli değişiklik özetini içerir.
 - Teknik eylem kodları yönetim arayüzünde Türkçe açıklamalarla gösterilir.
 
+### Güvenli geri alma
+
+- Stok düzeltmesi, malzeme kategori/konum/görünürlük değişikliği ve yalnız duyuru yayın durumu değişikliği 60 saniye içinde geri alınabilir.
+- Geri alma yalnız işlemi yapan ve gerekli yetkisi hâlâ bulunan kullanıcı tarafından uygulanabilir.
+- Süresi dolmuş, daha önce geri alınmış veya sonradan değiştirilmiş kayıtların üzerine yazılmaz.
+- Parola, kullanıcı yetkisi, teslim/iade, hasar-kayıp, içe aktarma ve arşivleme işlemleri doğrudan geri alınamaz.
+- İlk işlem ile geri alma işlemi denetim geçmişinde birbirine bağlı ayrı kayıtlar olarak korunur.
+
 ### Form güvenliği ve yerel taslaklar
 
 - Kaydedilmemiş değişiklik varken panel içi sayfa geçişinde site temalı uyarı gösterilir.

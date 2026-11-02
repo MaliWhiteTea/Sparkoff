@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Enums\InventoryItemType;
 use App\Enums\InventoryVisibility;
 use App\Enums\StockMovementType;
+use App\Enums\UndoActionType;
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\InventoryCategory;
@@ -13,6 +14,8 @@ use App\Models\InventoryLocation;
 use App\Models\InventoryMedia;
 use App\Models\InventoryTransaction;
 use App\Models\StockMovement;
+use App\Models\UndoAction;
+use App\Services\AdminUndoService;
 use App\Services\InventoryStockService;
 use App\Support\InventoryCsvContract;
 use Illuminate\Http\RedirectResponse;
@@ -125,14 +128,14 @@ class InventoryController extends Controller
         ]);
     }
 
-    public function update(Request $request, InventoryItem $item): RedirectResponse
+    public function update(Request $request, InventoryItem $item, AdminUndoService $undo): RedirectResponse
     {
         $data = $this->validatedItem($request, false, $item);
         if (! $request->user()->hasPermissionTo('inventory.change_item_type')) {
             unset($data['item_type']);
         }
 
-        DB::transaction(function () use ($item, $data) {
+        $undoActionId = DB::transaction(function () use ($item, $data, $request, $undo) {
             $lockedItem = InventoryItem::query()->lockForUpdate()->findOrFail($item->id);
             if ($lockedItem->archived_at) {
                 throw ValidationException::withMessages(['item' => 'Arşivlenmiş bir malzeme düzenlenemez.']);
@@ -144,13 +147,41 @@ class InventoryController extends Controller
                     'item_type' => 'Aktif teslimi bulunan malzemenin türü değiştirilemez. Önce teslim kaydını kapatın.',
                 ]);
             }
+            $before = $lockedItem->getRawOriginal();
             $lockedItem->update($data);
+            $changed = collect(array_keys($lockedItem->getChanges()))->reject(fn (string $field) => $field === 'updated_at')->values();
+            $safeType = $changed->count() === 1 ? match ($changed->first()) {
+                'category_id' => UndoActionType::InventoryBulkCategory,
+                'location_id' => UndoActionType::InventoryBulkLocation,
+                'public_visibility' => UndoActionType::InventoryBulkVisibility,
+                default => null,
+            } : null;
+            if (! $safeType) {
+                return null;
+            }
+
+            $field = $changed->first();
+            $log = ActivityLog::query()->create([
+                'user_id' => $request->user()->id, 'action' => 'updated',
+                'subject_type' => InventoryItem::class, 'subject_id' => $lockedItem->id,
+                'changed_fields' => [$field], 'created_at' => now(),
+            ]);
+
+            return $undo->create($request->user(), $safeType, ['items' => [[
+                'id' => $lockedItem->id,
+                'before' => $this->undoScalar($before[$field] ?? null),
+                'after' => $this->undoScalar($lockedItem->getRawOriginal($field)),
+            ]]], $log)->id;
         }, 3);
 
-        return back()->with('success', 'Malzeme bilgileri güncellendi.');
+        $response = back()->with('success', 'Malzeme bilgileri güncellendi.');
+
+        return $undoActionId
+            ? $response->with('undo', $undo->flash(UndoAction::query()->findOrFail($undoActionId)))
+            : $response;
     }
 
-    public function bulkUpdate(Request $request): RedirectResponse
+    public function bulkUpdate(Request $request, AdminUndoService $undo): RedirectResponse
     {
         $operation = $request->validate([
             'operation' => ['required', Rule::in(['category', 'location', 'visibility', 'archive'])],
@@ -179,7 +210,7 @@ class InventoryController extends Controller
         };
         $ids = collect($data['item_ids'])->map(fn ($id) => (int) $id)->sort()->values();
 
-        $result = DB::transaction(function () use ($ids, $changes, $data, $request) {
+        $result = DB::transaction(function () use ($ids, $changes, $data, $request, $undo) {
             $items = InventoryItem::query()->whereIn('id', $ids)->orderBy('id')->lockForUpdate()->get()->keyBy('id');
             $canSeeNames = $request->user()->hasPermissionTo('inventory.view');
             $failures = collect();
@@ -206,6 +237,21 @@ class InventoryController extends Controller
                 $eligibleIds->push($id);
             }
 
+            $undoSnapshots = collect();
+            $undoType = match ($data['operation']) {
+                'category' => UndoActionType::InventoryBulkCategory,
+                'location' => UndoActionType::InventoryBulkLocation,
+                'visibility' => UndoActionType::InventoryBulkVisibility,
+                'archive' => null,
+            };
+            $undoField = array_key_first($changes);
+            if ($undoType && $eligibleIds->isNotEmpty()) {
+                $undoSnapshots = $eligibleIds->map(fn (int $id) => [
+                    'id' => $id,
+                    'before' => $this->undoScalar($items->get($id)->getRawOriginal($undoField)),
+                    'after' => $this->undoScalar($changes[$undoField]),
+                ])->filter(fn (array $snapshot) => ! $this->undoValuesEqual($snapshot['before'], $snapshot['after']))->values();
+            }
             if ($eligibleIds->isNotEmpty()) {
                 InventoryItem::query()->whereIn('id', $eligibleIds)->update($changes);
             }
@@ -215,7 +261,7 @@ class InventoryController extends Controller
                 'visibility' => ['public_visibility'],
                 'archive' => ['is_active', 'archived_at'],
             };
-            ActivityLog::query()->create([
+            $log = ActivityLog::query()->create([
                 'user_id' => $request->user()->id,
                 'action' => "inventory_bulk_{$data['operation']}_updated",
                 'subject_type' => InventoryItem::class,
@@ -223,12 +269,16 @@ class InventoryController extends Controller
                 'changed_fields' => ["item_count:{$eligibleIds->count()}", "failure_count:{$failures->count()}", ...$fields],
                 'created_at' => now(),
             ]);
+            $undoAction = $undoType && $undoSnapshots->isNotEmpty()
+                ? $undo->create($request->user(), $undoType, ['items' => $undoSnapshots->all()], $log)
+                : null;
 
             return [
                 'operation' => $data['operation'],
                 'successCount' => $eligibleIds->count(),
                 'failureCount' => $failures->count(),
                 'failures' => $failures->values()->all(),
+                'undoActionId' => $undoAction?->id,
             ];
         }, 3);
 
@@ -240,6 +290,9 @@ class InventoryController extends Controller
         };
 
         $response = back()->with('bulk_result', $result);
+        if ($result['undoActionId']) {
+            $response->with('undo', $undo->flash(UndoAction::query()->findOrFail($result['undoActionId'])));
+        }
         if ($result['failureCount'] === 0) {
             return $response->with('success', $message);
         }
@@ -286,7 +339,7 @@ class InventoryController extends Controller
         return back()->with('success', "{$count} malzeme ve ilişkili test kayıtları kalıcı olarak silindi.");
     }
 
-    public function adjustStock(Request $request, InventoryItem $item, InventoryStockService $stock): RedirectResponse
+    public function adjustStock(Request $request, InventoryItem $item, InventoryStockService $stock, AdminUndoService $undo): RedirectResponse
     {
         $data = $request->validate([
             'quantity_change' => ['required', 'numeric', 'not_in:0', 'between:-9999999999,9999999999'],
@@ -296,12 +349,21 @@ class InventoryController extends Controller
             throw ValidationException::withMessages(['quantity_change' => 'Arşivlenmiş malzemenin stoku değiştirilemez.']);
         }
         try {
-            $stock->adjust($item, $data['quantity_change'], StockMovementType::Adjustment, $request->user(), $data['reason']);
+            $movement = $stock->adjust($item, $data['quantity_change'], StockMovementType::Adjustment, $request->user(), $data['reason']);
         } catch (LogicException $exception) {
             throw ValidationException::withMessages(['quantity_change' => $exception->getMessage()]);
         }
 
-        return back()->with('success', 'Stok hareketi kaydedildi.');
+        $log = ActivityLog::query()->create([
+            'user_id' => $request->user()->id, 'action' => 'inventory_stock_adjusted',
+            'subject_type' => StockMovement::class, 'subject_id' => $movement->id,
+            'changed_fields' => ['quantity_change', 'reason'], 'created_at' => now(),
+        ]);
+        $undoAction = $undo->create($request->user(), UndoActionType::InventoryStockAdjustment, [
+            'movement_id' => $movement->id,
+        ], $log);
+
+        return back()->with('success', 'Stok hareketi kaydedildi.')->with('undo', $undo->flash($undoAction));
     }
 
     public function storeCategory(Request $request): RedirectResponse
@@ -353,6 +415,16 @@ class InventoryController extends Controller
         $request->merge(['is_active' => $request->boolean('is_active')]);
 
         return $request->validate($rules);
+    }
+
+    private function undoScalar(mixed $value): mixed
+    {
+        return $value instanceof \BackedEnum ? $value->value : $value;
+    }
+
+    private function undoValuesEqual(mixed $first, mixed $second): bool
+    {
+        return $first === $second || (string) $first === (string) $second;
     }
 
     private function validatedFilters(Request $request): array

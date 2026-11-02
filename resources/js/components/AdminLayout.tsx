@@ -3,11 +3,12 @@ import { CSSProperties, KeyboardEvent as ReactKeyboardEvent, PointerEvent, Props
 import AdminQuickSearch from './AdminQuickSearch';
 import AdminNotifications from './AdminNotifications';
 import AdminQuickActions, { type AdminQuickAction } from './AdminQuickActions';
+import AdminUndoNotice, { type UndoNotice } from './AdminUndoNotice';
 
 type Preferences = { theme: 'light' | 'dark' | 'system'; scale: 'small' | 'normal' | 'large'; density: 'comfortable' | 'normal' | 'compact'; sidebar: 'wide' | 'narrow' };
 type SharedProps = {
     auth: { user: { name: string; email: string; role: string; roles: string[]; permissions: string[]; isSystemAdministrator: boolean; interfacePreferences: Preferences } };
-    flash: { success?: string; warning?: string };
+    flash: { success?: string; warning?: string; undo?: UndoNotice };
     features: { onlineBooking: boolean };
     staffAnnouncements: { id: number; title: string; body: string; type: string; isPinned: boolean; requiresAcknowledgement: boolean; isRead: boolean }[];
     staffAnnouncementUnreadCount: number;
@@ -119,6 +120,7 @@ export default function AdminLayout({ children, quickActions = [] }: PropsWithCh
         <main className="admin-content">
             <div className="admin-utility-bar"><AdminQuickActions actions={quickActions} /><AdminQuickSearch /><AdminNotifications unreadCount={notificationUnreadCount} /></div>
             {flash.success && <div className="admin-flash success">{flash.success}</div>}{flash.warning && <div className="admin-flash warning">{flash.warning}</div>}
+            {flash.undo && <AdminUndoNotice notice={flash.undo} />}
             {staffAnnouncements.filter((announcement) => !announcement.isRead).map((announcement) => <section className={`staff-announcement staff-${announcement.type}`} key={announcement.id}><div><span>{announcement.isPinned ? 'SABİTLENMİŞ DUYURU' : 'YÖNETİM DUYURUSU'}</span><strong>{announcement.title}</strong><p>{announcement.body}</p></div><button type="button" onClick={() => router.post(`/yonetim/duyurular/${announcement.id}/okundu`, {}, { preserveScroll: true })}>{announcement.requiresAcknowledgement ? 'Okudum, onaylıyorum' : 'Okundu işaretle'}</button></section>)}
             {children}
         </main>
