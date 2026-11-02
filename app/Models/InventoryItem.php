@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
-    'category_id', 'location_id', 'name', 'slug', 'sku', 'item_type', 'unit', 'quantity',
+    'category_id', 'location_id', 'name', 'slug', 'sku', 'brand', 'model', 'item_type', 'unit', 'quantity',
     'minimum_stock', 'public_visibility', 'description', 'technical_specs', 'image_path',
     'is_active', 'archived_at',
 ])]

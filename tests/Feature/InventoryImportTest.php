@@ -46,7 +46,7 @@ class InventoryImportTest extends TestCase
     public function test_csv_can_be_mapped_previewed_and_imported_with_initial_stock(): void
     {
         $importer = $this->userWithPermissions(['inventory.import']);
-        $csv = "Ürün;Kod;Kategori;Konum;Tür;Birim;Miktar;Kritik stok;Görünürlük;Açıklama;Eski alan\nArduino Uno;ARD-01;Elektronik;A Rafı;ödünç;adet;30;5;kesin;Geliştirme kartı;yok say\nLehim Teli;LEH-01;Sarf;B Rafı;sarf;makara;4;1;durum;Kurşunsuz;yok say\n";
+        $csv = "Ürün;Kod;Üretici;Model No;Kategori;Konum;Tür;Birim;Miktar;Kritik stok;Görünürlük;Açıklama;Eski alan\nArduino Uno;ARD-01;Arduino;UNO R3;Elektronik;A Rafı;ödünç;adet;30;5;kesin;Geliştirme kartı;yok say\nLehim Teli;LEH-01;Soldex;Sn60Pb40;Sarf;B Rafı;sarf;makara;4;1;durum;Kurşunsuz;yok say\n";
 
         $this->actingAs($importer)->post(route('admin.inventory.import.upload'), [
             'file' => UploadedFile::fake()->createWithContent('envanter.csv', $csv),
@@ -55,11 +55,14 @@ class InventoryImportTest extends TestCase
         $this->get(route('admin.inventory.import.index'))->assertOk()->assertInertia(fn (Assert $page) => $page
             ->component('Admin/Inventory/Import')
             ->where('upload.name', 'envanter.csv')
-            ->has('upload.headers', 11)
+            ->has('upload.headers', 13)
+            ->where('upload.mapping.Üretici', 'brand')
+            ->where('upload.mapping.Model No', 'model')
             ->where('upload.unmappedHeaders', ['Eski alan']));
 
         $mapping = [
-            'Ürün' => 'name', 'Kod' => 'sku', 'Kategori' => 'category', 'Konum' => 'location', 'Tür' => 'type',
+            'Ürün' => 'name', 'Kod' => 'sku', 'Üretici' => 'brand', 'Model No' => 'model',
+            'Kategori' => 'category', 'Konum' => 'location', 'Tür' => 'type',
             'Birim' => 'unit', 'Miktar' => 'quantity', 'Kritik stok' => 'minimum_stock',
             'Görünürlük' => 'visibility', 'Açıklama' => 'description',
         ];
@@ -79,6 +82,8 @@ class InventoryImportTest extends TestCase
         $this->assertSame('30.000', $arduino->quantity);
         $this->assertSame('loanable', $arduino->item_type->value);
         $this->assertSame('exact', $arduino->public_visibility->value);
+        $this->assertSame('Arduino', $arduino->brand);
+        $this->assertSame('UNO R3', $arduino->model);
         $this->assertDatabaseHas('stock_movements', ['inventory_item_id' => $arduino->id, 'movement_type' => 'initial', 'quantity_change' => 30]);
         $this->assertTrue(ActivityLog::query()->where('action', 'inventory_imported')->exists());
         Storage::disk('local')->assertMissing(session('inventory_import.path', 'missing'));
@@ -115,8 +120,8 @@ class InventoryImportTest extends TestCase
     public function test_exported_inventory_csv_can_be_uploaded_with_automatic_mapping(): void
     {
         $importer = $this->userWithPermissions(['inventory.import']);
-        $csv = "Stok kodu,Malzeme,Tür,Kategori,Konum kodu,Konum,Miktar,Birim,Kritik stok,Durum,Katalog görünürlüğü,Açıklama\r\n".
-            ",Arduino UNO,Ödünç,Elektronik,A-1,A Rafı,8,adet,2,Aktif,Kesin,Test açıklaması\r\n";
+        $csv = "Stok kodu,Malzeme,Marka,Model,Tür,Kategori,Konum kodu,Konum,Miktar,Birim,Kritik stok,Durum,Katalog görünürlüğü,Açıklama\r\n".
+            ",Arduino UNO,Arduino,UNO R3,Ödünç,Elektronik,A-1,A Rafı,8,adet,2,Aktif,Kesin,Test açıklaması\r\n";
 
         $this->actingAs($importer)->post(route('admin.inventory.import.upload'), [
             'file' => UploadedFile::fake()->createWithContent('sparkoff-envanter.csv', $csv),
@@ -125,11 +130,32 @@ class InventoryImportTest extends TestCase
         $this->get(route('admin.inventory.import.index'))->assertInertia(fn (Assert $page) => $page
             ->where('upload.mapping.Stok kodu', 'sku')
             ->where('upload.mapping.Malzeme', 'name')
+            ->where('upload.mapping.Marka', 'brand')
+            ->where('upload.mapping.Model', 'model')
             ->where('upload.mapping.Tür', 'type')
             ->where('upload.mapping.Konum kodu', 'location_code')
             ->where('upload.mapping.Durum', 'status')
             ->where('upload.mapping.Katalog görünürlüğü', 'visibility')
             ->where('upload.mapping.Miktar', 'quantity'));
+    }
+
+    public function test_legacy_csv_without_brand_and_model_remains_importable(): void
+    {
+        $importer = $this->userWithPermissions(['inventory.import']);
+        $csv = "Malzeme;Stok kodu;Miktar\nEski kayıt;ESK-01;2\n";
+
+        $this->actingAs($importer)->post(route('admin.inventory.import.upload'), [
+            'file' => UploadedFile::fake()->createWithContent('eski.csv', $csv),
+        ])->assertSessionHas('success');
+        $this->post(route('admin.inventory.import.preview'), [
+            'mapping' => ['Malzeme' => 'name', 'Stok kodu' => 'sku', 'Miktar' => 'quantity'],
+        ])->assertSessionHas('success');
+        $this->post(route('admin.inventory.import.confirm'))->assertSessionHas('success');
+
+        $item = InventoryItem::query()->where('sku', 'ESK-01')->firstOrFail();
+        $this->assertNull($item->brand);
+        $this->assertNull($item->model);
+        $this->assertSame('2.000', $item->quantity);
     }
 
     public function test_real_export_can_be_imported_without_changing_contract_values(): void
@@ -143,13 +169,15 @@ class InventoryImportTest extends TestCase
             foreach (InventoryVisibility::cases() as $visibility) {
                 foreach ([true, false] as $active) {
                     $sku = strtoupper(substr($type->value, 0, 3).'-'.substr($visibility->value, 0, 3).'-'.($active ? 'A' : 'P'));
-                    $expected[$sku] = ['type' => $type, 'visibility' => $visibility, 'active' => $active];
+                    $expected[$sku] = ['type' => $type, 'visibility' => $visibility, 'active' => $active, 'brand' => 'Test Marka', 'model' => $sku.' Model'];
                     InventoryItem::query()->create([
                         'category_id' => $category->id,
                         'location_id' => $location->id,
                         'name' => "{$type->value} {$visibility->value} ".($active ? 'aktif' : 'pasif'),
                         'slug' => strtolower($sku),
                         'sku' => $sku,
+                        'brand' => 'Test Marka',
+                        'model' => $sku.' Model',
                         'item_type' => $type,
                         'unit' => 'adet',
                         'quantity' => '1.125',
@@ -188,6 +216,8 @@ class InventoryImportTest extends TestCase
             $this->assertSame($values['type'], $item->item_type);
             $this->assertSame($values['visibility'], $item->public_visibility);
             $this->assertSame($values['active'], $item->is_active);
+            $this->assertSame($values['brand'], $item->brand);
+            $this->assertSame($values['model'], $item->model);
             $this->assertSame('1.125', $item->quantity);
             $this->assertSame('0.125', $item->minimum_stock);
             $this->assertSame("Birinci satır\nİkinci satır; ayraçlı", $item->description);
@@ -276,6 +306,27 @@ class InventoryImportTest extends TestCase
         $this->assertSame('0.001', InventoryItem::query()->where('name', 'En küçük')->firstOrFail()->quantity);
         $this->assertSame('1.250', InventoryItem::query()->where('name', 'Ondalık virgül')->firstOrFail()->quantity);
         $this->assertDatabaseMissing('inventory_items', ['name' => 'Çok küçük']);
+    }
+
+    public function test_brand_and_model_length_limits_are_reported_in_csv_preview(): void
+    {
+        $importer = $this->userWithPermissions(['inventory.import']);
+        $csv = "Malzeme;Marka;Model\nUzun kayıt;".str_repeat('M', 121).';'.str_repeat('O', 161)."\n";
+
+        $this->actingAs($importer)->post(route('admin.inventory.import.upload'), [
+            'file' => UploadedFile::fake()->createWithContent('uzun-marka-model.csv', $csv),
+        ])->assertSessionHas('success');
+        $this->post(route('admin.inventory.import.preview'), [
+            'mapping' => ['Malzeme' => 'name', 'Marka' => 'brand', 'Model' => 'model'],
+        ])->assertSessionHas('success');
+
+        $this->get(route('admin.inventory.import.index'))->assertInertia(fn (Assert $page) => $page
+            ->where('analysis.validCount', 0)
+            ->where('analysis.errorCount', 1)
+            ->where('analysis.rows.0.errors', [
+                'Marka en fazla 120 karakter olabilir.',
+                'Model en fazla 160 karakter olabilir.',
+            ]));
     }
 
     public function test_malformed_headers_and_row_widths_are_rejected_with_line_number(): void

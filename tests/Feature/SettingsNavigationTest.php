@@ -187,6 +187,11 @@ class SettingsNavigationTest extends TestCase
         ])->assertSessionHas('success');
 
         $this->assertSame(['status', 'starts_at', 'applicant'], $user->fresh()->table_preferences['appointments']);
+
+        $this->put(route('admin.settings.personal.table.update'), [
+            'table' => 'inventory', 'columns' => ['name', 'brand', 'model'],
+        ])->assertSessionHas('success');
+        $this->assertSame(['name', 'brand', 'model'], $user->fresh()->table_preferences['inventory']);
     }
 
     public function test_sensitive_table_column_requires_matching_permission(): void

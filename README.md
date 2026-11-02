@@ -82,7 +82,7 @@ Gerçek SMTP, SPF/DKIM ve teslimat testleri tamamlanmadan çevrimiçi randevu ö
 ### Malzeme kayıtları
 
 - Sarf malzemesi, ödünç verilebilir malzeme ve demirbaş türlerini destekler.
-- Kategori, raf/kutu konumu, birim, stok, minimum stok ve katalog görünürlüğü bilgilerini tutar.
+- Marka, model, kategori, raf/kutu konumu, birim, stok, minimum stok ve katalog görünürlüğü bilgilerini tutar.
 - Her stok değişikliğini neden, önceki/yeni bakiye, tarih ve işlemi yapan yetkiliyle kaydeder.
 - Kritik ve tükenen stokları ayrı filtrelerle gösterir.
 - Malzemeleri arşivleme ve yalnız ana yöneticiye açık kalıcı test temizliği işlemlerini destekler.
@@ -98,6 +98,7 @@ Gerçek SMTP, SPF/DKIM ve teslimat testleri tamamlanmadan çevrimiçi randevu ö
 
 - Envanter CSV olarak dışa aktarılabilir.
 - CSV içe aktarmada kaynak sütunları sistem alanlarıyla eşlenir.
+- Dışa aktarma marka ve modeli ayrı sütunlarda üretir; içe aktarma eski dosyaları desteklemeyi sürdürür ve `Marka`/`Brand`/`Üretici` ile `Model`/`Model No`/`Model Numarası` başlıklarını otomatik eşler.
 - Aktarım öncesinde ön izleme, doğrulama, tekrar kaydı tespiti ve satır bazlı hata raporu gösterilir.
 - Kategori ve konumlar mevcut kayıtlarla eşleştirilebilir veya yetki dâhilinde oluşturulabilir.
 - Yalnız geçerli ve kullanıcı tarafından onaylanan satırlar toplu olarak kaydedilir.

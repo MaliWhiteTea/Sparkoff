@@ -114,7 +114,8 @@ class InventoryController extends Controller
 
             foreach ($items as $item) {
                 fputcsv($output, array_map($this->safeCsvValue(...), [
-                    $item->sku, $item->name, InventoryCsvContract::typeLabel($item->item_type), $item->category?->name,
+                    $item->sku, $item->name, $item->brand, $item->model,
+                    InventoryCsvContract::typeLabel($item->item_type), $item->category?->name,
                     $item->location?->code, $item->location?->name, $item->quantity, $item->unit,
                     $item->minimum_stock, InventoryCsvContract::statusLabel($item->archived_at ? 'archived' : ($item->is_active ? 'active' : 'inactive')),
                     InventoryCsvContract::visibilityLabel($item->public_visibility), $item->description,
@@ -400,6 +401,8 @@ class InventoryController extends Controller
         $rules = [
             'name' => ['required', 'string', 'max:180'],
             'sku' => ['nullable', 'string', 'max:100', Rule::unique('inventory_items')->ignore($item)],
+            'brand' => ['nullable', 'string', 'max:120'],
+            'model' => ['nullable', 'string', 'max:160'],
             'category_id' => ['nullable', 'integer', 'exists:inventory_categories,id'],
             'location_id' => ['nullable', 'integer', 'exists:inventory_locations,id'],
             'item_type' => ['required', Rule::enum(InventoryItemType::class)],
@@ -443,7 +446,13 @@ class InventoryController extends Controller
     {
         return InventoryItem::query()
             ->when($filters['search'] ?? null, function ($query, string $search) {
-                $query->where(fn ($nested) => $nested->where('name', 'like', "%{$search}%")->orWhere('sku', 'like', "%{$search}%"));
+                foreach (preg_split('/\s+/u', trim($search), -1, PREG_SPLIT_NO_EMPTY) as $term) {
+                    $query->where(fn ($nested) => $nested
+                        ->where('name', 'like', "%{$term}%")
+                        ->orWhere('sku', 'like', "%{$term}%")
+                        ->orWhere('brand', 'like', "%{$term}%")
+                        ->orWhere('model', 'like', "%{$term}%"));
+                }
             })
             ->when($filters['category'] ?? null, fn ($query, $category) => $query->where('category_id', $category))
             ->when($filters['type'] ?? null, fn ($query, $type) => $query->where('item_type', $type))
@@ -532,6 +541,7 @@ class InventoryController extends Controller
     {
         return [
             'id' => $item->id, 'name' => $item->name, 'sku' => $item->sku,
+            'brand' => $item->brand, 'model' => $item->model,
             'categoryId' => $item->category_id, 'category' => $item->category?->name,
             'locationId' => $item->location_id, 'location' => $item->location ? "{$item->location->code} · {$item->location->name}" : null,
             'itemType' => $item->item_type->value, 'unit' => $item->unit, 'quantity' => $item->quantity,

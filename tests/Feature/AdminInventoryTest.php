@@ -39,6 +39,25 @@ class AdminInventoryTest extends TestCase
                 ->where('recentMovements', []));
     }
 
+    public function test_inventory_search_and_payload_include_brand_and_model(): void
+    {
+        $viewer = $this->userWithPermissions(['inventory.view']);
+        $item = InventoryItem::query()->create($this->itemData([
+            'name' => 'Geliştirme kartı', 'slug' => 'gelistirme-karti',
+            'brand' => 'Arduino', 'model' => 'UNO R3',
+        ]));
+        InventoryItem::query()->create($this->itemData(['name' => 'Başka ürün', 'slug' => 'baska-urun']));
+
+        foreach (['Arduino', 'UNO R3', 'Arduino R3'] as $search) {
+            $this->actingAs($viewer)->get(route('admin.inventory.index', ['search' => $search]))
+                ->assertInertia(fn (Assert $page) => $page
+                    ->has('items.data', 1)
+                    ->where('items.data.0.id', $item->id)
+                    ->where('items.data.0.brand', 'Arduino')
+                    ->where('items.data.0.model', 'UNO R3'));
+        }
+    }
+
     public function test_inactive_item_can_be_found_and_reactivated_from_inactive_or_all_filters(): void
     {
         $viewer = $this->userWithPermissions(['inventory.view', 'inventory.update']);
@@ -80,17 +99,36 @@ class AdminInventoryTest extends TestCase
         $staff = $this->userWithPermissions(['inventory.create']);
 
         $this->actingAs($staff)->post(route('admin.inventory.store'), [
-            'name' => 'Arduino Uno', 'sku' => 'ARD-01', 'category_id' => null, 'location_id' => null,
+            'name' => 'Arduino Uno', 'sku' => 'ARD-01', 'brand' => 'Arduino', 'model' => 'UNO R3',
+            'category_id' => null, 'location_id' => null,
             'item_type' => 'loanable', 'unit' => 'adet', 'quantity' => '30', 'minimum_stock' => '5',
             'public_visibility' => 'exact', 'description' => 'Geliştirme kartı', 'is_active' => true,
         ])->assertSessionHas('success');
 
         $item = InventoryItem::query()->where('sku', 'ARD-01')->firstOrFail();
         $this->assertSame('30.000', $item->quantity);
+        $this->assertSame('Arduino', $item->brand);
+        $this->assertSame('UNO R3', $item->model);
         $this->assertDatabaseHas('stock_movements', [
             'inventory_item_id' => $item->id, 'user_id' => $staff->id,
             'movement_type' => 'initial', 'quantity_change' => 30,
         ]);
+    }
+
+    public function test_brand_and_model_length_limits_are_validated(): void
+    {
+        $staff = $this->userWithPermissions(['inventory.create']);
+
+        $this->actingAs($staff)->post(route('admin.inventory.store'), [
+            'name' => 'Uzun marka modeli', 'sku' => null,
+            'brand' => str_repeat('M', 121), 'model' => str_repeat('O', 161),
+            'category_id' => null, 'location_id' => null,
+            'item_type' => 'consumable', 'unit' => 'adet', 'quantity' => 0,
+            'minimum_stock' => null, 'public_visibility' => 'status',
+            'description' => null, 'is_active' => true,
+        ])->assertSessionHasErrors(['brand', 'model']);
+
+        $this->assertDatabaseMissing('inventory_items', ['name' => 'Uzun marka modeli']);
     }
 
     public function test_item_creation_uses_the_same_thousandth_precision_as_stock_service(): void
@@ -185,7 +223,7 @@ class AdminInventoryTest extends TestCase
 
     public function test_inventory_export_requires_permission_and_respects_filters(): void
     {
-        InventoryItem::query()->create($this->itemData(['name' => 'Arduino Uno', 'slug' => 'arduino-uno', 'item_type' => InventoryItemType::Loanable]));
+        InventoryItem::query()->create($this->itemData(['name' => 'Arduino Uno', 'slug' => 'arduino-uno', 'brand' => 'Arduino', 'model' => 'UNO R3', 'item_type' => InventoryItemType::Loanable]));
         InventoryItem::query()->create($this->itemData(['name' => 'Lehim Teli', 'slug' => 'lehim-teli', 'item_type' => InventoryItemType::Consumable]));
         $viewer = $this->userWithPermissions(['inventory.view']);
         $exporter = $this->userWithPermissions(['inventory.export']);
@@ -197,6 +235,8 @@ class AdminInventoryTest extends TestCase
 
         $this->assertStringStartsWith("\xEF\xBB\xBF", $csv);
         $this->assertStringContainsString('Arduino Uno', $csv);
+        $this->assertStringContainsString('"Stok kodu";Malzeme;Marka;Model;Tür', $csv);
+        $this->assertStringContainsString('Arduino;"UNO R3"', $csv);
         $this->assertStringNotContainsString('Lehim Teli', $csv);
     }
 

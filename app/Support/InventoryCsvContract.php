@@ -11,6 +11,8 @@ final class InventoryCsvContract
     public const COLUMNS = [
         'sku' => 'Stok kodu',
         'name' => 'Malzeme',
+        'brand' => 'Marka',
+        'model' => 'Model',
         'type' => 'Tür',
         'category' => 'Kategori',
         'location_code' => 'Konum kodu',

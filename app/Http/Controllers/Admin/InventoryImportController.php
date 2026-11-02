@@ -31,7 +31,8 @@ class InventoryImportController extends Controller
     private const PREVIEW_ROWS = 100;
 
     private const FIELDS = [
-        'name' => 'Malzeme adı (zorunlu)', 'sku' => 'Stok kodu', 'category' => 'Kategori',
+        'name' => 'Malzeme adı (zorunlu)', 'sku' => 'Stok kodu', 'brand' => 'Marka', 'model' => 'Model',
+        'category' => 'Kategori',
         'location_code' => 'Konum kodu', 'location' => 'Konum', 'type' => 'Tür', 'unit' => 'Birim',
         'quantity' => 'Miktar', 'minimum_stock' => 'Kritik stok', 'status' => 'Durum',
         'visibility' => 'Katalog görünürlüğü', 'description' => 'Açıklama',
@@ -128,7 +129,8 @@ class InventoryImportController extends Controller
                 $quantity = $row['quantity'];
                 $item = InventoryItem::query()->create([
                     'category_id' => $categoryId, 'location_id' => $locationId, 'name' => $row['name'],
-                    'slug' => $this->uniqueSlug($row['name']), 'sku' => $row['sku'], 'item_type' => $row['type'],
+                    'slug' => $this->uniqueSlug($row['name']), 'sku' => $row['sku'],
+                    'brand' => $row['brand'], 'model' => $row['model'], 'item_type' => $row['type'],
                     'unit' => $row['unit'], 'quantity' => 0, 'minimum_stock' => $row['minimum_stock'],
                     'public_visibility' => $row['visibility'], 'description' => $row['description'],
                     'is_active' => $row['status'] === 'active',
@@ -180,6 +182,11 @@ class InventoryImportController extends Controller
             $errors = [];
             if ($row['name'] === '') {
                 $errors[] = 'Malzeme adı boş.';
+            }
+            foreach (['brand' => ['Marka', 120], 'model' => ['Model', 160]] as $field => [$label, $maximum]) {
+                if (mb_strlen((string) ($raw[$field] ?? '')) > $maximum) {
+                    $errors[] = "{$label} en fazla {$maximum} karakter olabilir.";
+                }
             }
             foreach (['quantity' => 'Miktar', 'minimum_stock' => 'Kritik stok'] as $field => $label) {
                 if (($raw[$field] ?? '') !== '' && ! $this->validQuantity($raw[$field])) {
@@ -237,6 +244,8 @@ class InventoryImportController extends Controller
 
         return [
             'name' => trim($row['name'] ?? ''), 'sku' => ($row['sku'] ?? '') !== '' ? trim($row['sku']) : null,
+            'brand' => ($row['brand'] ?? '') !== '' ? trim($row['brand']) : null,
+            'model' => ($row['model'] ?? '') !== '' ? trim($row['model']) : null,
             'category' => trim($row['category'] ?? ''), 'location' => trim($row['location'] ?? ''), 'location_code' => trim($row['location_code'] ?? ''),
             'type' => $type ?? $typeInput, 'unit' => trim($row['unit'] ?? '') ?: 'adet',
             'quantity' => $this->quantityValue($row['quantity'] ?? '', '0'),
@@ -330,7 +339,14 @@ class InventoryImportController extends Controller
     private function suggestMapping(array $headers): array
     {
         $aliases = collect(InventoryCsvContract::COLUMNS)->mapWithKeys(fn ($label, $field) => [InventoryCsvContract::normalize($label) => $field])->all();
-        $aliases = [...$aliases, 'malzeme adı' => 'name', 'urun' => 'name', 'ürün' => 'name', 'kod' => 'sku', 'yer' => 'location', 'tur' => 'type', 'adet' => 'quantity', 'minimum stok' => 'minimum_stock', 'görünürlük' => 'visibility', 'aciklama' => 'description'];
+        $aliases = [...$aliases,
+            'malzeme adı' => 'name', 'urun' => 'name', 'ürün' => 'name', 'kod' => 'sku',
+            'brand' => 'brand', 'üretici' => 'brand', 'uretici' => 'brand',
+            'model no' => 'model', 'model numarası' => 'model', 'model numarasi' => 'model',
+            'ürün modeli' => 'model', 'urun modeli' => 'model',
+            'yer' => 'location', 'tur' => 'type', 'adet' => 'quantity', 'minimum stok' => 'minimum_stock',
+            'görünürlük' => 'visibility', 'aciklama' => 'description',
+        ];
 
         return collect($headers)->mapWithKeys(fn ($header) => [$header => $aliases[InventoryCsvContract::normalize($header)] ?? ''])->all();
     }

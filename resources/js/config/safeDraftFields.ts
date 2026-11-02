@@ -1,6 +1,6 @@
 export const safeDraftFields = {
     announcement: ['title', 'body', 'type', 'placement', 'audience', 'is_published', 'is_pinned', 'requires_acknowledgement', 'starts_at', 'ends_at', 'role_ids'],
-    inventoryItem: ['name', 'sku', 'category_id', 'location_id', 'item_type', 'unit', 'quantity', 'minimum_stock', 'public_visibility', 'description', 'is_active'],
+    inventoryItem: ['name', 'sku', 'brand', 'model', 'category_id', 'location_id', 'item_type', 'unit', 'quantity', 'minimum_stock', 'public_visibility', 'description', 'is_active'],
     workshopHours: ['hours'],
     bookingRules: ['hours', 'values'],
     privacyRetention: ['appointmentRetentionMonths', 'fileRetentionDays', 'noticeVersion', 'isDraft'],

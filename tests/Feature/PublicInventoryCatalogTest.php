@@ -22,6 +22,7 @@ class PublicInventoryCatalogTest extends TestCase
         $category = InventoryCategory::query()->create(['name' => 'Elektronik', 'slug' => 'elektronik', 'is_active' => true]);
         $privateLocation = InventoryLocation::query()->create(['name' => 'Gizli Dolap', 'code' => 'GD-1', 'is_public' => false, 'is_active' => true]);
         $exact = $this->item('Arduino Uno', InventoryVisibility::Exact, 30, $category, $privateLocation);
+        $exact->update(['brand' => 'Arduino', 'model' => 'UNO R3']);
         $this->item('HC-SR04 Sensör', InventoryVisibility::Status, 4, $category);
         $this->item('Gizli Parça', InventoryVisibility::Hidden, 99, $category);
         $archived = $this->item('Arşiv Parça', InventoryVisibility::Exact, 2, $category);
@@ -32,6 +33,8 @@ class PublicInventoryCatalogTest extends TestCase
             ->has('items.data', 2)
             ->where('items.data.0.id', $exact->id)
             ->where('items.data.0.quantity', '30.000')
+            ->where('items.data.0.brand', 'Arduino')
+            ->where('items.data.0.model', 'UNO R3')
             ->where('items.data.0.location', null)
             ->where('items.data.1.quantity', null));
     }
@@ -40,7 +43,8 @@ class PublicInventoryCatalogTest extends TestCase
     {
         $electronics = InventoryCategory::query()->create(['name' => 'Elektronik', 'slug' => 'elektronik', 'is_active' => true]);
         $mechanics = InventoryCategory::query()->create(['name' => 'Mekanik', 'slug' => 'mekanik', 'is_active' => true]);
-        $wanted = $this->item('Arduino Uno R3', InventoryVisibility::Status, 5, $electronics);
+        $wanted = $this->item('Geliştirme Kartı', InventoryVisibility::Status, 5, $electronics);
+        $wanted->update(['brand' => 'Arduino', 'model' => 'UNO R3']);
         $this->item('Arduino Nano', InventoryVisibility::Status, 0, $electronics);
         $this->item('Lineer Rulman', InventoryVisibility::Status, 5, $mechanics);
 
@@ -48,6 +52,8 @@ class PublicInventoryCatalogTest extends TestCase
             ->assertOk()->assertInertia(fn (Assert $page) => $page
             ->has('items.data', 1)
             ->where('items.data.0.id', $wanted->id)
+            ->where('items.data.0.brand', 'Arduino')
+            ->where('items.data.0.model', 'UNO R3')
             ->where('filters.search', 'Arduino R3'));
     }
 

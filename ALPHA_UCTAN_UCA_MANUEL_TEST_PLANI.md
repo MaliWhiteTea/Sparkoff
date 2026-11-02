@@ -188,6 +188,10 @@ Güvenlik ve veri kuralları:
 - [ ] MAT-PUB-13 — Sayfa numaraları doğru; ilk sayfada Önceki, son sayfada
   Sonraki butonu gösterilmiyor.
 - [ ] MAT-PUB-14 — Sayfa değişiminde filtreler ve kaydırma davranışı korunuyor.
+- [ ] MAT-PUB-15 — Marka ve model, mevcutsa malzeme adının altında doğru ve
+  mobilde taşmadan gösteriliyor; ikisi de boşsa gereksiz boş satır oluşmuyor.
+- [ ] MAT-PUB-16 — Marka, model ve marka+model sözcüklerini birlikte kullanan
+  aramalar doğru malzemeyi getiriyor ve diğer filtrelerle birlikte çalışıyor.
 
 ## 6. Geri bildirim ve KVKK
 
@@ -322,17 +326,17 @@ Güvenlik ve veri kuralları:
 ## 10. Envanter: tanımlar, malzemeler ve stok
 
 - [ ] INV-01 — “Yeni malzeme” formu açılıyor, “Formu kapat” kapatıyor.
-- [ ] INV-02 — Sarf, ödünç ve demirbaş; kategori/konum; birim; başlangıç stoku;
-  kritik eşik; exact/status/hidden görünürlük; açıklama ve Kullanımda alanlarıyla
-  ayrı sentetik kayıt oluşturuluyor.
+- [ ] INV-02 — Sarf, ödünç ve demirbaş; marka/model; kategori/konum; birim;
+  başlangıç stoku; kritik eşik; exact/status/hidden görünürlük; açıklama ve
+  Kullanımda alanlarıyla ayrı sentetik kayıt oluşturuluyor.
 - [ ] INV-03 — Zorunlu alan, negatif/0.001 hassasiyet, üst sınır, yinelenen kod
   ve Türkçe/büyük-küçük harf benzerliği doğrulamaları 500 vermiyor.
 - [ ] INV-04 — İlk stok hareketi doğru kullanıcı, `+miktar`, bakiye ve “İlk stok
   kaydı” gerekçesiyle oluşuyor.
 - [ ] INV-05 — Aktif/Pasif/Kritik/Tükenen/Arşivlenen özet kartlarının her biri
   doğru filtreyi açıyor.
-- [ ] INV-06 — Ad/kod arama, kategori, tür ve durum filtreleri tek tek ve birlikte
-  çalışıyor; “Ara” doğru sonucu getiriyor.
+- [ ] INV-06 — Ad/kod/marka/model arama, kategori, tür ve durum filtreleri tek tek
+  ve birlikte çalışıyor; marka+model sorgusu doğru sonucu getiriyor.
 - [ ] INV-07 — “Düzenle”, alan değişiklikleri, “Değişiklikleri kaydet” ve
   “Vazgeç” doğru çalışıyor.
 - [ ] INV-08 — Tür değiştirme yetkisi olmayan kullanıcı tür alanını değiştiremiyor;
@@ -364,6 +368,10 @@ Güvenlik ve veri kuralları:
   başarısız kayıtlar ayrı raporlanıp başarılı kayıtlar uygulanıyor.
 - [ ] INV-21 — “CSV indir” mevcut filtreleri yansıtıyor, UTF-8 Türkçe alanları
   doğru ve `=`, `+`, `-`, `@` ile başlayan hücreleri formül olarak çalıştırmıyor.
+- [ ] INV-22 — Marka ve model ayrı görünür alanlar olarak açılıp kapatılıyor;
+  kaydedilen sütun tercihi yenileme ve yeniden girişten sonra korunuyor.
+- [ ] INV-23 — Marka 120, model 160 karakter sınırını uyguluyor; alanlar boş
+  bırakıldığında eski malzeme kayıtları düzenlenebiliyor.
 
 ### 10.1. Envanter medyası
 
@@ -406,6 +414,12 @@ Güvenlik ve veri kuralları:
   oluşturuyor.
 - [ ] CSV-12 — İçe aktarma akışının yükle/ön izleme/onay/iptal adımlarının her biri
   `inventory.import` yetkisi olmadan 403.
+- [ ] CSV-13 — Dışa aktarılan dosyada `Marka` ve `Model` ayrı sütunlarda; yeniden
+  içe aktarıldığında değerler kayıpsız korunuyor.
+- [ ] CSV-14 — `Marka`/`Brand`/`Üretici` ve `Model`/`Model No`/`Model Numarası`
+  başlıkları otomatik eşleniyor; marka/model sütunu olmayan eski CSV aktarılıyor.
+- [ ] CSV-15 — Marka/model uzunluk sınırını aşan satır ön izlemede açık Türkçe
+  hatayla işaretleniyor ve onay sırasında kaydedilmiyor.
 
 ## 11. Teslim ve iadeler
 

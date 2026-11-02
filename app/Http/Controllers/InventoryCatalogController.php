@@ -31,6 +31,8 @@ class InventoryCatalogController extends Controller
                     $query->where(function ($nested) use ($term) {
                         $nested->where('name', 'like', "%{$term}%")
                             ->orWhere('sku', 'like', "%{$term}%")
+                            ->orWhere('brand', 'like', "%{$term}%")
+                            ->orWhere('model', 'like', "%{$term}%")
                             ->orWhere('description', 'like', "%{$term}%")
                             ->orWhereHas('category', fn ($category) => $category->where('name', 'like', "%{$term}%"));
                     });
@@ -49,6 +51,8 @@ class InventoryCatalogController extends Controller
                     'id' => $item->id,
                     'name' => $item->name,
                     'sku' => $item->sku,
+                    'brand' => $item->brand,
+                    'model' => $item->model,
                     'category' => $item->category?->name ?? 'Diğer',
                     'location' => $item->location?->is_public ? $item->location->name : null,
                     'type' => $item->item_type->value,

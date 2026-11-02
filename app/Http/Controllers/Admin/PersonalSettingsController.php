@@ -115,7 +115,7 @@ class PersonalSettingsController extends Controller
                 'printer' => null,
                 'status' => null,
             ],
-            'inventory' => ['name' => null, 'category' => null, 'location' => null, 'quantity' => null, 'visibility' => null],
+            'inventory' => ['name' => null, 'brand' => null, 'model' => null, 'category' => null, 'location' => null, 'quantity' => null, 'visibility' => null],
             'loans' => ['item' => null, 'recipient' => 'loans.view_personal_data', 'quantity' => null, 'issued_at' => null, 'due_at' => null, 'status' => null],
             'feedback' => ['type' => null, 'message' => null, 'status' => null, 'created_at' => null, 'handler' => null],
             'users' => ['name' => null, 'email' => null, 'roles' => null, 'status' => null],

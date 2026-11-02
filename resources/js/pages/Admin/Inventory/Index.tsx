@@ -19,6 +19,8 @@ type Item = {
   id: number;
   name: string;
   sku: string | null;
+  brand: string | null;
+  model: string | null;
   categoryId: number | null;
   category: string | null;
   locationId: number | null;
@@ -66,6 +68,8 @@ type BulkResult = {
 type ItemForm = {
   name: string;
   sku: string;
+  brand: string;
+  model: string;
   category_id: string;
   location_id: string;
   item_type: string;
@@ -79,6 +83,8 @@ type ItemForm = {
 const emptyItem: ItemForm = {
   name: "",
   sku: "",
+  brand: "",
+  model: "",
   category_id: "",
   location_id: "",
   item_type: "consumable",
@@ -250,6 +256,22 @@ function Fields({
         />
       </label>
       <label className="field">
+        <span>Marka (isteğe bağlı)</span>
+        <input
+          value={data.brand}
+          maxLength={120}
+          onChange={(e) => setData({ ...data, brand: e.target.value })}
+        />
+      </label>
+      <label className="field">
+        <span>Model (isteğe bağlı)</span>
+        <input
+          value={data.model}
+          maxLength={160}
+          onChange={(e) => setData({ ...data, model: e.target.value })}
+        />
+      </label>
+      <label className="field">
         <span>Kategori</span>
         <select
           value={data.category_id}
@@ -390,6 +412,8 @@ function ItemCard({
   const initialData: ItemForm = {
     name: item.name,
     sku: item.sku ?? "",
+    brand: item.brand ?? "",
+    model: item.model ?? "",
     category_id: item.categoryId ? String(item.categoryId) : "",
     location_id: item.locationId ? String(item.locationId) : "",
     item_type: item.itemType,
@@ -476,6 +500,10 @@ function ItemCard({
         {selectable && <SelectionCheckbox checked={selected} label={`${item.name} malzemesini seç`} onChange={onSelectionChange} />}
         <div className="inventory-item-summary">
           {columns.includes("name") && <><span>{item.sku || typeLabels[item.itemType]}</span><h3>{item.name}</h3></>}
+          {(columns.includes("brand") || columns.includes("model")) && <small className="inventory-brand-model">{[
+            columns.includes("brand") ? item.brand : null,
+            columns.includes("model") ? item.model : null,
+          ].filter(Boolean).join(" · ") || "Marka veya model belirtilmedi"}</small>}
           {(columns.includes("category") || columns.includes("location")) && <p>{[
             columns.includes("category") ? item.category : null,
             columns.includes("location") ? item.location : null,
@@ -975,6 +1003,8 @@ export default function Inventory({
   const isSystemAdministrator = page.props.auth.user.isSystemAdministrator;
   const columnDefinitions: ColumnDefinition[] = [
     { key: "name", label: "Malzeme adı" },
+    { key: "brand", label: "Marka" },
+    { key: "model", label: "Model" },
     { key: "category", label: "Kategori" },
     { key: "location", label: "Konum" },
     { key: "quantity", label: "Stok miktarı" },
@@ -1096,7 +1126,7 @@ export default function Inventory({
           <span>Malzeme ara</span>
           <input
             value={search}
-            placeholder="Ad veya stok kodu"
+            placeholder="Ad, stok kodu, marka veya model"
             onChange={(e) => setSearch(e.target.value)}
           />
         </label>

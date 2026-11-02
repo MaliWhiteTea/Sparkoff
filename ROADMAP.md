@@ -264,6 +264,15 @@ Sparkoff Proje Atölyesi
 - [x] Parola, kullanıcı yetkisi, teslim/iade, hasar/kayıp ve içe aktarmada doğrudan geri almayı engelle
 - [x] Her geri alma ve ters hareketi işlem geçmişine bağlantılı biçimde kaydet
 
+### P.1. Envanter marka ve model alanları — ara paket
+
+- [x] Malzeme kayıtlarına isteğe bağlı, ayrı marka ve model alanları ekle
+- [x] Yönetim formu, liste görünümü, arama ve işlem geçmişine marka/model desteği ekle
+- [x] CSV dışa aktarma sözleşmesine marka/model sütunlarını ve içe aktarma başlık eşlemelerini ekle
+- [x] Marka/model içermeyen eski CSV dosyalarının uyumluluğunu koru
+- [x] Ziyaretçi kataloğunda marka/model gösterimini ve bu alanlarda aramayı ekle
+- [x] Sunucu, CSV, genel katalog ve geriye uyumluluk testlerini tamamla
+
 ### Q. Ziyaretçi malzeme kataloğu — altıncı uygulama paketi
 
 - [ ] Malzeme tablosuna sıralama ve kategori başına sonuç sayısı ekle (seçim 18)
