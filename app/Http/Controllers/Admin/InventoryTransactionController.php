@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Enums\InventoryTransactionStatus;
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
 use App\Models\InventoryItem;
 use App\Models\InventoryTransaction;
 use App\Services\InventoryTransactionService;
@@ -52,6 +53,14 @@ class InventoryTransactionController extends Controller
                 'issuer' => $transaction->issuer?->name ?? 'Sistem',
                 'canReverse' => $canReverse && $service->canReverse($transaction),
             ]);
+
+        if (($canSeeName || $canSeeEmail) && $transactions->count() > 0) {
+            ActivityLog::query()->create([
+                'user_id' => $request->user()->id, 'action' => 'personal_data_viewed',
+                'subject_type' => InventoryTransaction::class, 'subject_id' => null,
+                'changed_fields' => ['record_count' => $transactions->count()], 'created_at' => now(),
+            ]);
+        }
 
         return Inertia::render('Admin/InventoryTransactions/Index', [
             'transactions' => $transactions, 'filter' => $status,

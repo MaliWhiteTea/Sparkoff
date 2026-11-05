@@ -9,6 +9,7 @@ use App\Mail\AppointmentStatusMail;
 use App\Models\ActivityLog;
 use App\Models\Announcement;
 use App\Models\Appointment;
+use App\Models\AppointmentFile;
 use App\Models\BlackoutPeriod;
 use App\Models\Printer;
 use App\Models\Role;
@@ -176,7 +177,15 @@ class AdminPanelTest extends TestCase
         $url = route('admin.appointments.files.download', [$appointment->public_id, $file]);
 
         $this->get($url)->assertRedirect(route('admin.login'));
+        $viewer = User::factory()->create(['role' => 'operator', 'is_active' => true]);
+        $viewer->roles()->attach(Role::query()->where('slug', 'inventory-moderator')->firstOrFail());
+        $this->actingAs($viewer)->get($url)->assertForbidden();
+        $this->assertDatabaseMissing('activity_logs', ['user_id' => $viewer->id, 'action' => 'private_file_downloaded']);
         $this->actingAs($admin)->get($url)->assertDownload('model.stl');
+        $this->assertDatabaseHas('activity_logs', [
+            'user_id' => $admin->id, 'action' => 'private_file_downloaded',
+            'subject_type' => AppointmentFile::class, 'subject_id' => $file->id,
+        ]);
     }
 
     public function test_private_appointment_files_are_not_exposed_by_a_storage_route(): void

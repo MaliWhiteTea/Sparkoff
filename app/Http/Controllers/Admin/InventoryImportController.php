@@ -21,6 +21,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
+use OpenSpout\Reader\XLSX\Reader as XlsxReader;
 
 class InventoryImportController extends Controller
 {
@@ -41,7 +42,7 @@ class InventoryImportController extends Controller
     public function index(Request $request): Response
     {
         $state = $this->state($request);
-        $csv = $state ? $this->readCsv($state['path']) : ['headers' => [], 'rows' => []];
+        $csv = $state ? $this->readFile($state['path']) : ['headers' => [], 'rows' => []];
         $headers = $csv['headers'];
         $rows = $csv['rows'];
         $mapping = $state ? ($state['mapping'] ?? $this->suggestMapping($headers)) : [];
@@ -82,22 +83,25 @@ class InventoryImportController extends Controller
 
     public function upload(Request $request): RedirectResponse
     {
-        $data = $request->validate(['file' => ['required', 'file', 'extensions:csv,txt', 'mimetypes:text/csv,text/plain,application/csv,application/vnd.ms-excel,application/octet-stream', 'max:2048']]);
-        $contents = file_get_contents($data['file']->getRealPath());
-        if ($contents === false || ! mb_check_encoding($contents, 'UTF-8')) {
+        $data = $request->validate(['file' => ['required', 'file', 'extensions:csv,txt,xlsx', 'mimetypes:text/csv,text/plain,application/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/zip,application/octet-stream', 'max:2048']]);
+        $extension = strtolower($data['file']->getClientOriginalExtension());
+        if ($extension !== 'xlsx' && ! mb_check_encoding((string) file_get_contents($data['file']->getRealPath()), 'UTF-8')) {
             throw ValidationException::withMessages(['file' => 'CSV dosyası UTF-8 kodlamasında olmalıdır. Dosyayı UTF-8 olarak kaydedip yeniden yükleyin.']);
         }
         $this->clearState($request);
-        $path = $data['file']->storeAs('inventory-imports', Str::uuid().'.csv', 'local');
+        $path = $data['file']->storeAs('inventory-imports', Str::uuid().'.'.$extension, 'local');
         try {
-            $csv = $this->readCsv($path);
-        } catch (ValidationException $exception) {
+            $csv = $this->readFile($path);
+        } catch (\Throwable $exception) {
             Storage::disk('local')->delete($path);
-            throw $exception;
+            if ($exception instanceof ValidationException) {
+                throw $exception;
+            }
+            throw ValidationException::withMessages(['file' => 'XLSX dosyası okunamadı. Geçerli bir çalışma kitabı yükleyin.']);
         }
         if ($csv['rows'] === []) {
             Storage::disk('local')->delete($path);
-            throw ValidationException::withMessages(['file' => 'CSV dosyasında başlık ve en az bir veri satırı bulunmalıdır.']);
+            throw ValidationException::withMessages(['file' => 'Dosyada başlık ve en az bir veri satırı bulunmalıdır.']);
         }
         $request->session()->put(self::SESSION_KEY, [
             'path' => $path, 'name' => $data['file']->getClientOriginalName(), 'user_id' => $request->user()->id,
@@ -113,13 +117,13 @@ class InventoryImportController extends Controller
             'mapping' => ['required', 'array'],
             'mapping.*' => ['nullable', 'string', Rule::in(array_keys(self::FIELDS))],
         ])['mapping'];
-        $headers = $this->readCsv($state['path'])['headers'];
+        $headers = $this->readFile($state['path'])['headers'];
         if (array_diff(array_keys($mapping), $headers) !== []) {
             throw ValidationException::withMessages(['mapping' => 'Dosyada bulunmayan bir sütun gönderildi.']);
         }
         $selected = array_values(array_filter($mapping));
         if (! in_array('name', $selected, true)) {
-            throw ValidationException::withMessages(['mapping' => 'Malzeme adı alanını bir CSV sütunuyla eşleyin.']);
+            throw ValidationException::withMessages(['mapping' => 'Malzeme adı alanını bir dosya sütunuyla eşleyin.']);
         }
         if (count($selected) !== count(array_unique($selected))) {
             throw ValidationException::withMessages(['mapping' => 'Bir alan birden fazla sütunla eşlenemez.']);
@@ -134,7 +138,7 @@ class InventoryImportController extends Controller
     {
         $state = $this->requiredState($request);
         abort_unless(isset($state['mapping']), 422);
-        $analysis = $this->analyze($this->readCsv($state['path'])['rows'], $state['mapping']);
+        $analysis = $this->analyze($this->readFile($state['path'])['rows'], $state['mapping']);
         if ($analysis['validCount'] === 0) {
             throw ValidationException::withMessages(['import' => 'İçe aktarılabilecek geçerli satır bulunamadı.']);
         }
@@ -154,7 +158,7 @@ class InventoryImportController extends Controller
                     'archived_at' => $row['status'] === 'archived' ? now() : null,
                 ]);
                 if ($quantity > 0) {
-                    $stock->adjust($item, $quantity, StockMovementType::Initial, $request->user(), 'CSV içe aktarma');
+                    $stock->adjust($item, $quantity, StockMovementType::Initial, $request->user(), 'Dosyadan içe aktarma');
                 }
             }
             ActivityLog::query()->create([
@@ -349,6 +353,65 @@ class InventoryImportController extends Controller
             $rows[] = ['line' => $recordStartLine, 'data' => array_combine($headers, $values)];
         }
         fclose($handle);
+
+        return ['headers' => $headers, 'rows' => $rows];
+    }
+
+    private function readFile(string $path): array
+    {
+        return str_ends_with($path, '.xlsx') ? $this->readXlsx($path) : $this->readCsv($path);
+    }
+
+    private function readXlsx(string $path): array
+    {
+        $reader = new XlsxReader;
+        $headers = [];
+        $rows = [];
+        $reader->open(Storage::disk('local')->path($path));
+        try {
+            foreach ($reader->getSheetIterator() as $sheet) {
+                $line = 0;
+                foreach ($sheet->getRowIterator() as $record) {
+                    $line++;
+                    $values = array_map(function ($cell) {
+                        $value = $cell->getValue();
+
+                        if ($value instanceof \DateTimeInterface) {
+                            return $value->format('Y-m-d H:i:s');
+                        }
+                        if ($value instanceof \DateInterval) {
+                            return $value->format('%d %H:%I:%S');
+                        }
+
+                        return (string) ($value ?? '');
+                    }, $record->getCells());
+                    if ($line === 1) {
+                        $headers = array_map('trim', $values);
+                        $normalized = array_map(InventoryCsvContract::normalize(...), $headers);
+                        if ($headers === [] || count($headers) > 100 || in_array('', $headers, true) || count(array_unique($normalized)) !== count($headers)) {
+                            throw ValidationException::withMessages(['file' => 'XLSX sütun başlıkları boş, tekrarlı veya 100 sütundan fazla olamaz.']);
+                        }
+
+                        continue;
+                    }
+                    if (count(array_filter($values, fn (string $value) => trim($value) !== '')) === 0) {
+                        continue;
+                    }
+                    if (count($rows) >= self::MAX_DATA_ROWS) {
+                        throw ValidationException::withMessages(['file' => 'XLSX dosyası en fazla 2.000 veri satırı içerebilir.']);
+                    }
+                    $values = array_slice(array_pad($values, count($headers), ''), 0, max(count($headers), count($values)));
+                    if (count($values) > count($headers) && count(array_filter(array_slice($values, count($headers)), fn (string $value) => trim($value) !== '')) > 0) {
+                        throw ValidationException::withMessages(['file' => "XLSX {$line}. satırında başlık dışında veri bulunuyor."]);
+                    }
+                    $rows[] = ['line' => $line, 'data' => array_combine($headers, array_slice($values, 0, count($headers)))];
+                }
+
+                break;
+            }
+        } finally {
+            $reader->close();
+        }
 
         return ['headers' => $headers, 'rows' => $rows];
     }

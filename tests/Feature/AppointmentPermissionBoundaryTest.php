@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Enums\AppointmentStatus;
 use App\Enums\FilamentSource;
+use App\Models\ActivityLog;
 use App\Models\Appointment;
 use App\Models\Permission;
 use App\Models\Printer;
@@ -44,6 +45,21 @@ class AppointmentPermissionBoundaryTest extends TestCase
                 ->where('appointment.email', null)
                 ->has('appointment.files', 0)
                 ->has('appointment.actions', 0));
+        $this->assertDatabaseMissing('activity_logs', ['user_id' => $viewer->id, 'action' => 'personal_data_viewed']);
+    }
+
+    public function test_personal_appointment_views_are_audited_without_copying_identity(): void
+    {
+        $viewer = $this->userWithPermissions(['appointments.view', 'appointments.view_personal_data']);
+        $appointment = $this->appointment();
+
+        $this->actingAs($viewer)->get(route('admin.appointments.index'))->assertOk();
+        $this->get(route('admin.appointments.show', $appointment->public_id))->assertOk();
+
+        $logs = ActivityLog::query()->where('user_id', $viewer->id)->where('action', 'personal_data_viewed')->get();
+        $this->assertCount(2, $logs);
+        $this->assertSame($appointment->id, $logs->last()->subject_id);
+        $this->assertStringNotContainsString('ada@example.com', $logs->toJson());
     }
 
     public function test_calendar_manager_without_personal_data_or_appointment_view_permission_gets_anonymous_unlinked_events(): void

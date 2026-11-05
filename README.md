@@ -100,15 +100,17 @@ Gerçek SMTP, SPF/DKIM ve teslimat testleri tamamlanmadan çevrimiçi randevu ö
 ### CSV içe/dışa aktarma
 
 - Envanter CSV olarak dışa aktarılabilir.
-- CSV içe aktarmada kaynak sütunları sistem alanlarıyla eşlenir.
+- CSV ve XLSX içe aktarmada kaynak sütunları sistem alanlarıyla eşlenir; XLSX'in ilk çalışma sayfası kullanılır.
 - Dışa aktarma marka ve modeli ayrı sütunlarda üretir; içe aktarma eski dosyaları desteklemeyi sürdürür ve `Marka`/`Brand`/`Üretici` ile `Model`/`Model No`/`Model Numarası` başlıklarını otomatik eşler.
 - Aktarım öncesinde ön izleme, doğrulama, tekrar kaydı tespiti ve satır bazlı hata raporu gösterilir.
 - Kaynak sütunlar için eşleme, dolu/boş hücre sayıları ve hata türlerine göre özet gösterilir.
 - Kategori ve konumlar mevcut kayıtlarla eşleştirilebilir veya yetki dâhilinde oluşturulabilir.
 - Yalnız geçerli ve kullanıcı tarafından onaylanan satırlar toplu olarak kaydedilir.
 - Aktarım sonucu işlem geçmişine yazılır.
+- Yetkili randevu/teslim kişisel veri görüntülemeleri ve özel dosya indirmeleri,
+  kişisel içeriği kopyalamadan işlem geçmişine kaydedilir.
 
-Doğrudan Google Sheets ve XLSX desteği henüz tamamlanmamıştır.
+Doğrudan Google Sheets bağlantısı henüz tamamlanmamıştır.
 
 ### Tablo ve toplu işlemler
 

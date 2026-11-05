@@ -16,6 +16,8 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
+use OpenSpout\Common\Entity\Row;
+use OpenSpout\Writer\XLSX\Writer;
 use Tests\TestCase;
 
 class InventoryImportTest extends TestCase
@@ -162,6 +164,52 @@ class InventoryImportTest extends TestCase
         $this->assertNull($item->brand);
         $this->assertNull($item->model);
         $this->assertSame('2.000', $item->quantity);
+    }
+
+    public function test_xlsx_first_sheet_uses_the_same_mapping_preview_and_confirmation_flow(): void
+    {
+        $importer = $this->userWithPermissions(['inventory.import']);
+        $path = tempnam(sys_get_temp_dir(), 'sparkoff-xlsx-');
+        $writer = new Writer;
+        try {
+            $writer->openToFile($path);
+            $writer->addRow(Row::fromValues(['Malzeme', 'Stok kodu', 'Marka', 'Model', 'Miktar']));
+            $writer->addRow(Row::fromValues(['Test Kartı', 'XLSX-01', 'Arduino', 'UNO R3', 3]));
+            $writer->addRow(Row::fromValues(['Bozuk Kart', 'XLSX-02', '', '', -1]));
+            $writer->close();
+            $content = file_get_contents($path);
+        } finally {
+            if (file_exists($path)) {
+                unlink($path);
+            }
+        }
+
+        $this->actingAs($importer)->post(route('admin.inventory.import.upload'), [
+            'file' => UploadedFile::fake()->createWithContent('envanter.xlsx', $content),
+        ])->assertSessionHas('success');
+        $this->get(route('admin.inventory.import.index'))->assertInertia(fn (Assert $page) => $page
+            ->where('upload.rowCount', 2)
+            ->where('upload.mapping.Marka', 'brand')
+            ->where('upload.columnQuality.2.emptyCount', 1));
+        $this->post(route('admin.inventory.import.preview'), ['mapping' => [
+            'Malzeme' => 'name', 'Stok kodu' => 'sku', 'Marka' => 'brand', 'Model' => 'model', 'Miktar' => 'quantity',
+        ]])->assertSessionHas('success');
+        $this->get(route('admin.inventory.import.index'))->assertInertia(fn (Assert $page) => $page
+            ->where('analysis.validCount', 1)
+            ->where('analysis.errorCount', 1)
+            ->where('analysis.rows.1.line', 3));
+        $this->post(route('admin.inventory.import.confirm'))->assertSessionHas('success');
+        $this->assertDatabaseHas('inventory_items', ['sku' => 'XLSX-01', 'brand' => 'Arduino', 'model' => 'UNO R3', 'quantity' => 3]);
+        $this->assertDatabaseMissing('inventory_items', ['sku' => 'XLSX-02']);
+    }
+
+    public function test_invalid_xlsx_is_rejected_without_leaving_a_stored_file(): void
+    {
+        $importer = $this->userWithPermissions(['inventory.import']);
+        $this->actingAs($importer)->post(route('admin.inventory.import.upload'), [
+            'file' => UploadedFile::fake()->createWithContent('bozuk.xlsx', 'not an xlsx'),
+        ])->assertSessionHasErrors('file');
+        $this->assertSame([], Storage::disk('local')->allFiles('inventory-imports'));
     }
 
     public function test_real_export_can_be_imported_without_changing_contract_values(): void

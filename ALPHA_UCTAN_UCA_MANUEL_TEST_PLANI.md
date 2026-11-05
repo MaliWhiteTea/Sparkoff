@@ -438,6 +438,8 @@ Güvenlik ve veri kuralları:
   başlıkları otomatik eşleniyor; marka/model sütunu olmayan eski CSV aktarılıyor.
 - [ ] CSV-15 — Marka/model uzunluk sınırını aşan satır ön izlemede açık Türkçe
   hatayla işaretleniyor ve onay sırasında kaydedilmiyor.
+- [ ] CSV-16 — XLSX dosyasının ilk çalışma sayfası başlık, veri kalitesi,
+  satır hatası ve onay adımlarında CSV ile aynı sonucu veriyor; bozuk dosya reddediliyor.
 
 ## 11. Teslim ve iadeler
 

@@ -165,7 +165,7 @@ Sparkoff Proje Atölyesi
 - [x] Kategori ve konumları aktarım sırasında eşleştir veya oluştur
 - [x] Envanterdeki ve dosya içindeki olası tekrarları belirle
 - [x] Sütun eşlemeli ve ön izlemeli CSV içe aktarma
-- [ ] XLSX dosyası desteği
+- [x] XLSX dosyası desteği
 - [x] Hatalı satırları ayrı raporla
 - [x] Onay sonrası geçerli kayıtları toplu oluştur
 - [x] Aktarım sonucunu işlem geçmişine yaz
@@ -202,12 +202,15 @@ Sparkoff Proje Atölyesi
 ### K. Güvenlik, denetim ve yayın
 
 - [ ] Her kritik eylem için izin/verilmeme testleri
-- [ ] Kişisel veri görüntüleme ve dışa aktarma logları
-- [ ] Aktif teslimlerin yanlışlıkla anonimleştirilmesini engelleyen testler
+- [x] Kişisel veri görüntüleme ve özel dosya indirme logları
+- [x] Aktif teslimlerin yanlışlıkla anonimleştirilmesini engelleyen testler
 - [ ] Dosya yükleme ve indirme yetki testleri
 - [ ] Yedekleme/geri yükleme testi
 - [ ] cPanel üretim paketleri ve migration
 - [ ] Mobil, masaüstü ve canlı kabul testi
+
+Yerel SQLite yedeği ayrı bir kopyaya geri yüklendi; bütünlük kontrolü geçti. Canlı
+veritabanı ve dosya yedeklerinin geri yükleme provası ayrıca yapılacak.
 
 ### L. Yönetim arayüzü temeli — birinci uygulama paketi
 

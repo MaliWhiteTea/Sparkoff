@@ -6,6 +6,7 @@ use App\Enums\AppointmentStatus;
 use App\Exceptions\SlotUnavailableException;
 use App\Http\Controllers\Controller;
 use App\Mail\AppointmentStatusMail;
+use App\Models\ActivityLog;
 use App\Models\Appointment;
 use App\Models\AppointmentFile;
 use App\Models\Printer;
@@ -65,6 +66,14 @@ class AppointmentController extends Controller
                 'durationMinutes' => $appointment->duration_minutes,
             ]);
 
+        if ($canViewPersonalData && $appointments->count() > 0) {
+            ActivityLog::query()->create([
+                'user_id' => $request->user()->id, 'action' => 'personal_data_viewed',
+                'subject_type' => Appointment::class, 'subject_id' => null,
+                'changed_fields' => ['record_count' => $appointments->count()], 'created_at' => now(),
+            ]);
+        }
+
         return Inertia::render('Admin/Appointments/Index', [
             'appointments' => $appointments,
             'filters' => ['status' => $status, 'search' => $search, 'sort' => $sort, 'direction' => $direction],
@@ -85,6 +94,13 @@ class AppointmentController extends Controller
         $appointment = $this->findAppointment($publicId);
         $recent->track($request->user(), 'appointment', $appointment->id);
         $canViewPersonalData = $this->can($request, 'appointments.view_personal_data');
+        if ($canViewPersonalData) {
+            ActivityLog::query()->create([
+                'user_id' => $request->user()->id, 'action' => 'personal_data_viewed',
+                'subject_type' => Appointment::class, 'subject_id' => $appointment->id,
+                'changed_fields' => [], 'created_at' => now(),
+            ]);
+        }
         $canDownloadFiles = $this->can($request, 'appointments.download_file');
         $canReview = $this->can($request, 'appointments.review');
         $canManageStatus = $this->can($request, 'appointments.manage_status');
@@ -198,7 +214,7 @@ class AppointmentController extends Controller
         return back()->with('success', 'Randevu durumu güncellendi ve kullanıcıya e-posta gönderildi.');
     }
 
-    public function download(string $publicId, AppointmentFile $file): StreamedResponse
+    public function download(Request $request, string $publicId, AppointmentFile $file): StreamedResponse
     {
         $appointment = Appointment::query()->where('public_id', $publicId)->firstOrFail();
         abort_unless(
@@ -207,6 +223,12 @@ class AppointmentController extends Controller
                 && Storage::disk('local')->exists($file->path),
             404,
         );
+
+        ActivityLog::query()->create([
+            'user_id' => $request->user()->id, 'action' => 'private_file_downloaded',
+            'subject_type' => AppointmentFile::class, 'subject_id' => $file->id,
+            'changed_fields' => [], 'created_at' => now(),
+        ]);
 
         return Storage::disk('local')->download($file->path, $file->original_name);
     }

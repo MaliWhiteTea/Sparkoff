@@ -19,6 +19,8 @@ class ActivityLogPresenter
         'inventory_stock_adjusted' => 'Stok düzeltmesi yaptı',
         'undo_applied' => 'Değişikliği geri aldı',
         'retention_applied' => 'Veri saklama politikasını uyguladı',
+        'personal_data_viewed' => 'Kişisel verileri görüntüledi',
+        'private_file_downloaded' => 'Özel dosyayı indirdi',
     ];
 
     private const SUBJECTS = [
@@ -55,6 +57,7 @@ class ActivityLogPresenter
         'quantity_returned' => 'İade edilen miktar', 'recipient_email' => 'Alıcı e-postası',
         'recipient_name' => 'Alıcı adı', 'requires_acknowledgement' => 'Onay gereksinimi',
         'roles' => 'Roller', 'sku' => 'Stok kodu', 'slug' => 'Adres adı',
+        'record_count' => 'Görüntülenen kayıt',
         'source_file' => 'Kaynak dosya', 'staff_announcement' => 'Yönetim duyurusu',
         'status' => 'Durum', 'table_preferences' => 'Tablo tercihleri', 'target_roles' => 'Hedef roller',
         'saved_filters' => 'Kayıtlı filtreler',

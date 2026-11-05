@@ -161,6 +161,7 @@ class InventoryTransactionTest extends TestCase
                 ->where('transactions.data.0.recipientName', 'Gizli kullanıcı')
                 ->where('transactions.data.0.recipientEmail', null)
                 ->where('transactions.data.0.notes', null));
+        $this->assertDatabaseMissing('activity_logs', ['user_id' => $viewer->id, 'action' => 'personal_data_viewed']);
     }
 
     public function test_anonymization_never_touches_active_transactions(): void
