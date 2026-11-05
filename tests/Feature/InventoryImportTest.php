@@ -58,6 +58,10 @@ class InventoryImportTest extends TestCase
             ->has('upload.headers', 13)
             ->where('upload.mapping.Üretici', 'brand')
             ->where('upload.mapping.Model No', 'model')
+            ->where('upload.columnQuality.2.header', 'Üretici')
+            ->where('upload.columnQuality.2.filledCount', 2)
+            ->where('upload.columnQuality.2.emptyCount', 0)
+            ->where('upload.columnQuality.12.field', '')
             ->where('upload.unmappedHeaders', ['Eski alan']));
 
         $mapping = [
@@ -100,6 +104,8 @@ class InventoryImportTest extends TestCase
 
         $this->get(route('admin.inventory.import.index'))->assertInertia(fn (Assert $page) => $page
             ->where('analysis.validCount', 0)->where('analysis.errorCount', 3)
+            ->where('analysis.errorSummary.0.message', 'Miktar 0 ile 9.999.999.999 arasında ve en fazla üç ondalık basamaklı olmalıdır.')
+            ->where('analysis.errorSummary.0.count', 2)
             ->where('analysis.rows.0.errors.0', 'Envanterde veya dosyada tekrar eden malzeme.')
             ->has('analysis.rows.1.errors', 2)
             ->where('analysis.rows.2.errors.0', 'Miktar 0 ile 9.999.999.999 arasında ve en fazla üç ondalık basamaklı olmalıdır.'));

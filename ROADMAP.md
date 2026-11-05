@@ -161,7 +161,7 @@ Sparkoff Proje Atölyesi
 
 ### G. Google Sheets aktarımı
 
-- [ ] Kaynak sütunları ve veri kalitesini analiz et
+- [x] Kaynak sütunları ve veri kalitesini analiz et
 - [x] Kategori ve konumları aktarım sırasında eşleştir veya oluştur
 - [x] Envanterdeki ve dosya içindeki olası tekrarları belirle
 - [x] Sütun eşlemeli ve ön izlemeli CSV içe aktarma

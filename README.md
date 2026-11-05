@@ -103,6 +103,7 @@ Gerçek SMTP, SPF/DKIM ve teslimat testleri tamamlanmadan çevrimiçi randevu ö
 - CSV içe aktarmada kaynak sütunları sistem alanlarıyla eşlenir.
 - Dışa aktarma marka ve modeli ayrı sütunlarda üretir; içe aktarma eski dosyaları desteklemeyi sürdürür ve `Marka`/`Brand`/`Üretici` ile `Model`/`Model No`/`Model Numarası` başlıklarını otomatik eşler.
 - Aktarım öncesinde ön izleme, doğrulama, tekrar kaydı tespiti ve satır bazlı hata raporu gösterilir.
+- Kaynak sütunlar için eşleme, dolu/boş hücre sayıları ve hata türlerine göre özet gösterilir.
 - Kategori ve konumlar mevcut kayıtlarla eşleştirilebilir veya yetki dâhilinde oluşturulabilir.
 - Yalnız geçerli ve kullanıcı tarafından onaylanan satırlar toplu olarak kaydedilir.
 - Aktarım sonucu işlem geçmişine yazılır.

@@ -45,9 +45,25 @@ class InventoryImportController extends Controller
         $headers = $csv['headers'];
         $rows = $csv['rows'];
         $mapping = $state ? ($state['mapping'] ?? $this->suggestMapping($headers)) : [];
+        $columnQuality = collect($headers)->map(function (string $header) use ($rows, $mapping) {
+            $empty = collect($rows)->filter(fn (array $row) => trim((string) ($row['data'][$header] ?? '')) === '')->count();
+
+            return [
+                'header' => $header,
+                'field' => $mapping[$header] ?? '',
+                'emptyCount' => $empty,
+                'filledCount' => count($rows) - $empty,
+            ];
+        })->values()->all();
         $analysis = $state && isset($state['mapping']) ? $this->analyze($rows, $state['mapping']) : null;
         if ($analysis) {
             unset($analysis['validRows']);
+            $analysis['errorSummary'] = collect($analysis['errorRows'])
+                ->flatMap(fn (array $row) => $row['errors'])
+                ->countBy()
+                ->sortDesc()
+                ->map(fn (int $count, string $message) => ['message' => $message, 'count' => $count])
+                ->values()->all();
         }
 
         return Inertia::render('Admin/Inventory/Import', [
@@ -55,6 +71,7 @@ class InventoryImportController extends Controller
                 'name' => $state['name'], 'headers' => $headers,
                 'rowCount' => count($rows),
                 'sample' => array_map(fn ($row) => $row['data'], array_slice($rows, 0, 5)), 'mapping' => $mapping,
+                'columnQuality' => $columnQuality,
                 'unmappedHeaders' => array_keys(array_filter($mapping, fn ($field) => $field === '')),
             ] : null,
             'fields' => self::FIELDS,
