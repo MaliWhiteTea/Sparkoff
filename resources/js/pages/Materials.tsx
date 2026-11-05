@@ -81,7 +81,7 @@ export default function Materials({ items, filters, categories }: Props) {
                 setFavoriteIds([...new Set(stored.filter((id): id is number => Number.isSafeInteger(id) && id > 0))].slice(0, 100));
             }
         } catch {
-            window.localStorage.removeItem(favoriteStorageKey);
+            setFavoriteIds([]);
         } finally {
             setFavoritesReady(true);
         }
@@ -105,7 +105,7 @@ export default function Materials({ items, filters, categories }: Props) {
         router.get('/malzemeler', query, {
             preserveState: true,
             preserveScroll: true,
-            replace: true,
+            replace: false,
         });
     };
 
@@ -227,6 +227,7 @@ export default function Materials({ items, filters, categories }: Props) {
                                         <button
                                             className={`material-favorite ${favoriteIds.includes(item.id) ? 'active' : ''}`}
                                             type="button"
+                                            disabled={!favoritesReady}
                                             aria-pressed={favoriteIds.includes(item.id)}
                                             aria-label={favoriteIds.includes(item.id) ? `${item.name} malzemesini favorilerden çıkar` : `${item.name} malzemesini favorilere ekle`}
                                             onClick={() => toggleFavorite(item.id)}
@@ -267,11 +268,11 @@ export default function Materials({ items, filters, categories }: Props) {
                 </div>
                 : <div className="materials-empty"><h2>Malzeme bulunamadı</h2><p>Arama veya filtreleri değiştirerek tekrar deneyin.</p></div>}
 
-            {items.links.length > 3 && <nav className="materials-pagination" aria-label="Sayfalar">
+            {items.links.length > 3 && <nav className="materials-pagination" aria-label="Malzeme sayfaları">
                 {items.links.map((link, index) => !link.url && (index === 0 || index === items.links.length - 1)
                     ? null
                     : link.url
-                        ? <Link href={link.url} className={link.active ? 'active' : ''} preserveScroll preserveState key={index}>{paginationLabel(link.label)}</Link>
+                        ? <Link href={link.url} className={link.active ? 'active' : ''} aria-current={link.active ? 'page' : undefined} preserveScroll preserveState key={index}>{paginationLabel(link.label)}</Link>
                         : <span key={index}>{paginationLabel(link.label)}</span>)}
             </nav>}
         </section>
