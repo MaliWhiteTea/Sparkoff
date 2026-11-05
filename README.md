@@ -44,11 +44,14 @@ Uygulama iki ana kullanım alanına ayrılır:
 
 ### Malzeme kataloğu
 
-- Birden fazla sözcükle arama, kategori ve stok filtreleri sunar.
+- Birden fazla sözcükle arama, kategori/stok filtreleri, sıralama ve ayarlanabilir sonuç sayısı sunar.
+- Filtreler paylaşılabilir URL'de ve sayfa geçişlerinde korunur; mobilde açılır filtre paneli ve hızlı “yalnız stokta” seçimi bulunur.
+- Favori malzemeler hesap gerektirmeden yalnız kullanıcının tarayıcısında saklanır ve tek seçimle filtrelenebilir.
 - Malzemeler için kesin miktar, yalnız stok durumu veya tamamen gizli görünürlük seçeneklerini destekler.
 - Mobil cihazlarda kart/satır düzenine dönüşen erişilebilir bir tablo kullanır.
 - Kapak görseli, sıralanabilir galeri, video ve güvenli HTTPS bağlantıları gösterebilir.
 - Teknik özellikleri ve malzeme açıklamalarını ayrıntılı biçimde sunar.
+- Her kayıt için son güncellenme tarihi gösterilir.
 
 ### Geri bildirim ve KVKK
 

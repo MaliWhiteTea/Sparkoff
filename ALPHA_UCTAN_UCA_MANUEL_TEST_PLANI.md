@@ -192,6 +192,24 @@ Güvenlik ve veri kuralları:
   mobilde taşmadan gösteriliyor; ikisi de boşsa gereksiz boş satır oluşmuyor.
 - [ ] MAT-PUB-16 — Marka, model ve marka+model sözcüklerini birlikte kullanan
   aramalar doğru malzemeyi getiriyor ve diğer filtrelerle birlikte çalışıyor.
+- [ ] MAT-PUB-17 — Ad A–Z, ad Z–A ve son güncellenen sıralamaları doğru sonuç
+  üretiyor; geçersiz sıralama adresi güvenli doğrulama hatası veriyor.
+- [ ] MAT-PUB-18 — 12/24/48 sonuç seçenekleri sayfa başına doğru kayıt sayısını
+  gösteriyor ve seçim sayfalama bağlantılarında korunuyor.
+- [ ] MAT-PUB-19 — “Yalnız stokta olanlar” hızlı seçimi basılı durumunu ve sonucu
+  doğru değiştiriyor; ikinci tıklama stok filtresini kaldırıyor.
+- [ ] MAT-PUB-20 — Mobil “Filtreler” düğmesi paneli açıp kapatıyor, `aria-expanded`
+  değerini güncelliyor ve 320 px genişlikte alanlar/butonlar taşmıyor.
+- [ ] MAT-PUB-21 — Arama, kategori, stok, sıralama ve sonuç sayısı URL'de korunuyor;
+  bağlantı yeni sekmede, yenilemede ve tarayıcı geri/ileri hareketinde aynı sonucu açıyor.
+- [ ] MAT-PUB-22 — Favori düğmesi klavye ve dokunmayla ekle/çıkar yapıyor;
+  `aria-pressed` ve erişilebilir etiketi duruma göre güncelleniyor.
+- [ ] MAT-PUB-23 — Favoriler yenileme ve aynı tarayıcıdaki yeni sekmede korunuyor,
+  başka tarayıcı/cihaz veya yönetici hesabına aktarılmıyor.
+- [ ] MAT-PUB-24 — “Favorilerim” yalnız kayıtlı ve hâlâ herkese açık malzemeleri
+  listeliyor; favori kalmayınca güvenli biçimde normal kataloğa dönüyor.
+- [ ] MAT-PUB-25 — Teknik özellik özeti alan sayısını, açılan liste bütün değerleri
+  ve “Son güncelleme” tarihi yönetimdeki son kayıt tarihiyle doğru gösteriyor.
 
 ## 6. Geri bildirim ve KVKK
 

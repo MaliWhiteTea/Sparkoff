@@ -275,11 +275,11 @@ Sparkoff Proje Atölyesi
 
 ### Q. Ziyaretçi malzeme kataloğu — altıncı uygulama paketi
 
-- [ ] Malzeme tablosuna sıralama ve kategori başına sonuç sayısı ekle (seçim 18)
-- [ ] “Yalnız stokta olanlar” hızlı filtresi ve mobil filtre paneli ekle
-- [ ] Filtrelenmiş katalog bağlantılarının paylaşılabilir ve yenilemede kalıcı olmasını sağla
-- [ ] Teknik özellik açılımını ve son güncellenme bilgisini iyileştir
-- [ ] Hesap oluşturmadan tarayıcıda tutulan favori malzemeleri ekle
+- [x] Malzeme tablosuna sıralama ve kategori başına sonuç sayısı ekle (seçim 18)
+- [x] “Yalnız stokta olanlar” hızlı filtresi ve mobil filtre paneli ekle
+- [x] Filtrelenmiş katalog bağlantılarının paylaşılabilir ve yenilemede kalıcı olmasını sağla
+- [x] Teknik özellik açılımını ve son güncellenme bilgisini iyileştir
+- [x] Hesap oluşturmadan tarayıcıda tutulan favori malzemeleri ekle
 - [ ] Mobil ve ekran okuyucu kabul testlerini tamamla
 
 ### R. Malzeme görselleri ve bağlantıları — envanter medya paketi
@@ -331,5 +331,6 @@ Bu sıra ortak bileşenleri önce kurarak aynı özelliğin farklı sayfalarda t
 
 ## Sıradaki teknik adım
 
-Q paketinde sıradaki adım, ziyaretçi malzeme kataloğuna sıralama, sonuç sayısı ve
-mobil hızlı filtre altyapısını eklemektir.
+Q paketinin geliştirme maddeleri tamamlandı. Sıradaki adım, katalogdaki yeni
+filtre, favori ve teknik ayrıntı akışlarının mobil ve ekran okuyucu kabul
+testlerini tamamlamaktır.

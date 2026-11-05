@@ -35,6 +35,7 @@ class PublicInventoryCatalogTest extends TestCase
             ->where('items.data.0.quantity', '30.000')
             ->where('items.data.0.brand', 'Arduino')
             ->where('items.data.0.model', 'UNO R3')
+            ->where('items.data.0.updatedAt', $exact->updated_at->format('d.m.Y'))
             ->where('items.data.0.location', null)
             ->where('items.data.1.quantity', null));
     }
@@ -85,7 +86,63 @@ class PublicInventoryCatalogTest extends TestCase
 
     public function test_catalog_rejects_invalid_filters(): void
     {
-        $this->get(route('materials.index', ['stock' => 'secret']))->assertSessionHasErrors('stock');
+        $this->get(route('materials.index', [
+            'stock' => 'secret', 'sort' => 'quantity_desc', 'per_page' => 13,
+        ]))->assertSessionHasErrors(['stock', 'sort', 'per_page']);
+    }
+
+    public function test_catalog_sorting_page_size_and_query_string_are_preserved(): void
+    {
+        $category = InventoryCategory::query()->create(['name' => 'Elektronik', 'slug' => 'elektronik', 'is_active' => true]);
+        foreach (range(1, 13) as $number) {
+            $this->item('Malzeme '.str_pad((string) $number, 2, '0', STR_PAD_LEFT), InventoryVisibility::Status, 1, $category);
+        }
+
+        $this->get(route('materials.index', [
+            'category' => $category->id,
+            'stock' => 'available',
+            'sort' => 'name_desc',
+            'per_page' => 12,
+        ]))->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->has('items.data', 12)
+            ->where('items.total', 13)
+            ->where('items.data.0.name', 'Malzeme 13')
+            ->where('filters.category', (string) $category->id)
+            ->where('filters.stock', 'available')
+            ->where('filters.sort', 'name_desc')
+            ->where('filters.perPage', 12)
+            ->where('items.next_page_url', fn (?string $url) => $url !== null
+                && str_contains($url, 'category='.$category->id)
+                && str_contains($url, 'stock=available')
+                && str_contains($url, 'sort=name_desc')
+                && str_contains($url, 'per_page=12')));
+
+        InventoryItem::query()->where('name', 'Malzeme 01')->update(['updated_at' => now()->addMinute()]);
+        $this->get(route('materials.index', ['sort' => 'updated_desc']))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('filters.sort', 'updated_desc')
+                ->where('items.data.0.name', 'Malzeme 01'));
+    }
+
+    public function test_browser_favorite_ids_filter_public_catalog_without_exposing_hidden_items(): void
+    {
+        $category = InventoryCategory::query()->create(['name' => 'Elektronik', 'slug' => 'elektronik', 'is_active' => true]);
+        $first = $this->item('Birinci Favori', InventoryVisibility::Status, 1, $category);
+        $second = $this->item('İkinci Favori', InventoryVisibility::Status, 1, $category);
+        $hidden = $this->item('Gizli Favori', InventoryVisibility::Hidden, 1, $category);
+
+        $this->get(route('materials.index', [
+            'favorites' => 1,
+            'favorite_ids' => "{$second->id},{$hidden->id}",
+        ]))->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->where('filters.favorites', true)
+            ->has('items.data', 1)
+            ->where('items.data.0.id', $second->id));
+
+        $this->get(route('materials.index', ['favorites' => 1]))->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->has('items.data', 0));
+        $this->get(route('materials.index', ['favorites' => 1, 'favorite_ids' => "{$first->id},bozuk"]))
+            ->assertSessionHasErrors('favorite_ids');
     }
 
     public function test_catalog_exposes_accessible_media_without_internal_file_paths(): void

@@ -17,10 +17,25 @@ class InventoryCatalogController extends Controller
             'search' => ['nullable', 'string', 'max:100'],
             'category' => ['nullable', 'integer', 'exists:inventory_categories,id'],
             'stock' => ['nullable', 'in:all,available,out'],
+            'sort' => ['nullable', 'in:name_asc,name_desc,updated_desc'],
+            'per_page' => ['nullable', 'integer', 'in:12,24,48'],
+            'favorites' => ['nullable', 'boolean'],
+            'favorite_ids' => ['nullable', 'string', 'max:1200', 'regex:/^\d+(?:,\d+)*$/'],
         ]);
         $search = trim((string) ($filters['search'] ?? ''));
+        $sort = $filters['sort'] ?? 'name_asc';
+        $perPage = (int) ($filters['per_page'] ?? 24);
+        $favoritesOnly = $request->boolean('favorites');
+        $favoriteIds = collect(explode(',', (string) ($filters['favorite_ids'] ?? '')))
+            ->filter(fn (string $id) => $id !== '')
+            ->map(fn (string $id) => (int) $id)
+            ->filter(fn (int $id) => $id > 0)
+            ->unique()
+            ->take(100)
+            ->values()
+            ->all();
 
-        $items = InventoryItem::query()
+        $itemsQuery = InventoryItem::query()
             ->withAvailableQuantity()
             ->with(['category:id,name', 'location:id,name,is_public', 'media'])
             ->whereNull('archived_at')
@@ -39,10 +54,18 @@ class InventoryCatalogController extends Controller
                 }
             })
             ->when($filters['category'] ?? null, fn ($query, $category) => $query->where('category_id', $category))
+            ->when($favoritesOnly, fn ($query) => $favoriteIds === [] ? $query->whereRaw('1 = 0') : $query->whereIn('inventory_items.id', $favoriteIds))
             ->when(($filters['stock'] ?? 'all') === 'available', fn ($query) => $query->whereAvailable())
-            ->when(($filters['stock'] ?? 'all') === 'out', fn ($query) => $query->whereAvailable(false))
-            ->orderBy('name')
-            ->paginate(24)
+            ->when(($filters['stock'] ?? 'all') === 'out', fn ($query) => $query->whereAvailable(false));
+
+        match ($sort) {
+            'name_desc' => $itemsQuery->orderByDesc('name')->orderByDesc('id'),
+            'updated_desc' => $itemsQuery->orderByDesc('updated_at')->orderByDesc('id'),
+            default => $itemsQuery->orderBy('name')->orderBy('id'),
+        };
+
+        $items = $itemsQuery
+            ->paginate($perPage)
             ->withQueryString()
             ->through(function (InventoryItem $item) {
                 $availableQuantity = $item->availableQuantity();
@@ -59,6 +82,7 @@ class InventoryCatalogController extends Controller
                     'unit' => $item->unit,
                     'description' => $item->description,
                     'technicalSpecs' => $item->technical_specs ?? [],
+                    'updatedAt' => $item->updated_at?->format('d.m.Y'),
                     'availability' => (float) $availableQuantity > 0 ? 'available' : 'out',
                     'quantity' => $item->public_visibility === InventoryVisibility::Exact ? $availableQuantity : null,
                     'media' => $item->media->map(fn ($medium) => [
@@ -70,7 +94,14 @@ class InventoryCatalogController extends Controller
 
         return Inertia::render('Materials', [
             'items' => $items,
-            'filters' => ['search' => $search, 'category' => (string) ($filters['category'] ?? ''), 'stock' => $filters['stock'] ?? 'all'],
+            'filters' => [
+                'search' => $search,
+                'category' => (string) ($filters['category'] ?? ''),
+                'stock' => $filters['stock'] ?? 'all',
+                'sort' => $sort,
+                'perPage' => $perPage,
+                'favorites' => $favoritesOnly,
+            ],
             'categories' => InventoryCategory::query()
                 ->where('is_active', true)
                 ->whereHas('items', fn ($query) => $query
