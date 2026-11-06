@@ -27,6 +27,32 @@ class InventoryTransactionTest extends TestCase
         $this->seed();
     }
 
+    public function test_delivery_and_return_reject_more_than_three_decimal_places(): void
+    {
+        $admin = User::factory()->systemAdministrator()->create();
+        $item = $this->item(InventoryItemType::Loanable, 5);
+        $payload = [
+            'inventory_item_id' => $item->id,
+            'recipient_name' => 'Test Kullanıcı',
+            'quantity' => '1.0001',
+            'due_at' => now()->addDay()->format('Y-m-d\\TH:i'),
+        ];
+
+        $this->actingAs($admin)->post(route('admin.loans.store'), $payload)->assertSessionHasErrors('quantity');
+        $this->assertDatabaseCount('inventory_transactions', 0);
+
+        $this->actingAs($admin)->post(route('admin.loans.store'), [
+            ...$payload, 'quantity' => '1',
+        ])->assertSessionHas('success');
+        $transaction = InventoryTransaction::query()->firstOrFail();
+
+        $this->actingAs($admin)->post(route('admin.loans.return', $transaction), [
+            'quantity' => '0.0011',
+        ])->assertSessionHasErrors('quantity');
+        $this->assertSame('0.000', $transaction->fresh()->quantity_returned);
+        $this->assertSame('4.000', $item->fresh()->quantity);
+    }
+
     public function test_loan_delivery_and_partial_returns_update_stock_atomically(): void
     {
         $admin = User::factory()->systemAdministrator()->create();

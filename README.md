@@ -241,12 +241,12 @@ TypeScript tip denetimi, üretim derlemesi ve PHP kod biçimi kontrolleri de yay
 | Duyuru ve geri bildirim yönetimi | Kullanılabilir |
 | Kaydedilmemiş değişiklik ve güvenli taslaklar | Kullanılabilir |
 | Çevrimiçi randevu kodu | Hazır; canlı SMTP kabulü bekleniyor |
-| Google Sheets/XLSX aktarımı | Planlandı |
+| CSV/XLSX aktarımı | Kullanılabilir; doğrudan Google Sheets bağlantısı henüz yok |
 | Yetkiye göre yönetim genel bakış ekranı | Kullanılabilir |
 | Yetki ve kişisel veri sınırlarına bağlı hızlı arama | Kullanılabilir |
 | Yetkiye bağlı bildirim merkezi ve okunmamış sayacı | Kullanılabilir |
 | Kişisel veri saklamayan son görüntülenen kayıtlar | Kullanılabilir |
-| Güvenli geri alma/ters hareket paketi | Planlandı |
+| Güvenli geri alma/ters hareket paketi | Kullanılabilir; desteklenen eylemlerle sınırlı |
 
 ## Ortam ve yayın notları
 

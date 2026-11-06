@@ -83,7 +83,7 @@ class InventoryTransactionController extends Controller
         ]);
         $data = $request->validate([
             'inventory_item_id' => ['required', 'integer', 'exists:inventory_items,id'], 'recipient_name' => ['required', 'string', 'max:150'],
-            'recipient_email' => ['nullable', 'email:rfc', 'max:255'], 'quantity' => ['required', 'numeric', 'min:0.001', 'max:9999999999'],
+            'recipient_email' => ['nullable', 'email:rfc', 'max:255'], 'quantity' => ['required', 'numeric', 'decimal:0,3', 'min:0.001', 'max:9999999999'],
             'due_at' => ['nullable', 'date_format:Y-m-d\TH:i', 'after:now'], 'notes' => ['nullable', 'string', 'max:2000'],
         ]);
         $item = InventoryItem::query()->findOrFail($data['inventory_item_id']);
@@ -103,7 +103,7 @@ class InventoryTransactionController extends Controller
     {
         $remaining = $transaction->remainingQuantity();
         $data = $request->validate(
-            ['quantity' => ['required', 'numeric', 'min:0.001', "max:{$remaining}"], 'note' => ['nullable', 'string', 'max:1000']],
+            ['quantity' => ['required', 'numeric', 'decimal:0,3', 'min:0.001', "max:{$remaining}"], 'note' => ['nullable', 'string', 'max:1000']],
             ['quantity.max' => 'İade miktarı kalan miktarı aşamaz. En fazla :max iade edilebilir.'],
         );
         try {

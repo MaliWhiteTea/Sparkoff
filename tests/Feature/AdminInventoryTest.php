@@ -150,6 +150,19 @@ class AdminInventoryTest extends TestCase
         $this->assertSame('0.001', InventoryItem::query()->where('sku', 'HAS-01')->firstOrFail()->quantity);
     }
 
+    public function test_stock_adjustment_rejects_more_than_three_decimal_places(): void
+    {
+        $manager = $this->userWithPermissions(['inventory.adjust_stock']);
+        $item = InventoryItem::query()->create($this->itemData(['quantity' => 5]));
+
+        $this->actingAs($manager)->post(route('admin.inventory.stock.adjust', $item), [
+            'quantity_change' => '0.0006', 'reason' => 'Sayım farkı',
+        ])->assertSessionHasErrors('quantity_change');
+
+        $this->assertSame('5.000', $item->fresh()->quantity);
+        $this->assertDatabaseCount('stock_movements', 0);
+    }
+
     public function test_stock_adjustment_requires_permission_and_reason_and_cannot_go_negative(): void
     {
         $item = InventoryItem::query()->create($this->itemData(['quantity' => 3]));

@@ -343,7 +343,7 @@ class InventoryController extends Controller
     public function adjustStock(Request $request, InventoryItem $item, InventoryStockService $stock, AdminUndoService $undo): RedirectResponse
     {
         $data = $request->validate([
-            'quantity_change' => ['required', 'numeric', 'not_in:0', 'between:-9999999999,9999999999'],
+            'quantity_change' => ['required', 'numeric', 'decimal:0,3', 'not_in:0', 'between:-9999999999,9999999999'],
             'reason' => ['required', 'string', 'min:3', 'max:500'],
         ]);
         if ($item->archived_at) {
