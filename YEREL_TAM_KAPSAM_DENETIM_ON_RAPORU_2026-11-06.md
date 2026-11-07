@@ -14,7 +14,7 @@ Bu belge denetim başlamadan önce yazılmış **ön rapordur**; aşağıdaki ba
 
 | Alan | Doğrulanan kapsam | Sınır |
 |---|---|---|
-| Otomatik kalite kapısı | 306 PHP testi: 305 geçti, 1 MySQL/MariaDB gerektirdiği için atlandı; 2911 assertion. PHP biçimi, TypeScript tipleri ve Composer güvenlik duyurusu kontrolü geçti. | SQLite ve simüle servisler; üretim kabulü değil. |
+| Otomatik kalite kapısı | Yerelde 306 PHP testi: 305 geçti, 1 MySQL/MariaDB gerektirdiği için atlandı; 2911 assertion. PHP biçimi, TypeScript tipleri ve Composer güvenlik duyurusu kontrolü geçti. [GitHub CI çalışması #28](https://github.com/MaliWhiteTea/Sparkoff/actions/runs/42379767670) (`401664f`) MySQL 8.4 ve MariaDB 10.11 işlerini başarıyla tamamladı. | CI temiz migration/seed ve otomatik testleri kapsıyor; canlı hosting kabulü değil. |
 | Rota giriş kapısı | Yönetim rotalarının genel `auth` kapısı incelendi. Doğrudan test çağrısı bulunmayan 7 yönetim rotasına HTTP testleri eklendi. | 97 rotanın tam izin/hata/yan etki matrisi açık. |
 | Stok ve teslim | Dört ondalıklı miktarın reddi; teslim/iade stok hareketleri; arşivli malzemenin açık ödünç kaydına iade sınandı. | Eşzamanlılık, tüm tür/rol kombinasyonları açık. |
 | Randevu | Çakışan slot, dosya türü/içeriği, özel dosya erişimi, doğrulama ve takip token'ı, geçersiz ve yinelenen iptal, SMTP başarısızlığı ve disk yazma hatası için HTTP testleri çalıştı. | Gerçek SMTP ve MySQL/MariaDB yarış testi açık. |
@@ -30,7 +30,7 @@ Bu belge denetim başlamadan önce yazılmış **ön rapordur**; aşağıdaki ba
 
 1. Bu belgedeki A–I maddelerinin ve [390 maddelik arayüz planının](ALPHA_UCTAN_UCA_MANUEL_TEST_PLANI.md) her birine kanıtlı durum atanması. Şu an geçen örnek akışlar var; toplam geçti/kaldı yüzdesi güvenilir biçimde hesaplanamaz.
 2. 97 rotanın yöntem, girişsiz/pasif/sınırlı rol, yanlış kimlik, geçersiz girdi, tekrarlı istek, yan etki ve gizlilik kontrollerinin tamamlanması.
-3. MySQL/MariaDB üzerinde temiz kurulum, migration/seed, aynı slot yarışı ve son yönetici eşzamanlılığı. Yerel ortamda bu veritabanı sunucuları bulunmadı; CI matrisi ayrıca incelenecek.
+3. MySQL/MariaDB CI temiz kurulum, migration/seed ve otomatik testleri geçti. Aynı slot yarışı ve son yönetici eşzamanlılığı için özel, gerçek eşzamanlı istek kanıtı hâlâ açık; yerelde bu veritabanı sunucuları bulunmadı.
 4. Gerçek tarayıcıda masaüstü/mobil, açık/koyu tema, klavye, yenileme ve dosya yükleme akışlarının geri kalanı; gerçek SMTP, cron, hosting ve yedekten geri yükleme koşulları.
 5. `ONLINE_BOOKING_ENABLED=false` durumunda daha önce verilmiş doğrulama ve takip bağlantılarının 404 olması ürün beklentisiyle karşılaştırılacak. Büyük JS parçası uyarısının ilk yüklemeye etkisi ölçülecek.
 
