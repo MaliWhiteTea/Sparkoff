@@ -63,6 +63,11 @@ Uygulama iki ana kullanım alanına ayrılır:
 
 Randevu modülü `ONLINE_BOOKING_ENABLED` özellik bayrağıyla açılıp kapatılabilir. Akış şu adımlardan oluşur:
 
+Kapalı alpha kurulumunda bayrak `false` kalır. Bu durumda yeni başvuru ile
+birlikte doğrulama ve takip bağlantıları da kapanır; mevcut randevu kayıtları
+silinmez. Özellik açılmadan önce SMTP, dosya yükleme, cron ve uçtan uca kabul
+ayrı ortamda tamamlanmalıdır.
+
 1. Ziyaretçi yazıcı, tarih, saat, tahmini baskı süresi ve filament seçer.
 2. İzin verilen bir model dosyası yükler ve aydınlatma/randevu kurallarını kabul eder.
 3. Sistem çakışma, çalışma saati, dosya türü ve dosya boyutu kontrollerini uygular.
@@ -72,7 +77,8 @@ Randevu modülü `ONLINE_BOOKING_ENABLED` özellik bayrağıyla açılıp kapat�
 
 Randevu sistemi ayrıca:
 
-- Aynı zaman aralığının eşzamanlı olarak iki kez ayrılmasını engeller.
+- Aynı zaman aralığının iki kez ayrılmasını işlem ve yazıcı kilidiyle önlemeyi
+  hedefler; iki gerçek eşzamanlı istekle kabul testi hâlâ açıktır.
 - Doğrulanmayan taleplerin geçici olarak tuttuğu zamanı süre sonunda serbest bırakır.
 - Model dosyalarını kamuya açık depolama alanından ayrı tutar.
 - Dosya indirmeyi ayrı ve hassas bir yönetici yetkisiyle sınırlar.
@@ -221,7 +227,9 @@ React ve CSS dosyaları yayın öncesinde derlenir. Üretim sunucusunda Node.js 
 
 ## Kalite güvencesi
 
-Test paketi; özellik, izin sınırı, doğrulama, stok tutarlılığı, eşzamanlı randevu, veri saklama, erişilebilirlik ve güvenli dosya senaryolarını kapsar.
+Test paketi; özellik, izin sınırı, doğrulama, stok tutarlılığı, çakışan
+randevuların ardışık istekleri, veri saklama, erişilebilirlik ve güvenli dosya
+senaryolarını kapsar. Gerçek eşzamanlı randevu yarışı henüz kabul edilmedi.
 
 GitHub Actions veritabanı kabul akışı aynı uygulama testlerini şu ortamlarda çalıştırır:
 
@@ -265,6 +273,8 @@ TypeScript tip denetimi, üretim derlemesi ve PHP kod biçimi kontrolleri de yay
 - Bütün ekran ve işlemleri kapsayan manuel test planı: [ALPHA_UCTAN_UCA_MANUEL_TEST_PLANI.md](./ALPHA_UCTAN_UCA_MANUEL_TEST_PLANI.md)
 - Alpha öncesi bilinen sorunlar: [ALPHA_KNOWN_ISSUES.md](./ALPHA_KNOWN_ISSUES.md)
 - Son üretim kabul kaydı: [DEPLOYMENT_ACCEPTANCE_2026-10-28.md](./DEPLOYMENT_ACCEPTANCE_2026-10-28.md)
+- Güncel yerel denetim durumu ve kalan işler: [YEREL_TAM_KAPSAM_DENETIM_ON_RAPORU_2026-11-06.md](./YEREL_TAM_KAPSAM_DENETIM_ON_RAPORU_2026-11-06.md)
+- Denetim kanıtları ve düzeltilen hatalar: [YEREL_DENETIM_CALISMA_KAYDI_2026-11-07.md](./YEREL_DENETIM_CALISMA_KAYDI_2026-11-07.md)
 
 ## Lisans
 

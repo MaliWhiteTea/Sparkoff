@@ -175,6 +175,27 @@ class AppointmentVerificationAndTrackingTest extends TestCase
             ->count());
     }
 
+    public function test_feature_flag_blocks_existing_verification_and_tracking_links_without_changing_records(): void
+    {
+        $verificationToken = Str::random(64);
+        $trackingToken = Str::random(64);
+        $pending = $this->createPendingAppointment($verificationToken);
+        $verified = $this->createVerifiedAppointment($trackingToken);
+        config()->set('features.online_booking', false);
+
+        $verification = ['publicId' => $pending->public_id, 'token' => $verificationToken];
+        $tracking = ['publicId' => $verified->public_id, 'token' => $trackingToken];
+
+        $this->get(route('booking.verify', $verification))->assertNotFound();
+        $this->post(route('booking.verify.confirm', $verification))->assertNotFound();
+        $this->get(route('booking.track', $tracking))->assertNotFound();
+        $this->post(route('booking.cancel', $tracking))->assertNotFound();
+
+        $this->assertSame(AppointmentStatus::PendingVerification, $pending->fresh()->status);
+        $this->assertSame(AppointmentStatus::PendingApproval, $verified->fresh()->status);
+        $this->assertNull($verified->fresh()->canceled_at);
+    }
+
     private function createPendingAppointment(string $verificationToken): Appointment
     {
         return $this->createAppointment([

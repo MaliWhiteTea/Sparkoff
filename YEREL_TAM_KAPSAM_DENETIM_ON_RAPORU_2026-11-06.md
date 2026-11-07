@@ -32,7 +32,7 @@ Bu belge denetim başlamadan önce yazılmış **ön rapordur**; aşağıdaki ba
 2. 97 rotanın yöntem, girişsiz/pasif/sınırlı rol, yanlış kimlik, geçersiz girdi, tekrarlı istek, yan etki ve gizlilik kontrollerinin tamamlanması.
 3. MySQL/MariaDB CI temiz kurulum, migration/seed ve otomatik testleri geçti. Aynı slot yarışı ve son yönetici eşzamanlılığı için özel, gerçek eşzamanlı istek kanıtı hâlâ açık; yerelde bu veritabanı sunucuları bulunmadı.
 4. Gerçek tarayıcıda masaüstü/mobil, açık/koyu tema, klavye, yenileme ve dosya yükleme akışlarının geri kalanı; gerçek SMTP, cron, hosting ve yedekten geri yükleme koşulları.
-5. `ONLINE_BOOKING_ENABLED=false` durumunda daha önce verilmiş doğrulama ve takip bağlantılarının 404 olması ürün beklentisiyle karşılaştırılacak. Büyük JS parçası uyarısının ilk yüklemeye etkisi ölçülecek.
+5. `ONLINE_BOOKING_ENABLED=false` durumunda geçerli eski doğrulama/takip bağlantılarının da 404 olması alpha planındaki `BOOK-OFF-02` beklentisiyle uyumlu ve yeni HTTP testiyle doğrulandı. Büyük JS parçası uyarısının ilk yüklemeye etkisi hâlâ ölçülecek.
 
 **Karar:** Yerel düzeltmeler testlerden geçti; tam denetim ve canlı kabul henüz tamamlanmadı.
 

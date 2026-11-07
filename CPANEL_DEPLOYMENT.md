@@ -57,7 +57,7 @@ DB_PASSWORD=GUCLU_PAROLA
 SESSION_DRIVER=database
 SESSION_SECURE_COOKIE=true
 SESSION_SAME_SITE=lax
-ONLINE_BOOKING_ENABLED=true
+ONLINE_BOOKING_ENABLED=false
 ```
 
 ```bash
@@ -71,6 +71,12 @@ php artisan optimize
 
 Randevu e-postalarının gönderilebilmesi için `.env` içindeki `MAIL_*` değerlerini
 `randevu@sparkoff.tr` hesabının SMTP bilgileriyle doldurun.
+İlk kurulum ve kapalı alpha sırasında çevrimiçi randevuyu kapalı tutun. Gerçek
+SMTP teslimatı, SPF/DKIM, dosya yükleme, cron ve uçtan uca randevu kabulü
+tamamlanınca `ONLINE_BOOKING_ENABLED=true` yapıp `php artisan optimize:clear`
+ve `php artisan optimize` çalıştırın. Özellik kapalıyken mevcut doğrulama ve
+takip bağlantıları da 404 döndürür; özellik yeniden açıldığında kayıtların
+durumu ve token süreleri ayrıca değerlendirilmelidir.
 
 ## 3. Zamanlanmış görev
 
@@ -78,10 +84,11 @@ cPanel Cron İşleri bölümüne dakikada bir çalışan yalnızca şu görevi e
 (`CPANEL_KULLANICI` kısmını hesabınıza göre değiştirin):
 
 ```cron
-* * * * * cd /home/CPANEL_KULLANICI/sparkoff_app && /opt/alt/php84/usr/bin/php artisan schedule:run >> /dev/null 2>&1
+* * * * * cd /home/CPANEL_KULLANICI/sparkoff_app && /opt/alt/php84/usr/bin/php artisan schedule:run > /dev/null 2>> /home/CPANEL_KULLANICI/sparkoff-scheduler-errors.log
 ```
 
-`migrate` veya `db:seed` komutlarını dakikada bir çalıştırmayın. Bunlar yalnızca ilk
+Hata dosyasını düzenli kontrol edin; boş kalması tek başına cronun çalıştığını
+kanıtlamaz. `migrate` veya `db:seed` komutlarını dakikada bir çalıştırmayın. Bunlar yalnızca ilk
 kurulumda ve gerektiğinde güncelleme sırasında çalıştırılmalıdır.
 
 ## 4. Belge kökü ve izinler
@@ -89,10 +96,15 @@ kurulumda ve gerektiğinde güncelleme sırasında çalıştırılmalıdır.
 Document root proje kökü değil şu dizin olmalıdır:
 
 ```text
-/home/CPANEL_KULLANICI/Sparkoff/public
+/home/CPANEL_KULLANICI/sparkoff_app/public
 ```
 
-Bu değişmiyorsa dosyaları gelişigüzel `public_html` içine taşımayın; hosting sağlayıcısından document root değişikliği isteyin. `storage` ve `bootstrap/cache` PHP tarafından yazılabilir olmalıdır (`755`, gerekirse `775`; `777` kullanmayın).
+Bu değişmiyorsa uygulama kökünü `public_html` içine taşımayın. Mevcut
+`public_html/index.php` köprüsü kullanılıyorsa yalnız `public` dosyaları belge
+kökünde olmalı; giriş dosyasının `/home/CPANEL_KULLANICI/sparkoff_app`
+yollarını doğru yüklediği ve `.env`/`vendor`/özel depolamanın webden
+erişilemediği kontrol edilmelidir. `storage` ve `bootstrap/cache` PHP tarafından
+yazılabilir olmalıdır (`755`, gerekirse `775`; `777` kullanmayın).
 
 ## 5. SSL ve yedekleme
 
@@ -105,12 +117,12 @@ Bu değişmiyorsa dosyaları gelişigüzel `public_html` içine taşımayın; ho
 
 - [ ] `/up` HTTP 200 döndürüyor.
 - [ ] `/`, `/3d-yazicilar`, `/filamentler` ve `/malzemeler` açılıyor.
-- [ ] `/randevu` açılıyor; örnek bir talep, e-posta doğrulama ve takip akışı tamamlanıyor.
+- [ ] Kapalı alpha sırasında `/randevu` yazıcı sayfasına yönleniyor. Özellik açılmadan önce ayrı kabul ortamında örnek talep, e-posta doğrulama ve takip akışı tamamlanıyor.
 - [ ] Yönetim sayfaları giriş ve admin rolü gerektiriyor.
 - [ ] Takvim, filament, iletişim ve duyuru değişiklikleri siteye yansıyor.
 - [ ] İşlem geçmişi değişiklikleri kaydediyor.
 - [ ] Telefon, WhatsApp ve e-posta bağlantıları doğru.
-- [ ] `APP_DEBUG=false`, `ONLINE_BOOKING_ENABLED=true` ve SSL etkin.
+- [ ] `APP_DEBUG=false`, `ONLINE_BOOKING_ENABLED=false` ve SSL etkin; çevrimiçi randevu ancak aşağıdaki yayın kabulü tamamlanınca açılıyor.
 - [ ] `schedule:run` cron görevi dakikada bir çalışıyor.
 - [ ] Otomatik veritabanı yedeği etkin ve geri yükleme denendi.
 

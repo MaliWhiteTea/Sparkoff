@@ -326,7 +326,7 @@ Bu sıra ortak bileşenleri önce kurarak aynı özelliğin farklı sayfalarda t
 
 - Aktif, gecikmiş veya çözümlenmemiş teslimlerin kişi bilgileri otomatik silinmez.
 - Beklenen iade tarihi veri saklama başlangıcı değildir.
-- Saklama süresi `returned_at` veya `resolved_at` sonrasında başlar.
+- Saklama süresi teslim kaydındaki `completed_at` sonrasında başlar; tam iade veya hasar/kayıp kapanışı bu zamanı oluşturur.
 - Süre sonunda ad, soyad, e-posta ve kişiyi tanımlayan serbest alanlar anonimleştirilir.
 - Stok hareketi, miktar, işlem türü ve yetkili işlem kaydı korunur.
 - Otomatik görev günlük çalışır ve yaptığı işlemleri denetim kaydına yazar.
@@ -334,6 +334,9 @@ Bu sıra ortak bileşenleri önce kurarak aynı özelliğin farklı sayfalarda t
 
 ## Sıradaki teknik adım
 
-Q paketinin geliştirme maddeleri tamamlandı. Sıradaki adım, katalogdaki yeni
-filtre, favori ve teknik ayrıntı akışlarının mobil ve ekran okuyucu kabul
-testlerini tamamlamaktır.
+Q paketi ve P.1 marka/model paketi kod olarak tamamlandı. Şu anda
+[tam kapsamlı yerel denetim](YEREL_TAM_KAPSAM_DENETIM_ON_RAPORU_2026-11-06.md)
+sürüyor. Kalan işler: 390 maddelik arayüz planının kanıtlı kapatılması,
+97 rotanın izin/hatalı girdi/yan etki matrisi, gerçek eşzamanlı istekler,
+gerçek SMTP ve hosting kabulü. Yerel otomatik testlerin geçmesi bu kabulün
+yerine geçmez.

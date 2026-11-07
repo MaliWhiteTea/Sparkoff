@@ -91,3 +91,11 @@ Derleme aynı 500 kB üstü JS parçası uyarısını veriyor; bu performans tur
 **Takip bağlantısı:** Geçersiz token ile iptal isteği 404 döndürdü, durum değişmedi. Geçerli iptal isteğinin iki kez gönderilmesi yalnız bir `Canceled` geçmiş kaydı oluşturdu. İki yeni HTTP testi geçti.
 
 **Son kalite kapısı:** 306 PHP testi, 305 geçti, MySQL/MariaDB gerektiren 1 test atlandı, 2911 assertion. `pint --test`, `tsc --noEmit`, `composer audit --format=summary` ve `git diff --check` geçti. Özellik bayrağı kapatıldığında daha önce verilmiş doğrulama/takip bağlantılarının da 404 olması ayrıca ürün davranışı olarak değerlendirilecek; bu turda değiştirilmedi.
+
+## 7 Kasım ek turu — özellik bayrağı ve doküman uyumu
+
+`ALPHA_UCTAN_UCA_MANUEL_TEST_PLANI.md` içindeki `BOOK-OFF-02`, özellik kapalıyken doğrulama ve takip uçlarının veri açmamasını ister. Geçerli doğrulama ve takip token'larıyla GET/POST istekleri yeni HTTP testinde 404 döndürdü; kayıtların durumu değişmedi. Bu davranış alpha planıyla uyumlu, hata olarak açılmadı.
+
+Dokümantasyon taramasında iki güncel kod/plan çelişkisi düzeltildi: `CPANEL_DEPLOYMENT.md` ilk kurulum örneği randevuyu `true` açıyordu; kapalı alpha varsayılanı `false` yapıldı ve açma ön koşulları yazıldı. `ROADMAP.md` teslim saklama başlangıcı için kodda bulunmayan `returned_at`/`resolved_at` alanlarını söylüyordu; gerçek `completed_at` alanına düzeltildi. README, gerçek eşzamanlılık testinin açık olduğunu artık açıkça belirtiyor ve denetim raporlarına bağlanıyor. Tarihli eski kabul ve BugBot kayıtları tarihsel kanıt olarak korundu.
+
+**Kalite kapısı:** 307 PHP testi, 306 geçti, 1 yerel MySQL/MariaDB testi atlandı, 2918 assertion. `pint --test`, `tsc --noEmit` ve `git diff --check` geçti. MySQL/MariaDB CI'nin bu commit için sonucu push sonrasında ayrıca izlenecek.
