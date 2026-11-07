@@ -79,3 +79,15 @@ Derleme aynı 500 kB üstü JS parçası uyarısını veriyor; bu performans tur
 **Sonuç:** Yeni altı testin tamamı geçti. Tam suite: 301 test, 300 geçti, MySQL/MariaDB gerektiren 1 test atlandı, 2884 assertion. `pint --test`, `tsc --noEmit`, `git diff --check` geçti. Bu tarama yalnız doğrudan rota çağrısı boşluğunu kapatır; 97 rotanın tamamının tüm hata, yetki ve yan etki kombinasyonlarını ispatlamaz. Canlıya yayın yapılmadı.
 
 **Ek sınır durumu:** Aktif ödünç işlemi varken malzeme arşivlendi. HTTP üzerinden tam iade yapıldı; işlem tamamlandı, stok eski miktara döndü, iade stok hareketi oluştu ve malzeme arşivde kaldı. Yeni regresyon testi geçti. Son tam suite: 302 test, 301 geçti, MySQL/MariaDB gerektiren 1 test atlandı, 2891 assertion; `pint --test` ve `git diff --check` geçti.
+
+## 7 Kasım ek turu — randevu dosyası ve takip bağlantısı
+
+### BUG-006 — Dosya yazma başarısızken randevunun kabul edilmesi
+
+**Önem:** Yüksek. Özel diskin `putFileAs` çağrısı `false` döndürürse randevu akışı dosya kaydını başarılı sayıyordu. Düzeltme öncesi yeni HTTP testi `file` hata alanının boş olduğunu gösterdi. Kullanıcıya başarı dönme ve doğrulama e-postası gönderme riski vardı; dosyanın yolu geçersiz kalacaktı.
+
+**Düzeltme:** Dosya yazımı `false`/boş yol döndürürse veya istisna verirse `file` alanında anlaşılır hata üretiliyor. Veritabanı transaction'ı geri alınıyor ve doğrulama e-postası gönderilmiyor. İki ayrı test, randevu/dosya tablosunun boş kaldığını ve e-posta gönderilmediğini doğruladı. Düzeltme yalnız yerelde; canlıya yayınlanmadı.
+
+**Takip bağlantısı:** Geçersiz token ile iptal isteği 404 döndürdü, durum değişmedi. Geçerli iptal isteğinin iki kez gönderilmesi yalnız bir `Canceled` geçmiş kaydı oluşturdu. İki yeni HTTP testi geçti.
+
+**Son kalite kapısı:** 306 PHP testi, 305 geçti, MySQL/MariaDB gerektiren 1 test atlandı, 2911 assertion. `pint --test`, `tsc --noEmit`, `composer audit --format=summary` ve `git diff --check` geçti. Özellik bayrağı kapatıldığında daha önce verilmiş doğrulama/takip bağlantılarının da 404 olması ayrıca ürün davranışı olarak değerlendirilecek; bu turda değiştirilmedi.

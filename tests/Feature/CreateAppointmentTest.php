@@ -9,10 +9,12 @@ use App\Models\Appointment;
 use App\Models\Filament;
 use App\Models\Printer;
 use Carbon\CarbonImmutable;
+use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
+use Mockery;
 use Tests\TestCase;
 
 class CreateAppointmentTest extends TestCase
@@ -82,6 +84,36 @@ class CreateAppointmentTest extends TestCase
         $this->assertDatabaseCount('appointments', 0);
         $this->assertDatabaseCount('appointment_files', 0);
         $this->assertSame([], Storage::disk('local')->allFiles('appointments'));
+    }
+
+    public function test_failed_private_file_write_does_not_create_or_email_an_appointment(): void
+    {
+        Mail::fake();
+        $disk = Mockery::mock(FilesystemAdapter::class);
+        $disk->shouldReceive('putFileAs')->once()->andReturn(false);
+        Storage::shouldReceive('disk')->with('local')->andReturn($disk);
+
+        $this->post(route('booking.store'), $this->validPayload())
+            ->assertSessionHasErrors('file');
+
+        $this->assertDatabaseCount('appointments', 0);
+        $this->assertDatabaseCount('appointment_files', 0);
+        Mail::assertNothingSent();
+    }
+
+    public function test_private_file_write_exception_returns_a_file_error_without_creating_an_appointment(): void
+    {
+        Mail::fake();
+        $disk = Mockery::mock(FilesystemAdapter::class);
+        $disk->shouldReceive('putFileAs')->once()->andThrow(new \RuntimeException('Simulated disk failure'));
+        Storage::shouldReceive('disk')->with('local')->andReturn($disk);
+
+        $this->post(route('booking.store'), $this->validPayload())
+            ->assertSessionHasErrors('file');
+
+        $this->assertDatabaseCount('appointments', 0);
+        $this->assertDatabaseCount('appointment_files', 0);
+        Mail::assertNothingSent();
     }
 
     public function test_a_request_is_saved_for_the_selected_active_printer(): void

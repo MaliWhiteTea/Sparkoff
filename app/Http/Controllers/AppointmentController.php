@@ -170,11 +170,25 @@ class AppointmentController extends Controller
 
                 $file = $request->file('file');
                 $extension = strtolower($file->getClientOriginalExtension());
-                $storedPath = $file->storeAs(
-                    "appointments/{$appointment->public_id}",
-                    Str::uuid().".{$extension}",
-                    'local',
-                );
+                try {
+                    $storedPath = $file->storeAs(
+                        "appointments/{$appointment->public_id}",
+                        Str::uuid().".{$extension}",
+                        'local',
+                    );
+                } catch (Throwable $exception) {
+                    report($exception);
+
+                    throw ValidationException::withMessages([
+                        'file' => 'Baskı dosyası kaydedilemedi. Lütfen daha sonra tekrar deneyin.',
+                    ]);
+                }
+
+                if (! is_string($storedPath) || $storedPath === '') {
+                    throw ValidationException::withMessages([
+                        'file' => 'Baskı dosyası kaydedilemedi. Lütfen daha sonra tekrar deneyin.',
+                    ]);
+                }
 
                 $appointment->files()->create([
                     'disk' => 'local',

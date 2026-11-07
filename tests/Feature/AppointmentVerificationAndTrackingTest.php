@@ -94,6 +94,34 @@ class AppointmentVerificationAndTrackingTest extends TestCase
         ]))->assertNotFound();
     }
 
+    public function test_invalid_tracking_token_cannot_cancel_or_change_an_appointment(): void
+    {
+        $appointment = $this->createVerifiedAppointment(Str::random(64));
+
+        $this->post(route('booking.cancel', [
+            'publicId' => $appointment->public_id,
+            'token' => 'gecersiz-token',
+        ]))->assertNotFound();
+
+        $this->assertSame(AppointmentStatus::PendingApproval, $appointment->fresh()->status);
+        $this->assertNull($appointment->fresh()->canceled_at);
+        $this->assertSame(1, $appointment->statusHistory()->count());
+    }
+
+    public function test_canceling_twice_does_not_duplicate_status_history(): void
+    {
+        $token = Str::random(64);
+        $appointment = $this->createVerifiedAppointment($token);
+        $url = route('booking.cancel', ['publicId' => $appointment->public_id, 'token' => $token]);
+
+        $this->post($url)->assertRedirect();
+        $this->post($url)->assertRedirect();
+
+        $this->assertSame(AppointmentStatus::Canceled, $appointment->fresh()->status);
+        $this->assertSame(1, $appointment->statusHistory()
+            ->where('to_status', AppointmentStatus::Canceled->value)->count());
+    }
+
     public function test_an_expired_verification_link_does_not_activate_the_request(): void
     {
         $token = Str::random(64);
