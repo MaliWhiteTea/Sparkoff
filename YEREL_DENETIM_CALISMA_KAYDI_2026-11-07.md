@@ -35,3 +35,29 @@ Derleme aynı 500 kB üstü JS parçası uyarısını veriyor; bu performans tur
 - Geçici Python sanal ortamında Selenium ve Firefox sürücüsü çalıştırıldı; yukarıdaki ilk gerçek tarayıcı etkileşimleri geçti. Mevcut 390 maddelik UI planının geri kalanı açık.
 - Yönetici rolünü kaldırma/pasifleştirmede son aktif yöneticiyi koruyan kontrol transaction öncesinde yapılıyor. İki eşzamanlı istekte yarışma riski kod incelemesinde görüldü; MySQL/MariaDB ile eşzamanlılık kanıtı olmadan doğrulanmış hata veya geçti olarak işaretlenmeyecek.
 - MySQL/MariaDB, gerçek SMTP ve hosting koşulları bu yerel ortamda doğrulanmadı; bunlar yeşil kabul edilmeyecek.
+
+## 7 Kasım ek turu — yönetici ve yükleme hata yolları
+
+| Alan | Kanıt | Sonuç |
+|---|---|---|
+| F05 | Doğrulama e-postası gönderilemediğinde randevu ve özel dosyanın silindiği yeni HTTP testiyle doğrulandı. | Geçti |
+| H01/H02 | Son yöneticinin değişmeyen rol kimliğini form metni olarak gönderme senaryosu önce başarısız oldu; BUG-003 düzeltildi. | Geçti |
+| B08/G04 | Geri bildirim görseli diske yazılırken istisna oluşması önce 500 ile sonuçlandı; BUG-004 düzeltildi. | Geçti |
+| F03/H01 | PDO MySQL uzantısı var, fakat yerelde MySQL/MariaDB sunucusu veya Docker/Podman bulunmadı. Randevu ve son yönetici korumasının gerçek veritabanı eşzamanlılık testi açık. | Engelli: yalıtılmış veritabanı gerekli |
+| Kalite kapısı | Düzeltmelerden sonra `php artisan test --compact`: 294 test, 293 geçti, 1 MySQL/MariaDB testi atlandı, 2844 assertion. `pint --test`, `tsc --noEmit` ve `composer audit --format=summary` geçti. | Geçti; veritabanı kabulü açık |
+
+### BUG-003 — Değişmeyen sistem yöneticisi rolünün yanlış reddi
+
+**Önem:** Orta. `PUT /yonetim/kullanicilar/{user}` isteğinde `role_ids` form metni olarak (`"1"`) gelirse, son aktif sistem yöneticisi mevcut rolünü korusa bile kayıt engelleniyordu. Doğrulanmış alanın ham metin kimliği, sayısal sistem rolü kimliğiyle katı biçimde karşılaştırılıyordu. Yeni HTTP testi düzeltme öncesi hata, sonrası başarı gösterdi. Koruma artık önceden sayıya çevrilmiş rol kimliklerini kullanıyor. Son yöneticinin gerçekten yetki kaybetmesini reddeden mevcut test de geçti.
+
+### BUG-004 — Geri bildirim görseli depolama hatasında 500
+
+**Önem:** Orta. `POST /geri-bildirim` sırasında disk istisnası oluşursa talep kaydı oluşturulduktan sonra işlem 500'e düşüyordu. Geçici disk hatasını simüle eden HTTP testi bunu doğruladı. İstisna artık raporlanıyor; yarım talep siliniyor ve görsel alanında anlaşılır doğrulama hatası dönüyor. Test, talep tablosunun boş kaldığını doğruluyor.
+
+**Durum:** BUG-003 ve BUG-004 yerelde düzeltildi; canlıya yayınlanmadı.
+
+### BUG-005 — Envanter medyası depolama hatasında 500
+
+**Önem:** Orta. `POST /yonetim/envanter/{item}/medya` isteğinde dosya diski istisna verirse yükleme alanı hatası yerine 500 oluşuyordu. Yeni HTTP testi bunu düzeltme öncesi yeniden üretti. Dosya yazma istisnası artık raporlanıyor ve `file` alanına doğrulama hatası dönüyor; başarısız yazma sonucu da aynı şekilde ele alınıyor. Test, medya tablosunda kayıt oluşmadığını doğruluyor.
+
+**Son kalite kapısı:** 295 PHP testi, 294 geçti, yalnız MySQL/MariaDB testi atlandı, 2849 assertion. PHP biçim ve TypeScript tip kontrolü geçti. BUG-003–BUG-005 yerelde düzeltildi; canlıya yayınlanmadı.

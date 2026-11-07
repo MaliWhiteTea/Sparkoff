@@ -8,11 +8,14 @@ use App\Models\FeedbackReport;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
+use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
+use Mockery;
+use RuntimeException;
 use Tests\TestCase;
 
 class FeedbackTest extends TestCase
@@ -85,6 +88,24 @@ class FeedbackTest extends TestCase
             'website' => '',
         ])->assertRedirect(route('feedback.create'))
             ->assertSessionHasErrors('image');
+
+        $this->assertDatabaseCount('feedback_reports', 0);
+    }
+
+    public function test_feedback_storage_failure_does_not_leave_an_orphan_report(): void
+    {
+        $disk = Mockery::mock(FilesystemAdapter::class);
+        $disk->shouldReceive('putFileAs')->once()->andThrow(new RuntimeException('Simulated disk failure'));
+        Storage::shouldReceive('disk')->with('local')->once()->andReturn($disk);
+
+        $this->post(route('feedback.store'), [
+            'type' => FeedbackType::Bug->value,
+            'message' => 'Görsel depolama hatasında rapor kaydı kalmamalıdır.',
+            'image' => UploadedFile::fake()->createWithContent(
+                'ekran.png',
+                base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII='),
+            ),
+        ])->assertSessionHasErrors('image');
 
         $this->assertDatabaseCount('feedback_reports', 0);
     }

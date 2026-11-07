@@ -9,9 +9,12 @@ use App\Models\InventoryMedia;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
+use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Mockery;
+use RuntimeException;
 use Tests\TestCase;
 
 class InventoryMediaTest extends TestCase
@@ -57,6 +60,21 @@ class InventoryMediaTest extends TestCase
         $this->actingAs($manager)->post(route('admin.inventory.media.store', $item), [
             'type' => 'image', 'file' => $this->png('buyuk.png')->size(9000), 'alt_text' => 'Test',
         ])->assertSessionHasErrors('file');
+        $this->assertDatabaseCount('inventory_media', 0);
+    }
+
+    public function test_media_storage_failure_returns_a_field_error_without_creating_a_record(): void
+    {
+        $user = $this->userWithPermission('inventory.manage_media');
+        $item = $this->item();
+        $disk = Mockery::mock(FilesystemAdapter::class);
+        $disk->shouldReceive('putFileAs')->once()->andThrow(new RuntimeException('Simulated disk failure'));
+        Storage::shouldReceive('disk')->with('public')->once()->andReturn($disk);
+
+        $this->actingAs($user)->post(route('admin.inventory.media.store', $item), [
+            'type' => 'image', 'file' => $this->png('test.png'), 'alt_text' => 'Test resmi',
+        ])->assertSessionHasErrors('file');
+
         $this->assertDatabaseCount('inventory_media', 0);
     }
 

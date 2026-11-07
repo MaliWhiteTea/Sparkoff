@@ -56,7 +56,16 @@ class FeedbackController extends Controller
 
         if ($request->hasFile('image')) {
             $image = $request->file('image');
-            $path = $image->store("feedback/{$report->id}", 'local');
+            try {
+                $path = $image->store("feedback/{$report->id}", 'local');
+            } catch (\Throwable $exception) {
+                $report->delete();
+                report($exception);
+
+                throw ValidationException::withMessages([
+                    'image' => 'Görsel kaydedilemedi. Lütfen tekrar deneyin.',
+                ]);
+            }
 
             if (! $path) {
                 $report->delete();

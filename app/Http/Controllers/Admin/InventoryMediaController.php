@@ -34,7 +34,16 @@ class InventoryMediaController extends Controller
 
         $path = null;
         if ($request->hasFile('file')) {
-            $path = $request->file('file')->store("inventory-media/{$item->id}", 'public');
+            try {
+                $path = $request->file('file')->store("inventory-media/{$item->id}", 'public');
+            } catch (\Throwable $exception) {
+                report($exception);
+
+                throw ValidationException::withMessages(['file' => 'Medya dosyası kaydedilemedi. Lütfen tekrar deneyin.']);
+            }
+            if (! $path) {
+                throw ValidationException::withMessages(['file' => 'Medya dosyası kaydedilemedi. Lütfen tekrar deneyin.']);
+            }
         }
 
         try {

@@ -152,7 +152,7 @@ class AccessController extends Controller
 
         $systemRoleId = Role::query()->where('is_system', true)->value('id');
         $removesSystemAccess = $user->roles()->where('is_system', true)->exists()
-            && (! $validated['is_active'] || ! in_array($systemRoleId, $validated['role_ids'], true));
+            && (! $validated['is_active'] || ! in_array($systemRoleId, $submittedRoleIds, true));
 
         if ($removesSystemAccess && ! User::query()->where('is_active', true)->whereKeyNot($user->id)->whereHas('roles', fn ($query) => $query->where('is_system', true))->exists()) {
             throw ValidationException::withMessages(['role_ids' => 'Son aktif Sistem Yöneticisi pasifleştirilemez veya bu rolden çıkarılamaz.']);

@@ -122,6 +122,22 @@ class AccessManagementTest extends TestCase
         $this->assertTrue($admin->fresh()->isSystemAdministrator());
     }
 
+    public function test_last_system_administrator_can_save_unchanged_role_ids_sent_as_form_strings(): void
+    {
+        $admin = User::factory()->systemAdministrator()->create();
+        $systemRoleId = $admin->roles()->sole()->id;
+
+        $this->actingAs($admin)->put(route('admin.users.update', $admin), [
+            'name' => $admin->name,
+            'email' => $admin->email,
+            'password' => '',
+            'is_active' => '1',
+            'role_ids' => [(string) $systemRoleId],
+        ])->assertSessionHas('success');
+
+        $this->assertTrue($admin->fresh()->isSystemAdministrator());
+    }
+
     public function test_a_role_manager_cannot_assign_the_protected_system_role(): void
     {
         $managerRole = Role::query()->create(['name' => 'Erişim Yöneticisi', 'slug' => 'restricted-access-manager']);

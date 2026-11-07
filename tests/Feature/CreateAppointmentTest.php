@@ -71,6 +71,19 @@ class CreateAppointmentTest extends TestCase
         $this->assertDatabaseCount('appointments', 1);
     }
 
+    public function test_failed_verification_email_removes_the_request_and_private_file(): void
+    {
+        Storage::fake('local');
+        Mail::shouldReceive('to')->once()->andThrow(new \RuntimeException('Simulated SMTP failure'));
+
+        $this->post(route('booking.store'), $this->validPayload())
+            ->assertSessionHasErrors('email');
+
+        $this->assertDatabaseCount('appointments', 0);
+        $this->assertDatabaseCount('appointment_files', 0);
+        $this->assertSame([], Storage::disk('local')->allFiles('appointments'));
+    }
+
     public function test_a_request_is_saved_for_the_selected_active_printer(): void
     {
         Storage::fake('local');
