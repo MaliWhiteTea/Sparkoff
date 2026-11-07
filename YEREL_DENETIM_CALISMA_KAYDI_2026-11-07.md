@@ -77,3 +77,5 @@ Derleme aynı 500 kB üstü JS parçası uyarısını veriyor; bu performans tur
 | `admin.logout` | Oturum kapatılır; yönetim ekranına sonraki istek girişe yönlenir. |
 
 **Sonuç:** Yeni altı testin tamamı geçti. Tam suite: 301 test, 300 geçti, MySQL/MariaDB gerektiren 1 test atlandı, 2884 assertion. `pint --test`, `tsc --noEmit`, `git diff --check` geçti. Bu tarama yalnız doğrudan rota çağrısı boşluğunu kapatır; 97 rotanın tamamının tüm hata, yetki ve yan etki kombinasyonlarını ispatlamaz. Canlıya yayın yapılmadı.
+
+**Ek sınır durumu:** Aktif ödünç işlemi varken malzeme arşivlendi. HTTP üzerinden tam iade yapıldı; işlem tamamlandı, stok eski miktara döndü, iade stok hareketi oluştu ve malzeme arşivde kaldı. Yeni regresyon testi geçti. Son tam suite: 302 test, 301 geçti, MySQL/MariaDB gerektiren 1 test atlandı, 2891 assertion; `pint --test` ve `git diff --check` geçti.

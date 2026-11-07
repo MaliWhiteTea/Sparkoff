@@ -78,6 +78,30 @@ class InventoryTransactionTest extends TestCase
         $this->assertSame(InventoryTransactionStatus::Completed, $transaction->fresh()->status);
     }
 
+    public function test_archived_loanable_item_still_accepts_the_return_of_an_existing_loan(): void
+    {
+        $admin = User::factory()->systemAdministrator()->create();
+        $item = $this->item(InventoryItemType::Loanable, 5);
+
+        $this->actingAs($admin)->post(route('admin.loans.store'), [
+            'inventory_item_id' => $item->id, 'recipient_name' => 'Test Kullanıcı',
+            'quantity' => 2, 'due_at' => now()->addDay()->format('Y-m-d\TH:i'),
+        ])->assertSessionHas('success');
+        $transaction = InventoryTransaction::query()->firstOrFail();
+
+        $this->actingAs($admin)->patch(route('admin.inventory.archive', $item))->assertSessionHas('success');
+        $this->actingAs($admin)->post(route('admin.loans.return', $transaction), ['quantity' => 2])
+            ->assertSessionHas('success');
+
+        $this->assertSame(InventoryTransactionStatus::Completed, $transaction->fresh()->status);
+        $this->assertSame('5.000', $item->fresh()->quantity);
+        $this->assertNotNull($item->fresh()->archived_at);
+        $this->assertDatabaseHas('stock_movements', [
+            'inventory_item_id' => $item->id, 'movement_type' => 'return',
+            'quantity_change' => 2, 'balance_after' => 5,
+        ]);
+    }
+
     public function test_consumable_delivery_is_completed_immediately_and_reduces_stock(): void
     {
         $admin = User::factory()->systemAdministrator()->create();
