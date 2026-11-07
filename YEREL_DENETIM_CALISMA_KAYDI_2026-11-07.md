@@ -99,3 +99,17 @@ Derleme aynı 500 kB üstü JS parçası uyarısını veriyor; bu performans tur
 Dokümantasyon taramasında iki güncel kod/plan çelişkisi düzeltildi: `CPANEL_DEPLOYMENT.md` ilk kurulum örneği randevuyu `true` açıyordu; kapalı alpha varsayılanı `false` yapıldı ve açma ön koşulları yazıldı. `ROADMAP.md` teslim saklama başlangıcı için kodda bulunmayan `returned_at`/`resolved_at` alanlarını söylüyordu; gerçek `completed_at` alanına düzeltildi. README, gerçek eşzamanlılık testinin açık olduğunu artık açıkça belirtiyor ve denetim raporlarına bağlanıyor. Tarihli eski kabul ve BugBot kayıtları tarihsel kanıt olarak korundu.
 
 **Kalite kapısı:** 307 PHP testi, 306 geçti, 1 yerel MySQL/MariaDB testi atlandı, 2918 assertion. `pint --test`, `tsc --noEmit` ve `git diff --check` geçti. MySQL/MariaDB CI'nin bu commit için sonucu push sonrasında ayrıca izlenecek.
+
+## 7 Kasım ek turu — gerçek tarayıcıda kamu sayfaları ve geri bildirim
+
+**Ortam:** Uygulama, yalnız bu tur için hazırlanmış `/tmp/sparkoff-browser-audit-2026-11-07.sqlite` sentetik veritabanıyla `127.0.0.1:8765` üzerinde çalıştırıldı. Firefox headless ve Selenium ile `/`, `/3d-yazicilar`, `/filamentler`, `/malzemeler`, `/geri-bildirim`, `/kvkk-aydinlatma` sayfaları tarandı.
+
+### BUG-007 — Kapalı mobil menü kamu sayfalarını yatay taşırıyor
+
+**Önem:** Orta. Mobil menü kapalıyken panel `translateX(105%)` ile ekran dışına itiliyordu. Firefox'ta 768 px görüntü alanında `document.documentElement.scrollWidth` 1113 px, 500 px görüntü alanında 845 px ölçüldü; aynı taşma menüyü kullanan tüm kamu sayfalarında görüldü. Taşan öğe `.desktop-nav` idi.
+
+**Düzeltme:** Kapalı panel ekran sınırları içinde, görünmez ve etkileşimsiz tutuluyor; açılma opaklıkla yapılıyor. 768 px ölçümü 756 px'e, 500 px ölçümü 488 px'e indi. Altı sayfanın 500/768/1024/1440 px taramasında görüntü alanını aşan belge genişliği veya kırık görsel görülmedi. Menü açılınca ilk bağlantı odaklanıyor; Esc sonrası odak açma düğmesine dönüyor. Bu turda yeni otomatik CSS testi eklenmedi; gerçek tarayıcı ölçümüyle doğrulandı.
+
+**Geri bildirim:** Aynı sentetik veritabanında görselsiz ve 1 px PNG ile iki form gerçek tarayıcıdan gönderildi. İki durumda da başarı mesajı göründü; ilk gönderim sonrası mesaj alanı temizlendi. Veritabanında iki `new` rapor kaydı, görselli kayıtta özel dosya yolu ve `image/png` türü doğrulandı.
+
+**Sınır:** Bu Firefox headless kurulumunda en küçük gerçek CSS görüntü alanı 500 px oldu; pencereyi 320/375 px olarak ayarlamak `innerWidth` değerini 500 px'in altına düşürmedi. Bu iki genişlik geçti sayılmadı. Geri bildirim için yenileme, geri/ileri, ekran okuyucu ve tüm dosya türleri matrisi de açık.

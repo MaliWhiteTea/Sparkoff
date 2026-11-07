@@ -24,7 +24,7 @@ Bu belge denetim başlamadan önce yazılmış **ön rapordur**; aşağıdaki ba
 
 ### Bulunan ve yerelde düzeltilen hatalar
 
-`BUG-001` stok miktarında fazla ondalık basamak; `BUG-002` randevu geçmişi notunda kişisel veri görünmesi; `BUG-003` değişmeyen yönetici rolünün metin kimliğiyle yanlış reddi; `BUG-004` geri bildirim görseli disk hatasında 500; `BUG-005` envanter medyası disk hatasında 500; `BUG-006` randevu dosyası yazılamadığında başvurunun kabulü. Her bulgunun yeniden üretimi ve regresyon kanıtı çalışma kayıtlarında yer alır. Bu düzeltmelerin **canlıya geçişi bu raporla doğrulanmış değildir**.
+`BUG-001` stok miktarında fazla ondalık basamak; `BUG-002` randevu geçmişi notunda kişisel veri görünmesi; `BUG-003` değişmeyen yönetici rolünün metin kimliğiyle yanlış reddi; `BUG-004` geri bildirim görseli disk hatasında 500; `BUG-005` envanter medyası disk hatasında 500; `BUG-006` randevu dosyası yazılamadığında başvurunun kabulü; `BUG-007` kapalı mobil menünün kamu sayfalarını yatay taşırması. İlk altı bulgu HTTP regresyon testleriyle, yedinci bulgu gerçek tarayıcı ölçümüyle doğrulandı. Ayrıntılar çalışma kayıtlarında yer alır. Bu düzeltmelerin **canlıya geçişi bu raporla doğrulanmış değildir**.
 
 ### Kalan işler ve kabul engelleri
 
