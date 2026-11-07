@@ -6,6 +6,36 @@
 **Aşama:** Denetim kapsamı ve başlangıç ölçümü hazır. Aşağıdaki işlev denetimleri henüz yapılmadı; maddeler tamamlandı diye işaretlenmemelidir.
 **Ortam sınırı:** Canlı site testleri ayrı sürüyor. Canlı veriye müdahale ve yayın bu denetimin kapsamında değil.
 
+## Güncel durum — 7 Kasım 2026
+
+Bu belge denetim başlamadan önce yazılmış **ön rapordur**; aşağıdaki başlangıç sayıları 6 Kasım anlık görüntüsüdür. Yapılan işlemlerin ayrıntılı kanıtları [ilk çalışma kaydında](YEREL_DENETIM_ILK_CALISMA_KAYDI_2026-11-06.md) ve [7 Kasım çalışma kaydında](YEREL_DENETIM_CALISMA_KAYDI_2026-11-07.md) bulunur. Aşağıdaki özet, `6c6c330` commit'indeki yerel durumu gösterir.
+
+### Kontrol edilenler
+
+| Alan | Doğrulanan kapsam | Sınır |
+|---|---|---|
+| Otomatik kalite kapısı | 306 PHP testi: 305 geçti, 1 MySQL/MariaDB gerektirdiği için atlandı; 2911 assertion. PHP biçimi, TypeScript tipleri ve Composer güvenlik duyurusu kontrolü geçti. | SQLite ve simüle servisler; üretim kabulü değil. |
+| Rota giriş kapısı | Yönetim rotalarının genel `auth` kapısı incelendi. Doğrudan test çağrısı bulunmayan 7 yönetim rotasına HTTP testleri eklendi. | 97 rotanın tam izin/hata/yan etki matrisi açık. |
+| Stok ve teslim | Dört ondalıklı miktarın reddi; teslim/iade stok hareketleri; arşivli malzemenin açık ödünç kaydına iade sınandı. | Eşzamanlılık, tüm tür/rol kombinasyonları açık. |
+| Randevu | Çakışan slot, dosya türü/içeriği, özel dosya erişimi, doğrulama ve takip token'ı, geçersiz ve yinelenen iptal, SMTP başarısızlığı ve disk yazma hatası için HTTP testleri çalıştı. | Gerçek SMTP ve MySQL/MariaDB yarış testi açık. |
+| Yetki ve kişisel veri | Son yönetici rolü korunması, randevu notu gizleme, duyuru hedef kitle silme yetkileri, çıkış sonrası oturum kontrol edildi. | Her eylem/rol matrisi açık. |
+| Geri bildirim ve medya | Büyük görsel istemcide reddi, seçme/kaldırma, kısa açıklama doğrulaması ve disk hata yolları sınandı. | Başarılı gönderimin gerçek tarayıcı turu, tüm dosya türleri ve görüntüleme matrisi açık. |
+| Gerçek tarayıcı | 375–390 px görünümde ilk sayfa açılışı, mobil menü, İletişim bağlantısı, Esc/odak dönüşü ve tema kalıcılığı sınandı. | 390 maddelik planın büyük bölümü henüz tek tek kapatılmadı. |
+
+### Bulunan ve yerelde düzeltilen hatalar
+
+`BUG-001` stok miktarında fazla ondalık basamak; `BUG-002` randevu geçmişi notunda kişisel veri görünmesi; `BUG-003` değişmeyen yönetici rolünün metin kimliğiyle yanlış reddi; `BUG-004` geri bildirim görseli disk hatasında 500; `BUG-005` envanter medyası disk hatasında 500; `BUG-006` randevu dosyası yazılamadığında başvurunun kabulü. Her bulgunun yeniden üretimi ve regresyon kanıtı çalışma kayıtlarında yer alır. Bu düzeltmelerin **canlıya geçişi bu raporla doğrulanmış değildir**.
+
+### Kalan işler ve kabul engelleri
+
+1. Bu belgedeki A–I maddelerinin ve [390 maddelik arayüz planının](ALPHA_UCTAN_UCA_MANUEL_TEST_PLANI.md) her birine kanıtlı durum atanması. Şu an geçen örnek akışlar var; toplam geçti/kaldı yüzdesi güvenilir biçimde hesaplanamaz.
+2. 97 rotanın yöntem, girişsiz/pasif/sınırlı rol, yanlış kimlik, geçersiz girdi, tekrarlı istek, yan etki ve gizlilik kontrollerinin tamamlanması.
+3. MySQL/MariaDB üzerinde temiz kurulum, migration/seed, aynı slot yarışı ve son yönetici eşzamanlılığı. Yerel ortamda bu veritabanı sunucuları bulunmadı; CI matrisi ayrıca incelenecek.
+4. Gerçek tarayıcıda masaüstü/mobil, açık/koyu tema, klavye, yenileme ve dosya yükleme akışlarının geri kalanı; gerçek SMTP, cron, hosting ve yedekten geri yükleme koşulları.
+5. `ONLINE_BOOKING_ENABLED=false` durumunda daha önce verilmiş doğrulama ve takip bağlantılarının 404 olması ürün beklentisiyle karşılaştırılacak. Büyük JS parçası uyarısının ilk yüklemeye etkisi ölçülecek.
+
+**Karar:** Yerel düzeltmeler testlerden geçti; tam denetim ve canlı kabul henüz tamamlanmadı.
+
 ## 1. Amaç ve tamamlanma ölçütü
 
 Amaç, uygulamadaki her rotayı, görünür eylemi, kritik veri akışını, izin sınırını ve hata yolunu test ederek kanıtlı bir sonuç üretmek. Mevcut [alpha manuel test planındaki](ALPHA_UCTAN_UCA_MANUEL_TEST_PLANI.md) **390 madde** bu denetimin temel kapsam listesi olarak alınır. Bu belge onlara ek olarak kod, veritabanı, otomasyon ve izlenebilirlik kontrollerini tanımlar. İki liste birlikte takip edilecek; yalnız test dosyalarının yeşil olması kabul sayılmayacak.
