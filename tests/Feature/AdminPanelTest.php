@@ -65,6 +65,16 @@ class AdminPanelTest extends TestCase
                 ->where('appointments.data.0.publicId', $appointment->public_id));
     }
 
+    public function test_logout_invalidates_the_admin_session(): void
+    {
+        $admin = $this->admin();
+
+        $this->actingAs($admin)->post(route('admin.logout'))->assertRedirect(route('admin.login'));
+
+        $this->assertGuest();
+        $this->get(route('admin.dashboard'))->assertRedirect(route('admin.login'));
+    }
+
     public function test_login_email_is_normalized_before_authentication(): void
     {
         $admin = $this->admin();
@@ -256,6 +266,20 @@ class AdminPanelTest extends TestCase
         $this->actingAs($operator)
             ->get(route('admin.settings.printers.index'))
             ->assertForbidden();
+    }
+
+    public function test_admin_can_create_a_printer_with_normalized_unique_code(): void
+    {
+        $admin = $this->admin();
+        $payload = ['code' => ' p-03 ', 'name' => 'Yeni Yazıcı', 'status' => PrinterStatus::Maintenance->value, 'description' => 'Kurulum sürüyor'];
+
+        $this->actingAs($admin)->post(route('admin.settings.printers.store'), $payload)
+            ->assertSessionHas('success');
+        $this->assertDatabaseHas('printers', ['code' => 'P-03', 'name' => 'Yeni Yazıcı', 'status' => PrinterStatus::Maintenance->value]);
+
+        $this->actingAs($admin)->post(route('admin.settings.printers.store'), $payload)
+            ->assertSessionHasErrors('code');
+        $this->assertSame(1, Printer::query()->where('code', 'P-03')->count());
     }
 
     public function test_admin_can_update_public_contact_and_operating_hours(): void

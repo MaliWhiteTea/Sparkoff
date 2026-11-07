@@ -61,3 +61,19 @@ Derleme aynı 500 kB üstü JS parçası uyarısını veriyor; bu performans tur
 **Önem:** Orta. `POST /yonetim/envanter/{item}/medya` isteğinde dosya diski istisna verirse yükleme alanı hatası yerine 500 oluşuyordu. Yeni HTTP testi bunu düzeltme öncesi yeniden üretti. Dosya yazma istisnası artık raporlanıyor ve `file` alanına doğrulama hatası dönüyor; başarısız yazma sonucu da aynı şekilde ele alınıyor. Test, medya tablosunda kayıt oluşmadığını doğruluyor.
 
 **Son kalite kapısı:** 295 PHP testi, 294 geçti, yalnız MySQL/MariaDB testi atlandı, 2849 assertion. PHP biçim ve TypeScript tip kontrolü geçti. BUG-003–BUG-005 yerelde düzeltildi; canlıya yayınlanmadı.
+
+## 7 Kasım ek turu — doğrudan rota kapsamı
+
+`php artisan route:list --json` çıktısındaki 97 adlandırılmış rota, testlerdeki doğrudan `route(...)` çağrılarıyla karşılaştırıldı. Yedi rota için doğrudan çağrı bulunmadı. Her biri için gerçek HTTP isteğiyle davranış ve yetki sınırı sınandı:
+
+| Rota | Eklenen doğrulama |
+|---|---|
+| `admin.inventory.categories.store` | Yetkili kategori oluşturur; konum yetkilisi kategori oluşturamaz. |
+| `admin.inventory.locations.store` | Konum kodu büyük harfe normalize edilir; kategori yetkilisi konum oluşturamaz. |
+| `admin.inventory.archive` | Yetkisiz istek reddedilir; arşivleme etkinliği kapatır ve stok miktarını korur. |
+| `admin.settings.printers.store` | Yazıcı kodu normalize edilir; yinelenen kod doğrulama hatası verir. |
+| `admin.settings.filaments.store` | Filament kaydedilir; aynı malzeme ve rengin ikinci kaydı reddedilir. |
+| `admin.announcements.destroy` | Kamu ve ekip arşivleme izinleri birbirine geçmez; yetkili silme çalışır. |
+| `admin.logout` | Oturum kapatılır; yönetim ekranına sonraki istek girişe yönlenir. |
+
+**Sonuç:** Yeni altı testin tamamı geçti. Tam suite: 301 test, 300 geçti, MySQL/MariaDB gerektiren 1 test atlandı, 2884 assertion. `pint --test`, `tsc --noEmit`, `git diff --check` geçti. Bu tarama yalnız doğrudan rota çağrısı boşluğunu kapatır; 97 rotanın tamamının tüm hata, yetki ve yan etki kombinasyonlarını ispatlamaz. Canlıya yayın yapılmadı.

@@ -181,6 +181,30 @@ class StaffAnnouncementTest extends TestCase
         $this->assertSame('İç', $announcement->fresh()->title);
     }
 
+    public function test_announcement_deletion_respects_audience_archive_permissions(): void
+    {
+        $public = $this->user($this->role('Kamu Arşivci', ['announcements.archive']));
+        $staff = $this->user($this->role('İç Arşivci', ['staff_announcements.archive']));
+        $publicAnnouncement = Announcement::query()->create([
+            'title' => 'Kamu duyurusu', 'body' => 'Herkese açık bilgi', 'type' => 'info',
+            'placement' => 'all', 'audience' => 'public', 'is_published' => true,
+        ]);
+        $staffAnnouncement = Announcement::query()->create([
+            'title' => 'İç duyuru', 'body' => 'Ekibe özel bilgi', 'type' => 'info',
+            'placement' => 'all', 'audience' => 'staff', 'is_published' => true,
+        ]);
+
+        $this->actingAs($public)->delete(route('admin.announcements.destroy', $staffAnnouncement))->assertForbidden();
+        $this->actingAs($staff)->delete(route('admin.announcements.destroy', $publicAnnouncement))->assertForbidden();
+        $this->assertDatabaseCount('announcements', 2);
+
+        $this->actingAs($public)->delete(route('admin.announcements.destroy', $publicAnnouncement))
+            ->assertSessionHas('success');
+        $this->actingAs($staff)->delete(route('admin.announcements.destroy', $staffAnnouncement))
+            ->assertSessionHas('success');
+        $this->assertDatabaseCount('announcements', 0);
+    }
+
     public function test_public_viewer_cannot_see_internal_targeting_or_read_counts_on_combined_announcement(): void
     {
         $publicRole = $this->role('Kamu Görüntüleyici', ['announcements.view']);

@@ -18,6 +18,25 @@ class FilamentManagementTest extends TestCase
         $this->seed();
     }
 
+    public function test_admin_can_create_a_filament_and_duplicate_material_color_is_rejected(): void
+    {
+        $admin = User::factory()->systemAdministrator()->create();
+        $payload = [
+            'material' => 'PETG', 'color' => 'Turkuaz', 'brand' => 'Test', 'diameter_mm' => 1.75,
+            'spool_weight_grams' => 750, 'nozzle_temp_min' => 230, 'nozzle_temp_max' => 250,
+            'bed_temp_min' => 70, 'bed_temp_max' => 85, 'technical_notes' => null,
+            'is_available' => true, 'unavailable_reason' => null,
+        ];
+
+        $this->actingAs($admin)->post(route('admin.settings.filaments.store'), $payload)
+            ->assertSessionHas('success');
+        $this->assertDatabaseHas('filaments', ['material' => 'PETG', 'color' => 'Turkuaz', 'brand' => 'Test']);
+
+        $this->actingAs($admin)->post(route('admin.settings.filaments.store'), $payload)
+            ->assertSessionHasErrors('color');
+        $this->assertSame(1, Filament::query()->where('material', 'PETG')->where('color', 'Turkuaz')->count());
+    }
+
     public function test_admin_can_temporarily_disable_a_material_with_a_reason(): void
     {
         $admin = User::factory()->systemAdministrator()->create();

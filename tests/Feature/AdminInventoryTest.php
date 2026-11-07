@@ -234,6 +234,43 @@ class AdminInventoryTest extends TestCase
         $this->assertDatabaseHas('inventory_locations', ['id' => $location->id, 'code' => 'E-R01', 'is_public' => false, 'is_active' => false]);
     }
 
+    public function test_category_and_location_creation_enforces_separate_permissions_and_normalizes_codes(): void
+    {
+        $categoryManager = $this->userWithPermissions(['inventory.manage_categories']);
+        $locationManager = $this->userWithPermissions(['inventory.manage_locations']);
+        $category = ['name' => 'Ölçüm Araçları', 'description' => 'Atölye ölçüm cihazları', 'is_active' => true];
+        $location = ['name' => 'Üst Raf', 'code' => ' ust-01 ', 'description' => null, 'is_public' => true, 'is_active' => true];
+
+        $this->actingAs($categoryManager)->post(route('admin.inventory.categories.store'), $category)
+            ->assertSessionHas('success');
+        $this->actingAs($categoryManager)->post(route('admin.inventory.locations.store'), $location)
+            ->assertForbidden();
+        $this->actingAs($locationManager)->post(route('admin.inventory.categories.store'), $category)
+            ->assertForbidden();
+        $this->actingAs($locationManager)->post(route('admin.inventory.locations.store'), $location)
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('inventory_categories', ['name' => 'Ölçüm Araçları', 'description' => 'Atölye ölçüm cihazları']);
+        $this->assertDatabaseHas('inventory_locations', ['name' => 'Üst Raf', 'code' => 'UST-01', 'is_public' => true]);
+        $this->assertDatabaseCount('inventory_categories', 1);
+        $this->assertDatabaseCount('inventory_locations', 1);
+    }
+
+    public function test_inventory_archive_requires_permission_and_retains_stock_history(): void
+    {
+        $viewer = $this->userWithPermissions(['inventory.view']);
+        $archiver = $this->userWithPermissions(['inventory.archive']);
+        $item = InventoryItem::query()->create($this->itemData(['quantity' => 3]));
+
+        $this->actingAs($viewer)->patch(route('admin.inventory.archive', $item))->assertForbidden();
+        $this->assertNull($item->fresh()->archived_at);
+
+        $this->actingAs($archiver)->patch(route('admin.inventory.archive', $item))->assertSessionHas('success');
+        $this->assertFalse($item->fresh()->is_active);
+        $this->assertNotNull($item->fresh()->archived_at);
+        $this->assertSame('3.000', $item->fresh()->quantity);
+    }
+
     public function test_inventory_export_requires_permission_and_respects_filters(): void
     {
         InventoryItem::query()->create($this->itemData(['name' => 'Arduino Uno', 'slug' => 'arduino-uno', 'brand' => 'Arduino', 'model' => 'UNO R3', 'item_type' => InventoryItemType::Loanable]));
