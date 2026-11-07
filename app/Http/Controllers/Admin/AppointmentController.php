@@ -125,7 +125,7 @@ class AppointmentController extends Controller
                 ]) : [],
                 'history' => $appointment->statusHistory->map(fn ($history) => [
                     'label' => $this->statusLabel($history->to_status),
-                    'note' => $history->note,
+                    'note' => $canViewPersonalData ? $history->note : null,
                     'actor' => $history->actor?->name ?? 'Sistem',
                     'date' => $history->created_at->translatedFormat('d F Y, H:i'),
                 ]),

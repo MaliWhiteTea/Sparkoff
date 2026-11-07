@@ -62,6 +62,27 @@ class AppointmentPermissionBoundaryTest extends TestCase
         $this->assertStringNotContainsString('ada@example.com', $logs->toJson());
     }
 
+    public function test_appointment_history_notes_are_hidden_without_personal_data_permission(): void
+    {
+        $appointment = $this->appointment();
+        $appointment->statusHistory()->create([
+            'to_status' => AppointmentStatus::Approved,
+            'note' => 'Ada Lovelace, ada@example.com adresine gönderilecek.',
+        ]);
+        $viewer = $this->userWithPermissions(['appointments.view']);
+
+        $this->actingAs($viewer)->get(route('admin.appointments.show', $appointment->public_id))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('appointment.history.0.note', null));
+
+        $privileged = $this->userWithPermissions(['appointments.view', 'appointments.view_personal_data']);
+        $this->actingAs($privileged)->get(route('admin.appointments.show', $appointment->public_id))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('appointment.history.0.note', 'Ada Lovelace, ada@example.com adresine gönderilecek.'));
+    }
+
     public function test_calendar_manager_without_personal_data_or_appointment_view_permission_gets_anonymous_unlinked_events(): void
     {
         $manager = $this->userWithPermissions(['printers.manage_schedule']);

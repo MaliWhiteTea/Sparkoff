@@ -41,7 +41,7 @@ export default function AppointmentShow({ appointment }: { appointment: Appointm
                 </dl><h2>Dosyalar</h2>{appointment.files.map((file) => <a className="admin-file" href={file.downloadUrl} key={file.id}><span><strong>{file.name}</strong><small>{(file.size / 1024 / 1024).toFixed(2)} MB</small></span>Güvenli indir ↓</a>)}</section>
                 <aside>
                     {appointment.actions.length > 0 && <section className="admin-panel admin-review"><h2>Sonraki işlem</h2><label className="field"><span>Yönetici notu</span><textarea rows={5} value={note} onChange={(event) => setNote(event.target.value)} placeholder="Kullanıcıya iletilecek açıklama veya operasyon notu" /></label><p className="admin-review-hint">Değişiklik, red ve başarısız baskı işlemlerinde not zorunludur.</p>{error && <div className="form-error">{error}</div>}<div>{appointment.actions.map((action) => <button disabled={processing} className={action.tone === 'danger' ? 'admin-reject' : 'admin-approve'} onClick={() => updateStatus(action)} key={action.status}>{action.label}</button>)}</div></section>}
-                    <section className="admin-panel admin-history"><h2>İşlem geçmişi</h2>{appointment.history.map((item, index) => <article key={index}><i /><div><strong>{item.label}</strong><p>{item.note}</p><small>{item.actor} · {item.date}</small></div></article>)}</section>
+                    <section className="admin-panel admin-history"><h2>İşlem geçmişi</h2>{appointment.history.map((item, index) => <article key={index}><i /><div><strong>{item.label}</strong>{item.note && <p>{item.note}</p>}<small>{item.actor} · {item.date}</small></div></article>)}</section>
                 </aside>
             </div>
         </AdminLayout>

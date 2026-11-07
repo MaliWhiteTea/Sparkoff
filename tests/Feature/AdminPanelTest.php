@@ -194,6 +194,26 @@ class AdminPanelTest extends TestCase
         $this->assertFalse(app('router')->getRoutes()->hasNamedRoute('storage.local'));
     }
 
+    public function test_appointment_file_cannot_be_downloaded_through_another_appointment(): void
+    {
+        Storage::fake('local');
+        $admin = $this->admin();
+        $owner = $this->appointment();
+        $other = $this->appointment();
+        $path = "appointments/{$owner->public_id}/model.stl";
+        Storage::disk('local')->put($path, 'solid model');
+        $file = $owner->files()->create([
+            'disk' => 'local', 'path' => $path, 'original_name' => 'model.stl',
+            'extension' => 'stl', 'mime_type' => 'application/octet-stream', 'size_bytes' => 11,
+        ]);
+
+        $this->actingAs($admin)->get(route('admin.appointments.files.download', [$other->public_id, $file]))
+            ->assertNotFound();
+        $this->assertDatabaseMissing('activity_logs', [
+            'user_id' => $admin->id, 'action' => 'private_file_downloaded',
+        ]);
+    }
+
     public function test_calendar_displays_an_overnight_print_on_both_days(): void
     {
         $admin = $this->admin();
