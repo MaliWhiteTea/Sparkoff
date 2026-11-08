@@ -40,3 +40,15 @@ Kullanıcı bildirimi üzerine mobil menü ve ana sayfa düğmeleri ayrıca ince
 **Düzeltme:** Tekrarlanan sabit düğme ve yalnız onun için ayrılmış alt dolgu kaldırıldı; tema düğmesi mobilde alt kenardan 12 px konumuna alındı. 320 px'de ana sayfa giriş düğmesi dokunarak `/3d-yazicilar` sayfasına yönlendirdi. Sabit düğmenin kaldırıldığı ve atölye kartının görünür olduğu [ana sayfa görüntüsü](docs/audit/2026-11-08/home-mobile-after-menu-fix-320.png) ile açılmış [menü görüntüsü](docs/audit/2026-11-08/menu-open-after-fix-320.png) kaydedildi.
 
 **Tekrar kontrolü:** Chromium dokunmatik emülasyonunda altı kamu sayfası 320, 375, 390, 430 ve 768 px'de yeniden tarandı: toplam 30 birleşimde HTTP, yatay taşma ve JavaScript sayfa hatası çıkmadı. Menü kullanan dört sayfada panel alanı, gövde kaydırma kilidi, ilk bağlantı odağı ve Esc ile kapanma doğrulandı. 320–430 px'de başlangıç ekranında görünür bağlantı/düğme/girdi merkezlerinin başka bir öğe tarafından kapatılmadığı kontrol edildi. `npm run build`, `npx tsc --noEmit` ve `git diff --check` geçti. Bu emülasyon fiziksel telefon testi veya bütün sayfanın her kaydırma konumundaki görsel kabulü değildir.
+
+## Mobil dokunma hedefleri ve tam sayfa kaydırma turu
+
+Altı kamu sayfası 320, 375, 390 ve 430 px'de hem açık hem koyu temada yarım ekranlık aralıklarla sonuna kadar kaydırılıp görünür bağlantı ve düğmelerin merkezine başka öğe gelip gelmediği ölçüldü. Başlığın altından geçmekte olan öğeler örnekleme anında raporlandı; menüyle gerçek bölüm geçişlerinde `#icerik` ve `#hizmetler` başlıklarının yapışkan başlığın altında kalmadığı ayrıca doğrulandı. Bu örnekleme, ekranın her pikselini veya gerçek dokunmatik cihazı kapsamaz.
+
+### BUG-011 — Dar ekranda küçük bağlantı ve filtre hedefleri
+
+**Önem:** Orta. KVKK sayfasındaki “Ana sayfaya dön” bağlantısı 320 px görünümde yalnız 14 px yüksekliğindeydi. Filament başlık düğmesi ve malzeme filtre düğmeleri yaklaşık 10 px yazıyla gösteriliyordu; filtre düğmelerinin yüksekliği 40 px idi.
+
+**Düzeltme:** 600 px ve altında KVKK bağlantısı 44 px, filament düğmesi 47 px, malzeme filtreleri en az 44 px ve tema düğmesi 44×44 px yapıldı. Üç kontrolün yazısı 12 px. 320/375/390/430/600 px ölçümlerinde yatay taşma veya JavaScript sayfa hatası görülmedi. 320 px'de malzeme filtre düğmeleri metne yer açmak için 54 px'e yükseliyor. Dokunmatik emülasyonda KVKK bağlantısı ana sayfaya, filament düğmesi yazıcılara götürdü; filtre paneli açıldı ve stok filtresi `?stock=available` durumuna geçti.
+
+**Görsel kanıt:** [KVKK](docs/audit/2026-11-08/legal-mobile-controls-320.png), [filament](docs/audit/2026-11-08/filaments-mobile-controls-320.png) ve [malzeme filtreleri](docs/audit/2026-11-08/materials-mobile-controls-320.png) 320 px ekran görüntüleri. Üretim derlemesi ve `git diff --check` geçti.
