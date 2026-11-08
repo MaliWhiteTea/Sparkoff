@@ -148,7 +148,7 @@ svg { width: 1.15em; fill: none; stroke: currentColor; stroke-width: 1.7; stroke
 }
 
 @media (max-width: 640px) {
-  body { padding-bottom: 72px; }
+  .portal-home { padding-bottom: 72px; }
   .header-inner { height: 68px; padding: 0 18px; }.brand img { width: 44px; height: 44px; }.brand strong { font-size: 1rem; }.brand small { font-size: .62rem; }
   .public-menu-overlay { top: 68px; }
   .desktop-nav { top: 68px; }

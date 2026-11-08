@@ -6,9 +6,9 @@
 **Aşama:** Denetim kapsamı ve başlangıç ölçümü hazır. Aşağıdaki işlev denetimleri henüz yapılmadı; maddeler tamamlandı diye işaretlenmemelidir.
 **Ortam sınırı:** Canlı site testleri ayrı sürüyor. Canlı veriye müdahale ve yayın bu denetimin kapsamında değil.
 
-## Güncel durum — 7 Kasım 2026
+## Güncel durum — 8 Kasım 2026
 
-Bu belge denetim başlamadan önce yazılmış **ön rapordur**; aşağıdaki başlangıç sayıları 6 Kasım anlık görüntüsüdür. Yapılan işlemlerin ayrıntılı kanıtları [ilk çalışma kaydında](YEREL_DENETIM_ILK_CALISMA_KAYDI_2026-11-06.md) ve [7 Kasım çalışma kaydında](YEREL_DENETIM_CALISMA_KAYDI_2026-11-07.md) bulunur. Aşağıdaki özet, `6c6c330` commit'indeki yerel durumu gösterir.
+Bu belge denetim başlamadan önce yazılmış **ön rapordur**; aşağıdaki başlangıç sayıları 6 Kasım anlık görüntüsüdür. Yapılan işlemlerin ayrıntılı kanıtları [ilk çalışma kaydında](YEREL_DENETIM_ILK_CALISMA_KAYDI_2026-11-06.md), [7 Kasım çalışma kaydında](YEREL_DENETIM_CALISMA_KAYDI_2026-11-07.md) ve [8 Kasım çalışma kaydında](YEREL_DENETIM_CALISMA_KAYDI_2026-11-08.md) bulunur. Aşağıdaki özet, 8 Kasım yerel durumunu gösterir.
 
 ### Kontrol edilenler
 
@@ -20,11 +20,11 @@ Bu belge denetim başlamadan önce yazılmış **ön rapordur**; aşağıdaki ba
 | Randevu | Çakışan slot, dosya türü/içeriği, özel dosya erişimi, doğrulama ve takip token'ı, geçersiz ve yinelenen iptal, SMTP başarısızlığı ve disk yazma hatası için HTTP testleri çalıştı. | Gerçek SMTP ve MySQL/MariaDB yarış testi açık. |
 | Yetki ve kişisel veri | Son yönetici rolü korunması, randevu notu gizleme, duyuru hedef kitle silme yetkileri, çıkış sonrası oturum kontrol edildi. | Her eylem/rol matrisi açık. |
 | Geri bildirim ve medya | Büyük görsel istemcide reddi, seçme/kaldırma, kısa açıklama doğrulaması ve disk hata yolları sınandı. | Başarılı gönderimin gerçek tarayıcı turu, tüm dosya türleri ve görüntüleme matrisi açık. |
-| Gerçek tarayıcı | 375–390 px görünümde ilk sayfa açılışı, mobil menü, İletişim bağlantısı, Esc/odak dönüşü ve tema kalıcılığı sınandı. | 390 maddelik planın büyük bölümü henüz tek tek kapatılmadı. |
+| Gerçek tarayıcı | Altı kamu sayfası 320/375/768/1024/1440 px'de tarandı; mobil menü odağı, bağlantılar ve sentetik iletişim ayarları sınandı. | 390 maddelik planın büyük bölümü henüz tek tek kapatılmadı. |
 
 ### Bulunan ve yerelde düzeltilen hatalar
 
-`BUG-001` stok miktarında fazla ondalık basamak; `BUG-002` randevu geçmişi notunda kişisel veri görünmesi; `BUG-003` değişmeyen yönetici rolünün metin kimliğiyle yanlış reddi; `BUG-004` geri bildirim görseli disk hatasında 500; `BUG-005` envanter medyası disk hatasında 500; `BUG-006` randevu dosyası yazılamadığında başvurunun kabulü; `BUG-007` kapalı mobil menünün kamu sayfalarını yatay taşırması. İlk altı bulgu HTTP regresyon testleriyle, yedinci bulgu gerçek tarayıcı ölçümüyle doğrulandı. Ayrıntılar çalışma kayıtlarında yer alır. Bu düzeltmelerin **canlıya geçişi bu raporla doğrulanmış değildir**.
+`BUG-001` stok miktarında fazla ondalık basamak; `BUG-002` randevu geçmişi notunda kişisel veri görünmesi; `BUG-003` değişmeyen yönetici rolünün metin kimliğiyle yanlış reddi; `BUG-004` geri bildirim görseli disk hatasında 500; `BUG-005` envanter medyası disk hatasında 500; `BUG-006` randevu dosyası yazılamadığında başvurunun kabulü; `BUG-007` kapalı mobil menünün kamu sayfalarını yatay taşırması; `BUG-008` mobil alt sayfalarda gereksiz alt boşluk. İlk altı bulgu HTTP regresyon testleriyle, son iki bulgu gerçek tarayıcı ölçümüyle doğrulandı. Ayrıntılar çalışma kayıtlarında yer alır. Bu düzeltmelerin **canlıya geçişi bu raporla doğrulanmış değildir**.
 
 ### Kalan işler ve kabul engelleri
 

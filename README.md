@@ -274,7 +274,7 @@ TypeScript tip denetimi, üretim derlemesi ve PHP kod biçimi kontrolleri de yay
 - Alpha öncesi bilinen sorunlar: [ALPHA_KNOWN_ISSUES.md](./ALPHA_KNOWN_ISSUES.md)
 - Son üretim kabul kaydı: [DEPLOYMENT_ACCEPTANCE_2026-10-28.md](./DEPLOYMENT_ACCEPTANCE_2026-10-28.md)
 - Güncel yerel denetim durumu ve kalan işler: [YEREL_TAM_KAPSAM_DENETIM_ON_RAPORU_2026-11-06.md](./YEREL_TAM_KAPSAM_DENETIM_ON_RAPORU_2026-11-06.md)
-- Denetim kanıtları ve düzeltilen hatalar: [YEREL_DENETIM_CALISMA_KAYDI_2026-11-07.md](./YEREL_DENETIM_CALISMA_KAYDI_2026-11-07.md)
+- Denetim kanıtları ve düzeltilen hatalar: [7 Kasım](./YEREL_DENETIM_CALISMA_KAYDI_2026-11-07.md) ve [8 Kasım](./YEREL_DENETIM_CALISMA_KAYDI_2026-11-08.md) çalışma kayıtları
 
 ## Lisans
 
