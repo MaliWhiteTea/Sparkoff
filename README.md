@@ -267,6 +267,7 @@ TypeScript tip denetimi, üretim derlemesi ve PHP kod biçimi kontrolleri de yay
 
 ## Dokümantasyon
 
+- Bugüne kadar yapılan işler, kod/veri konumları ve altyapı haritası: [PROJE_GECMISI_VE_ALTYAPI_HARITASI_2026-11-08.md](./PROJE_GECMISI_VE_ALTYAPI_HARITASI_2026-11-08.md)
 - Ayrıntılı geliştirme planı: [ROADMAP.md](./ROADMAP.md)
 - cPanel dağıtım ve canlı kabul rehberi: [CPANEL_DEPLOYMENT.md](./CPANEL_DEPLOYMENT.md)
 - Davetli kullanıcılarla kapalı alpha kontrol listesi: [CLOSED_ALPHA_CHECKLIST.md](./CLOSED_ALPHA_CHECKLIST.md)
