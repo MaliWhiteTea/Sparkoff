@@ -64,3 +64,15 @@ Bu turda yalnız sentetik SQLite veritabanında oluşturulan test yöneticisi ku
 **Düzeltme:** Mobil yönetim bağlantıları flex satırına alındı, 12 px yazı ve en az 44 px dokunma yüksekliği verildi. Menü düğmesi 44×44 px, çıkış düğmesi 44 px yapıldı. 320–900 px'de panel açma, Esc ile kapatma, envanter bağlantısına dokunma, gövde kaydırma kilidi, yatay taşma ve JavaScript sayfa hatası kontrol edildi. 320×480 px kısa ekranda menü 149 px kendi içinde kaydırılarak çıkış düğmesine erişildi. [320 px açık menü](docs/audit/2026-11-08/admin-mobile-menu-after-fix-320.png) ve [320×480 px kısa ekran](docs/audit/2026-11-08/admin-mobile-short-menu-after-fix-320.png) görüntüleri kaydedildi. Üretim derlemesi ve `git diff --check` geçti.
 
 **Sınır:** Bu adım yalnız menüye odaklandı. Yönetim modüllerinin mobil form, tablo ve bütün izin akışları hâlâ açık.
+
+## Yönetim envanteri mobil üst alanı ve filtreler
+
+Sentetik test yöneticisiyle 320, 375 ve 430 px'de `/yonetim/envanter` açıldı; liste üst alanı, yeni malzeme formu ve filtreler gerçek tarayıcıda kontrol edildi.
+
+### BUG-013 — Envanter üst düğmeleri 320 px ekranı genişletiyor
+
+**Önem:** Orta. 320 px görsel görüntü alanında CSV yükle/indir düğmelerinin dar sütunlara zorlanması belge genişliğini 323 px'e çıkarıyordu. “Yeni malzeme” düğmesine dokununca form `scrollIntoView` ile ekranın tepesine geliyor, form başlığı 64 px sabit yönetim çubuğunun arkasında kalıyordu.
+
+**Düzeltme:** 600 px ve altında başlık ile eylemler alt alta yerleştirildi. CSV düğmeleri eşit iki sütunda, “Yeni malzeme” tam genişlikte ve en az 44 px yüksekliğinde. Forma 76 px kaydırma payı verildi. 320 px'de belge genişliği 320 px'e indi; form başlığı 95 px'de, sabit çubuğun 64 px alt kenarının altında görünüyor. 375/430 px'de de taşma ve JavaScript hatası görülmedi. Formun ilk alanı odaklandı; durum filtresi `status=low`, arama `search=test` parametresine geçti. [Liste üstü](docs/audit/2026-11-08/admin-inventory-mobile-header-320.png) ve [açık form](docs/audit/2026-11-08/admin-inventory-mobile-create-320.png) görüntüleri kaydedildi.
+
+**Sınır:** Kayıt ekleme, düzenleme, stok hareketleri, CSV aktarımı ve envanterdeki tüm diğer mobil etkileşimler bu turda tamamlanmadı. Üretim derlemesi ve `git diff --check` geçti.

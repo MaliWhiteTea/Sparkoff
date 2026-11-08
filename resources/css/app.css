@@ -542,3 +542,11 @@ html.theme-transitioning *,html.theme-transitioning *::before,html.theme-transit
   .admin-page .admin-sidebar nav a{min-height:44px;display:flex;align-items:center;gap:11px;padding:12px 13px;font-size:.75rem}
   .admin-page .admin-user button{min-height:44px;padding:10px 4px;display:flex;align-items:center;gap:8px;font-size:.75rem}
 }
+
+@media(max-width:600px){
+  .inventory-title{flex-direction:column;align-items:stretch}
+  .inventory-title>div:last-child{width:100%;grid-template-columns:repeat(2,minmax(0,1fr))}
+  .inventory-title>div:last-child button{grid-column:1/-1}
+  .inventory-title>div:last-child a,.inventory-title>div:last-child button{min-height:44px;font-size:.75rem}
+  #yeni-malzeme{scroll-margin-top:76px}
+}
