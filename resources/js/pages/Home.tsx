@@ -42,6 +42,5 @@ export default function Home({ workshop, printers, contact, announcements, featu
         <section className="portal-contact" id="iletisim"><header><span className="eyebrow">BİZE ULAŞIN</span><h2>İletişim</h2>{contact.hours && <p>{contact.hours}</p>}</header><div className="contact-method-grid">{contact.phone && <a className="contact-method" href={`tel:${contact.phone}`}><span className="contact-method-icon"><PhoneIcon /></span><span><small>TELEFON</small><strong>{contact.phone}</strong><em>Şimdi ara</em></span><ArrowIcon /></a>}{whatsappHref && <a className="contact-method" href={whatsappHref} target="_blank" rel="noreferrer"><span className="contact-method-icon"><MessageIcon /></span><span><small>WHATSAPP</small><strong>{contact.whatsapp}</strong><em>Mesaj gönder</em></span><ArrowIcon /></a>}{contact.email && <a className="contact-method" href={`mailto:${contact.email}`}><span className="contact-method-icon"><MailIcon /></span><span><small>E-POSTA</small><strong>{contact.email}</strong><em>E-posta gönder</em></span><ArrowIcon /></a>}{!hasContactMethod && <div className="contact-method-empty"><MessageIcon /><strong>İletişim bilgileri yakında burada paylaşılacak.</strong></div>}</div></section>
 
         <PublicFooter />
-        <Link className="mobile-booking" href="/3d-yazicilar">3D yazıcıları incele <ArrowIcon /></Link>
     </main>;
 }

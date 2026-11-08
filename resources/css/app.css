@@ -33,7 +33,7 @@
 .public-theme-toggle svg { width: 17px; height: 17px; }
 .public-theme-toggle:focus-visible { outline: 3px solid color-mix(in srgb, var(--navy) 35%, transparent); outline-offset: 2px; }
 
-@media (max-width: 600px) { .public-theme-toggle { width: 43px; padding: 0; right: 12px; bottom: 74px; justify-content: center; }.public-theme-toggle span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); } }
+@media (max-width: 600px) { .public-theme-toggle { width: 43px; padding: 0; right: 12px; bottom: 12px; justify-content: center; }.public-theme-toggle span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); } }
 
 /* Unified public and staff announcements */
 .announcement-role-picker{margin:0;padding:16px;border:1px solid var(--border);border-radius:7px}.announcement-role-picker legend{padding:0 5px;font-size:.66rem;font-weight:800}.announcement-role-picker p{margin:0 0 12px;color:var(--muted);font-size:.59rem}.announcement-role-picker>div{display:flex;flex-wrap:wrap;gap:7px}.announcement-role-picker label,.announcement-toggles label{padding:9px 11px;display:flex;align-items:center;gap:7px;border:1px solid var(--border);border-radius:6px;background:#fafcfd;font-size:.62rem;cursor:pointer}.announcement-role-picker input,.announcement-toggles input{accent-color:var(--navy)}.announcement-toggles{display:flex;flex-wrap:wrap;gap:8px}.announcement-admin-card.announcement-urgent{border-left:4px solid #b51236}.public-announcements article.announcement-urgent{border-color:#e6a9b8;border-left-color:#b51236;background:#fff0f3}.admin-nav-count{min-width:19px;height:19px;padding:0 5px;display:inline-grid;place-items:center;border-radius:999px;background:var(--burgundy);color:#fff;font-size:.52rem}.staff-announcement{margin-bottom:12px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;gap:20px;border:1px solid #bed6e3;border-left:4px solid var(--navy);border-radius:8px;background:#eff7fa}.staff-announcement.staff-warning,.staff-announcement.staff-maintenance{border-color:#ead0a7;border-left-color:#b87918;background:#fff7e9}.staff-announcement.staff-urgent{border-color:#e6a9b8;border-left-color:#b51236;background:#fff0f3}.staff-announcement>div{display:grid;gap:4px}.staff-announcement span{color:var(--burgundy);font-size:.53rem;font-weight:800;letter-spacing:.08em}.staff-announcement strong{font-size:.78rem}.staff-announcement p{margin:0;color:var(--muted);font-size:.66rem;line-height:1.5}.staff-announcement button{flex:none;padding:9px 12px;border:0;border-radius:6px;background:var(--navy);color:#fff;font-size:.59rem;font-weight:800;cursor:pointer}
@@ -130,9 +130,9 @@ svg { width: 1.15em; fill: none; stroke: currentColor; stroke-width: 1.7; stroke
 .footer-brand { display: flex; align-items: center; gap: 10px; }.footer-brand img { width: 42px; height: 42px; object-fit: cover; border-radius: 4px; }
 .footer-brand div { display: flex; flex-direction: column; gap: 3px; }.footer-brand strong { font-size: .82rem; }.footer-brand span { color: #aeb9c5; font-size: .65rem; }
 .public-footer p, .public-footer > span { margin: 0; color: #8e9ba9; font-size: .68rem; }
-.mobile-booking { display: none; }
 
 @media (max-width: 900px) {
+  .site-header { backdrop-filter: none; }
   body.public-menu-open { overflow: hidden; }
   .site-header.menu-open { z-index: 80; }
   .public-menu-toggle { width: 44px; height: 44px; margin-left: auto; padding: 0; display: grid; place-content: center; gap: 5px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); cursor: pointer; }
@@ -148,7 +148,6 @@ svg { width: 1.15em; fill: none; stroke: currentColor; stroke-width: 1.7; stroke
 }
 
 @media (max-width: 640px) {
-  .portal-home { padding-bottom: 72px; }
   .header-inner { height: 68px; padding: 0 18px; }.brand img { width: 44px; height: 44px; }.brand strong { font-size: 1rem; }.brand small { font-size: .62rem; }
   .public-menu-overlay { top: 68px; }
   .desktop-nav { top: 68px; }
@@ -161,7 +160,6 @@ svg { width: 1.15em; fill: none; stroke: currentColor; stroke-width: 1.7; stroke
   .printer-row { grid-template-columns: 48px 1fr; padding: 19px 16px; }.status { grid-column: 2; justify-self: start; }
   .help { margin: 0 18px 72px; padding: 29px 23px; grid-template-columns: 1fr; gap: 22px; }.help .button { width: 100%; }
   .public-footer { align-items: flex-start; flex-direction: column; padding: 28px 18px; }
-  .mobile-booking { position: fixed; z-index: 30; left: 12px; right: 12px; bottom: 10px; height: 52px; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 12px; background: var(--navy); color: white; box-shadow: 0 10px 30px rgba(11,44,72,.3); font-size: .83rem; font-weight: 800; }
 }
 
 @media (prefers-reduced-motion: reduce) {
