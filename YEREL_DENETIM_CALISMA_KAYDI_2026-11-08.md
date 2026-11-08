@@ -52,3 +52,15 @@ Altı kamu sayfası 320, 375, 390 ve 430 px'de hem açık hem koyu temada yarım
 **Düzeltme:** 600 px ve altında KVKK bağlantısı 44 px, filament düğmesi 47 px, malzeme filtreleri en az 44 px ve tema düğmesi 44×44 px yapıldı. Üç kontrolün yazısı 12 px. 320/375/390/430/600 px ölçümlerinde yatay taşma veya JavaScript sayfa hatası görülmedi. 320 px'de malzeme filtre düğmeleri metne yer açmak için 54 px'e yükseliyor. Dokunmatik emülasyonda KVKK bağlantısı ana sayfaya, filament düğmesi yazıcılara götürdü; filtre paneli açıldı ve stok filtresi `?stock=available` durumuna geçti.
 
 **Görsel kanıt:** [KVKK](docs/audit/2026-11-08/legal-mobile-controls-320.png), [filament](docs/audit/2026-11-08/filaments-mobile-controls-320.png) ve [malzeme filtreleri](docs/audit/2026-11-08/materials-mobile-controls-320.png) 320 px ekran görüntüleri. Üretim derlemesi ve `git diff --check` geçti.
+
+## Yönetim paneli mobil menüsü
+
+Bu turda yalnız sentetik SQLite veritabanında oluşturulan test yöneticisi kullanıldı; canlı kullanıcı/veri kullanılmadı. Girişten sonra 320, 375, 430, 768 ve 900 px'de yönetim çekmecesi açıldı. Panel ve karartma katmanı 64 px başlık altından ekranın sonuna kadar uzanıyordu; fakat menü bağlantıları simge üstte, etiket altta gösteriliyor ve yaklaşık 10 px yazı kullanıyordu.
+
+### BUG-012 — Yönetim menüsünde çakışan mobil CSS kuralları
+
+**Önem:** Orta. Eski 600/900 px kuralları, daha yeni çekmece düzeninin bağlantılarını `display:block` yapıyordu. 320 px'de bir bağlantı 59,8 px yüksekliğindeydi; simge ve yazı ayrı satırlardaydı. Menü düğmesi 42×42 px, kısa ekrandaki “Çıkış yap” düğmesi yalnız 17 px yükseklikteydi.
+
+**Düzeltme:** Mobil yönetim bağlantıları flex satırına alındı, 12 px yazı ve en az 44 px dokunma yüksekliği verildi. Menü düğmesi 44×44 px, çıkış düğmesi 44 px yapıldı. 320–900 px'de panel açma, Esc ile kapatma, envanter bağlantısına dokunma, gövde kaydırma kilidi, yatay taşma ve JavaScript sayfa hatası kontrol edildi. 320×480 px kısa ekranda menü 149 px kendi içinde kaydırılarak çıkış düğmesine erişildi. [320 px açık menü](docs/audit/2026-11-08/admin-mobile-menu-after-fix-320.png) ve [320×480 px kısa ekran](docs/audit/2026-11-08/admin-mobile-short-menu-after-fix-320.png) görüntüleri kaydedildi. Üretim derlemesi ve `git diff --check` geçti.
+
+**Sınır:** Bu adım yalnız menüye odaklandı. Yönetim modüllerinin mobil form, tablo ve bütün izin akışları hâlâ açık.

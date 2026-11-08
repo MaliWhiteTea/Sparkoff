@@ -536,3 +536,9 @@ html.theme-transitioning *,html.theme-transitioning *::before,html.theme-transit
 .public-theme-dark .public-flash.success{border-color:#356652;background:#18352c;color:#8ed8b8}.public-theme-dark .feedback-selected-file,.public-theme-dark .feedback-attachment{background:#1d2b36;border-color:var(--border)}
 .public-theme-dark .admin-login-page{background:linear-gradient(135deg,#0f1821,#17232e);color:var(--text)}.public-theme-dark .admin-login-card{border-color:var(--border);background:var(--surface);box-shadow:0 24px 65px rgba(0,0,0,.28)}.public-theme-dark .admin-login-brand small{color:var(--navy)}.public-theme-dark .admin-login-card .field input{background:var(--surface);color:var(--text);border-color:var(--border)}
 @media(max-width:700px){.portal-contact{width:calc(100% - 36px);margin-bottom:72px;padding:27px 20px}.portal-contact>header{grid-template-columns:1fr}.contact-method-grid{grid-template-columns:1fr}.feedback-selected-file{align-items:stretch;flex-direction:column}.feedback-selected-file button{width:100%}}
+
+@media(max-width:900px){
+  .admin-page .admin-mobile-bar>button{width:44px;height:44px}
+  .admin-page .admin-sidebar nav a{min-height:44px;display:flex;align-items:center;gap:11px;padding:12px 13px;font-size:.75rem}
+  .admin-page .admin-user button{min-height:44px;padding:10px 4px;display:flex;align-items:center;gap:8px;font-size:.75rem}
+}
