@@ -270,7 +270,18 @@ route.patch('/locations/:id', async c => {
 route.get('/media', async c => {
   const auth = c.get('auth');
   if (!can(auth, 'inventory_manage_media')) return c.json({ error: 'Yetki yok' }, 403);
-  return c.json({ media: await db.select().from(materialMedia) });
+  return c.json({ media: await db.select({ id: materialMedia.id, materialId: materialMedia.materialId, type: materialMedia.type, title: materialMedia.title, altText: materialMedia.altText, externalUrl: materialMedia.externalUrl, sortOrder: materialMedia.sortOrder, isCover: materialMedia.isCover }).from(materialMedia) });
+});
+route.get('/media/search', async c => {
+  const auth = c.get('auth');
+  if (!can(auth, 'inventory_manage_media')) return c.json({ error: 'Yetki yok' }, 403);
+  const input = z.object({ page: z.coerce.number().int().min(1).max(100000).default(1) }).safeParse(Object.fromEntries(new URL(c.req.url).searchParams));
+  if (!input.success) return c.json({ error: 'Medya sayfası geçersiz' }, 400);
+  const [{ total }] = await db.select({ total: count() }).from(materialMedia);
+  const pageSize = 24;
+  const rows = await db.select({ id: materialMedia.id, materialId: materialMedia.materialId, type: materialMedia.type, title: materialMedia.title, altText: materialMedia.altText, externalUrl: materialMedia.externalUrl, sortOrder: materialMedia.sortOrder, isCover: materialMedia.isCover })
+    .from(materialMedia).orderBy(desc(materialMedia.id)).limit(pageSize).offset((input.data.page - 1) * pageSize);
+  return c.json({ media: rows, total, page: input.data.page, pageSize });
 });
 route.post('/media/images', async c => {
   const auth = c.get('auth');
