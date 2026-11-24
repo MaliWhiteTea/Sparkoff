@@ -224,6 +224,7 @@ html.nav-resizing,html.nav-resizing * { cursor:ew-resize!important; user-select:
 .sheet-scroll form>h3 { margin:16px 0 6px; font-size:16px; line-height:22px; }
 .icon-button { display:grid; place-items:center; width:44px; height:44px; border:1px solid var(--border-2); border-radius:14px; background:var(--surface-2); color:var(--text); font-size:24px; }
 .quick-link,.profile-link,.selected-channel { width:100%; display:flex; align-items:center; text-align:left; min-height:44px; padding:10px 12px; border:0; border-bottom:1px solid var(--border); border-radius:10px; background:none; color:var(--text-2); }
+.quick-link[aria-current=page] { color:var(--text); background:var(--surface-2); font-weight:600; }
 .profile-link { font-weight:600; color:var(--accent); }
 .selected-channel { color:var(--text); background:var(--surface-2); }
 .modal-host { z-index:100; align-items:center; }
