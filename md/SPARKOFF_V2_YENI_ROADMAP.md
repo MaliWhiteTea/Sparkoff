@@ -280,6 +280,8 @@ Veri geçişinin alan, tarih, stok, dosya ve yetki kuralları: [V1→V2 veri ge�
 
 - Malzemenin kategori/konum ve teslim, stok hareketi, medya kayıtlarının malzeme/kullanıcı/ters hareket ilişkileri kaynak kimliklerinden bağımsız olarak yeniden hesaplandı: 871/871 bağ eşleşti. Yanlış stok hareketi malzeme bağı ve yanlış kategori bağı ayrı ayrı reddedildi; bağlar geri yüklendi.
 
+- Stok hareketinin teslim kaynak türü ve kaynak kimliği de bağımsız doğrulanıyor: 173 harekette 346/346 alan eşleşti. Geçici yanlış teslim kaynağı reddedildi; prova verisi geri yüklendi.
+
 ### 11 Kasım 2026 — kişisel tercihler ve randevu takibi
 
 - Profil, V1'den taşınan tema/ölçek/yoğunluk/yan menü ayarlarını okur; kullanıcı yeni etkin ayarı kaydedebilir veya varsayılana dönebilir. V1 kaynak JSON kopyası denetim için değişmeden kalır. Sistem teması işletim sistemi tercihini izler; açık tema ve yoğunluk/ölçek görsel kuralları eklendi. Yerel SQL kabulünde geçersiz değer 400, kayıt/okuma/sıfırlama ve V1 kopyasının korunması geçti. V1 kayıtlı filtreleri ve tablo alanı tercihleri ilgili V2 yönetim listelerinde uygulanıp yerel SQL kabulünden geçti; gerçek tarayıcı etkileşim kabulü açık.
