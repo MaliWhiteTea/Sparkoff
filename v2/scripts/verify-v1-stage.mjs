@@ -80,6 +80,18 @@ try {
     await compareAmounts('inventory_items', 'materials', 'legacy_material_id', [['quantity', 'quantity'], ['minimum_stock', 'minimum_stock']]) +
     await compareAmounts('inventory_transactions', 'loans', 'legacy_loan_id', [['quantity', 'quantity'], ['quantity_returned', 'returned_quantity']]) +
     await compareAmounts('stock_movements', 'stock_movements', 'legacy_movement_id', [['quantity_change', 'delta'], ['balance_after', 'balance_after']]);
+  const sourceMaterials = source.prepare('SELECT id, name, slug, sku, brand, model, item_type, unit, public_visibility, is_active FROM inventory_items ORDER BY id').all();
+  const [targetMaterials] = await db.query('SELECT legacy_material_id, name, slug, sku, brand, model, kind, unit, public_visibility, is_active FROM materials WHERE legacy_material_id IS NOT NULL');
+  const materialMap = new Map(targetMaterials.map(row => [Number(row.legacy_material_id), row]));
+  if (materialMap.size !== sourceMaterials.length) throw new Error('V1/V2 malzeme kimlik alanı kayıt sayısı farklı');
+  const identityFields = [['name', 'name'], ['slug', 'slug'], ['sku', 'sku'], ['brand', 'brand'], ['model', 'model'], ['unit', 'unit'], ['public_visibility', 'public_visibility'], ['is_active', 'is_active']];
+  for (const row of sourceMaterials) {
+    const target = materialMap.get(Number(row.id));
+    if (!target) throw new Error('V1/V2 malzeme kimliği eksik');
+    for (const [from, to] of identityFields) if (row[from] !== target[to]) throw new Error(`V1/V2 malzeme alanı farklı: ${from}`);
+    if ((row.item_type === 'fixed_asset' ? 'equipment' : row.item_type) !== target.kind) throw new Error('V1/V2 malzeme türü farklı');
+  }
+  const materialFieldChecks = sourceMaterials.length * (identityFields.length + 1);
   const settingRows = source.prepare('SELECT key, value FROM settings ORDER BY key').all();
   const [targetSettings] = await db.query('SELECT `key`, value FROM system_settings ORDER BY `key`');
   if (settingRows.length !== targetSettings.length || settingRows.some((row, index) => row.key !== targetSettings[index].key || JSON.stringify(JSON.parse(row.value)) !== JSON.stringify(targetSettings[index].value))) throw new Error('V1/V2 ayar anahtarı veya JSON değeri farklı');
@@ -131,5 +143,5 @@ try {
   if (Number(audit[0].missing_actors || 0)) throw new Error('V1 etkinlik kullanıcı bağı eksik');
   const sourceHash = createHash('sha256').update(await readFile(resolve(sourcePath))).digest('hex');
   const totals = Object.entries(report).filter(([table]) => !['permissions', 'permission_role', 'inventoryLegacyImages'].includes(table)).reduce((result, [, row]) => ({ source: result.source + row.source, migrated: result.migrated + row.migrated, excluded: result.excluded + row.excluded }), { source: 0, migrated: 0, excluded: 0 });
-  process.stdout.write(`${JSON.stringify({ sourceHash, totals, tables: report, inventoryAmountChecks, missingActivitySubjects: Number(audit[0].missing_subjects || 0) })}\n`);
+  process.stdout.write(`${JSON.stringify({ sourceHash, totals, tables: report, inventoryAmountChecks, materialFieldChecks, missingActivitySubjects: Number(audit[0].missing_subjects || 0) })}\n`);
 } finally { source.close(); await db.end(); }
