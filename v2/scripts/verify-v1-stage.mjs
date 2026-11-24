@@ -189,9 +189,9 @@ try {
     for (const [from, to] of loanDates) if (sourceUtc(row[from]) !== target[to]) throw new Error(`V1/V2 teslim zamanı farklı: ${from}`);
   }
   const loanFieldChecks = sourceLoans.length * 10;
-  const settingRows = source.prepare('SELECT key, value FROM settings ORDER BY key').all();
-  const [targetSettings] = await db.query('SELECT `key`, value FROM system_settings ORDER BY `key`');
-  if (settingRows.length !== targetSettings.length || settingRows.some((row, index) => row.key !== targetSettings[index].key || JSON.stringify(JSON.parse(row.value)) !== JSON.stringify(targetSettings[index].value))) throw new Error('V1/V2 ayar anahtarı veya JSON değeri farklı');
+  const settingRows = source.prepare('SELECT key, value, updated_at FROM settings ORDER BY key').all();
+  const [targetSettings] = await db.query('SELECT `key`, value, updated_at FROM system_settings ORDER BY `key`');
+  if (settingRows.length !== targetSettings.length || settingRows.some((row, index) => row.key !== targetSettings[index].key || JSON.stringify(JSON.parse(row.value)) !== JSON.stringify(targetSettings[index].value) || sourceUtc(row.updated_at) !== targetSettings[index].updated_at)) throw new Error('V1/V2 ayar anahtarı, JSON değeri veya zamanı farklı');
   report.settings = { source: settingRows.length, migrated: targetSettings.length, excluded: 0 };
   async function pivot(sourceTable, targetTable, sourceColumns, targetColumns, mapTables) {
     const sourceRows = source.prepare(`SELECT ${sourceColumns.join(',')} FROM ${sourceTable}`).all();

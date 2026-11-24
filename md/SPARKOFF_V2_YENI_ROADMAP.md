@@ -294,6 +294,8 @@ Veri geçişinin alan, tarih, stok, dosya ve yetki kuralları: [V1→V2 veri ge�
 
 - Üç teslim kaydının tür/durum dönüşümü, notları ve altı tarih alanı da bağımsız kontrol ediliyor. İki yerel migration DB'de 30/30 alan eşleşti; geçici teslim notu sapması reddedilip geri alındı. Şifreli kişi alanlarının kontrolü ayrı Laravel çözücü provasında yapılmıştı.
 
+- Sistem ayarlarının 12/12 JSON değeri ve İstanbul→UTC güncelleme zamanı da bağımsız doğrulamadan geçti; geçici zaman sapması reddedilip geri alındı. İkinci yerel migration DB'de aynı sonuç görüldü.
+
 ### 11 Kasım 2026 — kişisel tercihler ve randevu takibi
 
 - Profil, V1'den taşınan tema/ölçek/yoğunluk/yan menü ayarlarını okur; kullanıcı yeni etkin ayarı kaydedebilir veya varsayılana dönebilir. V1 kaynak JSON kopyası denetim için değişmeden kalır. Sistem teması işletim sistemi tercihini izler; açık tema ve yoğunluk/ölçek görsel kuralları eklendi. Yerel SQL kabulünde geçersiz değer 400, kayıt/okuma/sıfırlama ve V1 kopyasının korunması geçti. V1 kayıtlı filtreleri ve tablo alanı tercihleri ilgili V2 yönetim listelerinde uygulanıp yerel SQL kabulünden geçti; gerçek tarayıcı etkileşim kabulü açık.
