@@ -189,6 +189,24 @@ try {
     for (const [from, to] of loanDates) if (sourceUtc(row[from]) !== target[to]) throw new Error(`V1/V2 teslim zamanı farklı: ${from}`);
   }
   const loanFieldChecks = sourceLoans.length * 10;
+  async function comparePrinterFields(sourceTable, targetTable, legacyColumn, fields) {
+    const sourceRows = source.prepare(`SELECT id, ${fields.map(([from]) => from).join(', ')} FROM ${sourceTable}`).all();
+    const [targetRows] = await db.query(`SELECT ${legacyColumn} AS legacy_id, ${fields.map(([, to]) => to).join(', ')} FROM ${targetTable} WHERE ${legacyColumn} IS NOT NULL`);
+    const targetMap = new Map(targetRows.map(row => [Number(row.legacy_id), row]));
+    if (targetMap.size !== sourceRows.length) throw new Error(`V1/V2 yazıcı alanı kayıt sayısı farklı: ${sourceTable}`);
+    for (const row of sourceRows) {
+      const target = targetMap.get(Number(row.id));
+      for (const [from, to, kind] of fields) {
+        const expected = kind === 'date' ? sourceUtc(row[from]) : kind === 'diameter' ? Number(row[from]).toFixed(2) : row[from];
+        if (!target || expected !== target[to]) throw new Error(`V1/V2 yazıcı alanı farklı: ${sourceTable}.${from}`);
+      }
+    }
+    return sourceRows.length * fields.length;
+  }
+  const printerFieldChecks =
+    await comparePrinterFields('printers', 'printers', 'legacy_printer_id', [['code', 'code'], ['name', 'name'], ['status', 'status'], ['description', 'description'], ['sort_order', 'sort_order'], ['created_at', 'created_at', 'date'], ['updated_at', 'updated_at', 'date']]) +
+    await comparePrinterFields('filaments', 'filaments', 'legacy_filament_id', [['material', 'name'], ['color', 'color'], ['brand', 'brand'], ['is_available', 'available'], ['diameter_mm', 'diameter_mm', 'diameter'], ['spool_weight_grams', 'spool_weight_grams'], ['nozzle_temp_min', 'nozzle_temp_min'], ['nozzle_temp_max', 'nozzle_temp_max'], ['bed_temp_min', 'bed_temp_min'], ['bed_temp_max', 'bed_temp_max'], ['technical_notes', 'technical_notes'], ['unavailable_reason', 'unavailable_reason'], ['sort_order', 'sort_order'], ['created_at', 'created_at', 'date'], ['updated_at', 'updated_at', 'date']]) +
+    await comparePrinterFields('operating_hours', 'operating_hours', 'legacy_operating_hour_id', [['weekday', 'weekday'], ['is_open', 'is_open'], ['opens_at', 'opens_at'], ['latest_start_at', 'latest_start_at'], ['created_at', 'created_at', 'date'], ['updated_at', 'updated_at', 'date']]);
   const settingRows = source.prepare('SELECT key, value, updated_at FROM settings ORDER BY key').all();
   const [targetSettings] = await db.query('SELECT `key`, value, updated_at FROM system_settings ORDER BY `key`');
   if (settingRows.length !== targetSettings.length || settingRows.some((row, index) => row.key !== targetSettings[index].key || JSON.stringify(JSON.parse(row.value)) !== JSON.stringify(targetSettings[index].value) || sourceUtc(row.updated_at) !== targetSettings[index].updated_at)) throw new Error('V1/V2 ayar anahtarı, JSON değeri veya zamanı farklı');
@@ -240,5 +258,5 @@ try {
   if (Number(audit[0].missing_actors || 0)) throw new Error('V1 etkinlik kullanıcı bağı eksik');
   const sourceHash = createHash('sha256').update(await readFile(resolve(sourcePath))).digest('hex');
   const totals = Object.entries(report).filter(([table]) => !['permissions', 'permission_role', 'inventoryLegacyImages'].includes(table)).reduce((result, [, row]) => ({ source: result.source + row.source, migrated: result.migrated + row.migrated, excluded: result.excluded + row.excluded }), { source: 0, migrated: 0, excluded: 0 });
-  process.stdout.write(`${JSON.stringify({ sourceHash, totals, tables: report, inventoryAmountChecks, materialFieldChecks, inventoryRelationChecks, movementSourceChecks, movementHistoryChecks, inventoryMediaFiles, feedbackImageFiles, feedbackFieldChecks, loanFieldChecks, missingActivitySubjects: Number(audit[0].missing_subjects || 0) })}\n`);
+  process.stdout.write(`${JSON.stringify({ sourceHash, totals, tables: report, inventoryAmountChecks, materialFieldChecks, inventoryRelationChecks, movementSourceChecks, movementHistoryChecks, inventoryMediaFiles, feedbackImageFiles, feedbackFieldChecks, loanFieldChecks, printerFieldChecks, missingActivitySubjects: Number(audit[0].missing_subjects || 0) })}\n`);
 } finally { source.close(); await db.end(); }

@@ -76,6 +76,8 @@
 
 **Ayar zamanı:** 12/12 sistem ayarının JSON değeriyle birlikte İstanbul→UTC güncelleme zamanı da iki yerel migration DB'de eşleşti; geçici zaman sapması reddedilip geri alındı.
 
+**Bağımsız yazıcı/filament/saat kontrolü:** 2 yazıcı, 4 filament ve 7 çalışma saatinin 116 alanı iki yerel migration DB'de kaynakla eşleşti; geçici filament rengi sapması reddedilip geri alındı.
+
 **11 Kasım yerel yazıcı ve ayar provası:** `0017` kaynak ID alanları ve `stage-v1-printers.mjs` ile 2 yazıcı, 4 filament ve 7 çalışma saati aynı migration DB'sine taşındı; ikinci çalışmada 0 yeni/13 eşleşen kayıt ve kaynak adında değişiklik reddi görüldü. `stage-v1-settings.mjs` 12 ayarın tamamını V2 `system_settings` içine JSON tipi ve UTC güncelleme zamanı ile taşıdı; ikinci çalışmada 0 yeni/12 eşleşen kayıt. V1 ayar `id`, `group`, `created_at` alanları V2 çalışma tablosunda yoktur; kaynak raporunda saklanacak meta veridir. Canlı yedekte ek ayar anahtarları veya farklı enum/saat biçimleri yeniden sınıflandırılmalıdır. Bu VDS veya canlı kaynak kabulü değildir.
 
 **11 Kasım yerel etkinlik provası:** Geri bildirim kaydı ve görseli migration DB'ye de taşındı. `0019` benzersiz kaynak kimliğiyle `stage-v1-activity.mjs` 580 V1 etkinliğini V2 `audit_logs` içine taşıdı: 376 konu hedef kayda bağlı, 204 kaydın kaynak konusu artık bulunmadığı veya kaynak konu kimliği boş olduğu için hedef `entity_id` boş; özgün `subject_type`, `subject_id` ve `changed_fields` JSON içinde korunuyor. 580/580 aktör kullanıcı bağı korundu. Tekrarda 0 yeni/580 eşleşme, değiştirilmiş kaynakta reddetme görüldü. Kaynakta silinmiş konuların yeniden oluşturulması yapılmaz. Canlı kaynak farklı olabilir.

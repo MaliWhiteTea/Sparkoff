@@ -296,6 +296,8 @@ Veri geçişinin alan, tarih, stok, dosya ve yetki kuralları: [V1→V2 veri ge�
 
 - Sistem ayarlarının 12/12 JSON değeri ve İstanbul→UTC güncelleme zamanı da bağımsız doğrulamadan geçti; geçici zaman sapması reddedilip geri alındı. İkinci yerel migration DB'de aynı sonuç görüldü.
 
+- Yazıcı, filament ve çalışma saati kayıtlarının V1 alanları iki yerel migration DB'de bağımsız karşılaştırıldı: 2 yazıcı, 4 filament, 7 çalışma saati için 116/116 alan eşleşti. Geçici filament rengi sapması reddedildi, kayıt geri yüklendi; toplam 960/960 iş kaydı korundu.
+
 ### 11 Kasım 2026 — kişisel tercihler ve randevu takibi
 
 - Profil, V1'den taşınan tema/ölçek/yoğunluk/yan menü ayarlarını okur; kullanıcı yeni etkin ayarı kaydedebilir veya varsayılana dönebilir. V1 kaynak JSON kopyası denetim için değişmeden kalır. Sistem teması işletim sistemi tercihini izler; açık tema ve yoğunluk/ölçek görsel kuralları eklendi. Yerel SQL kabulünde geçersiz değer 400, kayıt/okuma/sıfırlama ve V1 kopyasının korunması geçti. V1 kayıtlı filtreleri ve tablo alanı tercihleri ilgili V2 yönetim listelerinde uygulanıp yerel SQL kabulünden geçti; gerçek tarayıcı etkileşim kabulü açık.
