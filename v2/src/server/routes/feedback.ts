@@ -21,7 +21,10 @@ route.get('/', async c => {
   const direction = input.data.direction === 'asc' ? asc : desc;
   const [total] = await db.select({ count: count() }).from(feedbacks).where(where);
   const rows = await db.select({ feedback: feedbacks, handlerName: users.name }).from(feedbacks).leftJoin(users, eq(feedbacks.handledBy, users.id)).where(where).orderBy(direction(sort), direction(feedbacks.id)).limit(30).offset((input.data.page - 1) * 30);
-  return c.json({ feedbacks: rows.map(({ feedback, handlerName }) => ({ ...feedback, handlerName, imageUrl: feedback.imagePath ? `/api/feedback/${feedback.id}/image` : null })), page: input.data.page, pageSize: 30, total: total.count });
+  return c.json({ feedbacks: rows.map(({ feedback, handlerName }) => {
+    const { imagePath, ...publicFields } = feedback;
+    return { ...publicFields, handlerName, imageUrl: imagePath ? `/api/feedback/${feedback.id}/image` : null };
+  }), page: input.data.page, pageSize: 30, total: total.count });
 });
 
 route.get('/:id/image', async c => {

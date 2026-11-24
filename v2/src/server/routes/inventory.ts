@@ -142,7 +142,10 @@ route.get('/', async c => {
     group.push(loan);
     loansByMaterial.set(loan.materialId, group);
   }
-  return c.json({ materials: rows.map(row => ({ ...row, availableQuantity: availableQuantity(row.kind, row.quantity, loansByMaterial.get(row.id)) })) });
+  return c.json({ materials: rows.map(row => {
+    const { imagePath, ...visible } = row;
+    return { ...visible, availableQuantity: availableQuantity(row.kind, row.quantity, loansByMaterial.get(row.id)) };
+  }) });
 });
 route.get('/count', async c => {
   const auth = c.get('auth');
@@ -176,7 +179,10 @@ route.get('/search', async c => {
   const order = filters.sort === 'quantity' ? [asc(materials.quantity), asc(materials.id)] : filters.sort === 'updated' ? [desc(materials.updatedAt), desc(materials.id)] : [asc(sql`${materials.name} collate utf8mb4_turkish_ci`), asc(materials.id)];
   const pageSize = 24;
   const rows = await db.select({ item: materials, available }).from(materials).where(where).orderBy(...order).limit(pageSize).offset((filters.page - 1) * pageSize);
-  return c.json({ materials: rows.map(({ item, available }) => ({ ...item, availableQuantity: available })), total, page: filters.page, pageSize });
+  return c.json({ materials: rows.map(({ item, available }) => {
+    const { imagePath, ...visible } = item;
+    return { ...visible, availableQuantity: available };
+  }), total, page: filters.page, pageSize });
 });
 route.get('/definitions', async c => {
   const auth = c.get('auth');
