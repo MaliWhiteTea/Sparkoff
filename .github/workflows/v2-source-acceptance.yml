@@ -34,3 +34,46 @@ jobs:
 
       - name: Üretim derlemesini doğrula
         run: npm run build
+
+  v2-migrations:
+    name: Temiz MariaDB migration
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: v2
+    services:
+      database:
+        image: mariadb:10.11
+        env:
+          MARIADB_DATABASE: sparkoff_v2_ci
+          MARIADB_USER: sparkoff_v2_ci
+          MARIADB_PASSWORD: ci_only_password
+          MARIADB_ROOT_PASSWORD: ci_only_root_password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mariadb-admin ping -h 127.0.0.1 -uroot -pci_only_root_password --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    env:
+      DATABASE_URL: mysql://sparkoff_v2_ci:ci_only_password@127.0.0.1:3306/sparkoff_v2_ci
+    steps:
+      - name: Kaynak kodu al
+        uses: actions/checkout@v7
+
+      - name: Node.js'i hazırla
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: v2/package-lock.json
+
+      - name: Bağımlılıkları kur
+        run: npm ci
+
+      - name: Migration'ları uygula
+        run: npm run db:migrate
+
+      - name: Tekrar çalıştırmayı doğrula
+        run: npm run db:migrate
