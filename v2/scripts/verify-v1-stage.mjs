@@ -152,8 +152,8 @@ try {
     if (createHash('sha256').update(await readFile(sourceFile)).digest('hex') !== createHash('sha256').update(await readFile(targetFile)).digest('hex')) throw new Error('V1/V2 medya dosya özeti farklı');
   }
   const inventoryMediaFiles = mediaFiles.length;
-  const sourceFeedbackImages = source.prepare('SELECT id, image_path, image_size, image_mime_type FROM feedback_reports ORDER BY id').all();
-  const [targetFeedbackImages] = await db.query('SELECT id, legacy_feedback_id, image_path, image_size, image_mime_type FROM feedbacks WHERE legacy_feedback_id IS NOT NULL');
+  const sourceFeedbackImages = source.prepare('SELECT id, type, message, status, admin_note, handled_by, handled_at, created_at, updated_at, image_path, image_original_name, image_size, image_mime_type FROM feedback_reports ORDER BY id').all();
+  const [targetFeedbackImages] = await db.query('SELECT id, legacy_feedback_id, kind, message, status, admin_note, handled_by, handled_at, created_at, updated_at, image_path, image_original_name, image_size, image_mime_type FROM feedbacks WHERE legacy_feedback_id IS NOT NULL');
   const feedbackMap = new Map(targetFeedbackImages.map(row => [Number(row.legacy_feedback_id), row]));
   const feedbackFiles = sourceFeedbackImages.filter(row => row.image_path);
   if (feedbackFiles.length && (!sourcePrivatePath || !process.env.PRIVATE_UPLOAD_DIR)) throw new Error('Geri bildirim görseli doğrulaması için özel dosya kökleri gerekli');
@@ -162,7 +162,9 @@ try {
   if (feedbackTargetRoot && !feedbackTargetRoot.startsWith(resolve('../storage/framework/local-test-v2') + sep)) throw new Error('Geri bildirim görseli hedefi yalnız yerel prova dizininde olabilir');
   for (const row of sourceFeedbackImages) {
     const target = feedbackMap.get(Number(row.id));
-    if (!target || Boolean(row.image_path) !== Boolean(target.image_path) || row.image_size !== target.image_size || row.image_mime_type !== target.image_mime_type) throw new Error('V1/V2 geri bildirim görsel meta verisi farklı');
+    const handler = row.handled_by == null ? null : targetIds.get('users').get(Number(row.handled_by));
+    if (!target || handler === undefined || row.type !== target.kind || row.message !== target.message || row.status !== target.status || row.admin_note !== target.admin_note || handler !== (target.handled_by == null ? null : Number(target.handled_by)) || sourceUtc(row.handled_at) !== target.handled_at || sourceUtc(row.created_at) !== target.created_at || sourceUtc(row.updated_at) !== target.updated_at) throw new Error('V1/V2 geri bildirim iş alanı farklı');
+    if (!target || Boolean(row.image_path) !== Boolean(target.image_path) || row.image_original_name !== target.image_original_name || row.image_size !== target.image_size || row.image_mime_type !== target.image_mime_type) throw new Error('V1/V2 geri bildirim görsel meta verisi farklı');
     if (!row.image_path) continue;
     if (!/^feedback\/\d+\/[^/]+\.(jpg|jpeg|png|webp)$/i.test(row.image_path) || Number(row.image_path.split('/')[1]) !== Number(row.id) || !new RegExp(`^feedback/${target.id}/[a-f0-9]{32}\\.(jpg|png|webp)$`).test(target.image_path)) throw new Error('V1/V2 geri bildirim görsel yolu geçersiz');
     const sourceFile = await realpath(resolve(feedbackSourceRoot, row.image_path));
@@ -172,6 +174,7 @@ try {
     if (sourceBytes.length !== Number(row.image_size) || targetBytes.length !== sourceBytes.length || createHash('sha256').update(sourceBytes).digest('hex') !== createHash('sha256').update(targetBytes).digest('hex')) throw new Error('V1/V2 geri bildirim görsel dosya özeti farklı');
   }
   const feedbackImageFiles = feedbackFiles.length;
+  const feedbackFieldChecks = sourceFeedbackImages.length * 9;
   const settingRows = source.prepare('SELECT key, value FROM settings ORDER BY key').all();
   const [targetSettings] = await db.query('SELECT `key`, value FROM system_settings ORDER BY `key`');
   if (settingRows.length !== targetSettings.length || settingRows.some((row, index) => row.key !== targetSettings[index].key || JSON.stringify(JSON.parse(row.value)) !== JSON.stringify(targetSettings[index].value))) throw new Error('V1/V2 ayar anahtarı veya JSON değeri farklı');
@@ -223,5 +226,5 @@ try {
   if (Number(audit[0].missing_actors || 0)) throw new Error('V1 etkinlik kullanıcı bağı eksik');
   const sourceHash = createHash('sha256').update(await readFile(resolve(sourcePath))).digest('hex');
   const totals = Object.entries(report).filter(([table]) => !['permissions', 'permission_role', 'inventoryLegacyImages'].includes(table)).reduce((result, [, row]) => ({ source: result.source + row.source, migrated: result.migrated + row.migrated, excluded: result.excluded + row.excluded }), { source: 0, migrated: 0, excluded: 0 });
-  process.stdout.write(`${JSON.stringify({ sourceHash, totals, tables: report, inventoryAmountChecks, materialFieldChecks, inventoryRelationChecks, movementSourceChecks, movementHistoryChecks, inventoryMediaFiles, feedbackImageFiles, missingActivitySubjects: Number(audit[0].missing_subjects || 0) })}\n`);
+  process.stdout.write(`${JSON.stringify({ sourceHash, totals, tables: report, inventoryAmountChecks, materialFieldChecks, inventoryRelationChecks, movementSourceChecks, movementHistoryChecks, inventoryMediaFiles, feedbackImageFiles, feedbackFieldChecks, missingActivitySubjects: Number(audit[0].missing_subjects || 0) })}\n`);
 } finally { source.close(); await db.end(); }

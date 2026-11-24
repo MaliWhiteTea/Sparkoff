@@ -288,6 +288,8 @@ Veri geçişinin alan, tarih, stok, dosya ve yetki kuralları: [V1→V2 veri ge�
 
 - Özel geri bildirim görseli de bağımsız kaynak/hedef SHA-256, boyut, MIME ve güvenli yol denetimine eklendi. İki yerel migration DB'de 1/1 görsel ile 960/960 kayıt doğrulandı. Hedef özel görsel geçici bozulunca doğrulama reddetti; dosya geri yüklendi. Komutun üçüncü argümanı V1 özel dosya kökü, `PRIVATE_UPLOAD_DIR` ise yerel V2 hedef köküdür.
 
+- Geri bildirimin tür, metin, durum, yönetici notu, sorumlu kullanıcı, üç tarih ve görsel özgün ad alanı da kaynakla bağımsız karşılaştırılıyor. İki ayrı yerel migration DB'de 9/9 alan ile 960/960 kayıt eşleşti; geçici durum sapması reddedilip geri alındı.
+
 ### 11 Kasım 2026 — kişisel tercihler ve randevu takibi
 
 - Profil, V1'den taşınan tema/ölçek/yoğunluk/yan menü ayarlarını okur; kullanıcı yeni etkin ayarı kaydedebilir veya varsayılana dönebilir. V1 kaynak JSON kopyası denetim için değişmeden kalır. Sistem teması işletim sistemi tercihini izler; açık tema ve yoğunluk/ölçek görsel kuralları eklendi. Yerel SQL kabulünde geçersiz değer 400, kayıt/okuma/sıfırlama ve V1 kopyasının korunması geçti. V1 kayıtlı filtreleri ve tablo alanı tercihleri ilgili V2 yönetim listelerinde uygulanıp yerel SQL kabulünden geçti; gerçek tarayıcı etkileşim kabulü açık.
