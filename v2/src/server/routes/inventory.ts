@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
-import { and, asc, count, desc, eq, gt, inArray, isNotNull, lt } from 'drizzle-orm';
+import { and, asc, count, desc, eq, gt, inArray, isNotNull, isNull, lt, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { randomUUID } from 'node:crypto';
 import { Readable } from 'node:stream';
@@ -135,14 +135,48 @@ route.get('/', async c => {
   if (!auth.permissions.includes('inventory_view') && auth.user.globalRole !== 'super_admin') return c.json({ error: 'Yönetim envanterini görme yetkisi yok' }, 403);
   const rows = await db.select().from(materials);
   const equipmentIds = rows.filter(row => row.kind === 'equipment').map(row => row.id);
-  const active = equipmentIds.length ? await db.select().from(loans).where(inArray(loans.materialId, equipmentIds)) : [];
-  return c.json({ materials: rows.map(row => ({ ...row, availableQuantity: availableQuantity(row.kind, row.quantity, active.filter(loan => loan.materialId === row.id)) })) });
+  const active = equipmentIds.length ? await db.select({ materialId: loans.materialId, quantity: loans.quantity, returnedQuantity: loans.returnedQuantity, status: loans.status }).from(loans).where(and(inArray(loans.materialId, equipmentIds), inArray(loans.status, ['open', 'partial']))) : [];
+  const loansByMaterial = new Map<number, typeof active>();
+  for (const loan of active) {
+    const group = loansByMaterial.get(loan.materialId) || [];
+    group.push(loan);
+    loansByMaterial.set(loan.materialId, group);
+  }
+  return c.json({ materials: rows.map(row => ({ ...row, availableQuantity: availableQuantity(row.kind, row.quantity, loansByMaterial.get(row.id)) })) });
 });
 route.get('/count', async c => {
   const auth = c.get('auth');
   if (!auth.permissions.includes('inventory_view') && auth.user.globalRole !== 'super_admin') return c.json({ error: 'Yönetim envanterini görme yetkisi yok' }, 403);
   const [{ total }] = await db.select({ total: count() }).from(materials);
   return c.json({ total });
+});
+route.get('/options', async c => {
+  const auth = c.get('auth');
+  if (!can(auth, 'inventory_view')) return c.json({ error: 'Yetki yok' }, 403);
+  const rows = await db.select({ id: materials.id, name: materials.name, kind: materials.kind, isActive: materials.isActive, archivedAt: materials.archivedAt }).from(materials).orderBy(materials.name, materials.id);
+  return c.json({ materials: rows });
+});
+route.get('/search', async c => {
+  const auth = c.get('auth');
+  if (!can(auth, 'inventory_view')) return c.json({ error: 'Yetki yok' }, 403);
+  const input = z.object({ search: z.string().max(100).default(''), status: z.enum(['active', 'all', 'inactive', 'low', 'out', 'archived']).default('active'), kind: z.enum(['', 'consumable', 'loanable', 'equipment']).default(''), category: z.coerce.number().int().nonnegative().default(0), sort: z.enum(['name', 'quantity', 'updated']).default('name'), page: z.coerce.number().int().min(1).max(100000).default(1) }).safeParse(Object.fromEntries(new URL(c.req.url).searchParams));
+  if (!input.success) return c.json({ error: 'Envanter ölçütleri geçersiz' }, 400);
+  const filters = input.data;
+  const available = sql<string>`greatest(0, ${materials.quantity} - case when ${materials.kind} = 'equipment' then coalesce((select sum(greatest(0, quantity - returned_quantity)) from loans where material_id = ${materials.id} and status in ('open', 'partial')), 0) else 0 end)`;
+  const terms = filters.search.trim().toLocaleLowerCase('tr-TR').split(/\s+/).filter(Boolean);
+  const haystack = sql`lower(concat_ws(' ', ${materials.name}, ${materials.sku}, ${materials.brand}, ${materials.model}) collate utf8mb4_turkish_ci)`;
+  const where = and(...terms.map(term => sql`locate(${term}, ${haystack}) > 0`),
+    filters.kind ? eq(materials.kind, filters.kind) : undefined,
+    filters.category ? eq(materials.categoryId, filters.category) : undefined,
+    filters.status === 'archived' ? isNotNull(materials.archivedAt) : isNull(materials.archivedAt),
+    filters.status === 'active' ? eq(materials.isActive, true) : filters.status === 'inactive' ? eq(materials.isActive, false) :
+      filters.status === 'out' ? and(eq(materials.isActive, true), sql`${materials.quantity} <= 0`) :
+      filters.status === 'low' ? and(eq(materials.isActive, true), sql`${materials.quantity} > 0`, isNotNull(materials.minimumStock), sql`${materials.quantity} <= ${materials.minimumStock}`) : undefined);
+  const [{ total }] = await db.select({ total: count() }).from(materials).where(where);
+  const order = filters.sort === 'quantity' ? [asc(materials.quantity), asc(materials.id)] : filters.sort === 'updated' ? [desc(materials.updatedAt), desc(materials.id)] : [asc(sql`${materials.name} collate utf8mb4_turkish_ci`), asc(materials.id)];
+  const pageSize = 24;
+  const rows = await db.select({ item: materials, available }).from(materials).where(where).orderBy(...order).limit(pageSize).offset((filters.page - 1) * pageSize);
+  return c.json({ materials: rows.map(({ item, available }) => ({ ...item, availableQuantity: available })), total, page: filters.page, pageSize });
 });
 route.get('/definitions', async c => {
   const auth = c.get('auth');

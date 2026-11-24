@@ -85,9 +85,22 @@ app.get('/api/public/materials/:materialId/media/:mediaId', async c => {
 app.get('/api/public/materials', async c => {
   const rows = await db.select({ id: materials.id, legacyMaterialId: materials.legacyMaterialId, name: materials.name, kind: materials.kind, unit: materials.unit, sku: materials.sku, brand: materials.brand, model: materials.model, description: materials.description, technicalSpecs: materials.technicalSpecs, updatedAt: materials.updatedAt, categoryId: materials.categoryId, category: categories.name, categoryActive: categories.isActive, location: locations.name, locationPublic: locations.isPublic, quantity: materials.quantity, publicVisibility: materials.publicVisibility }).from(materials).leftJoin(categories, eq(materials.categoryId, categories.id)).leftJoin(locations, eq(materials.locationId, locations.id)).where(and(eq(materials.isPublic, true), eq(materials.isActive, true), isNull(materials.archivedAt), ne(materials.publicVisibility, 'hidden')));
   const equipmentIds = rows.filter(row => row.kind === 'equipment').map(row => row.id);
-  const active = equipmentIds.length ? await db.select().from(loans).where(inArray(loans.materialId, equipmentIds)) : [];
+  const active = equipmentIds.length ? await db.select({ materialId: loans.materialId, quantity: loans.quantity, returnedQuantity: loans.returnedQuantity, status: loans.status }).from(loans).where(and(inArray(loans.materialId, equipmentIds), inArray(loans.status, ['open', 'partial']))) : [];
   const media = rows.length ? await db.select({ id: materialMedia.id, materialId: materialMedia.materialId, type: materialMedia.type, path: materialMedia.path, externalUrl: materialMedia.externalUrl, title: materialMedia.title, altText: materialMedia.altText, sortOrder: materialMedia.sortOrder, isCover: materialMedia.isCover }).from(materialMedia).where(inArray(materialMedia.materialId, rows.map(row => row.id))) : [];
-  return c.json({ materials: rows.map(row => ({ ...publicMaterialView(row, availableQuantity(row.kind, row.quantity, active.filter(loan => loan.materialId === row.id))), legacyMaterialId: row.legacyMaterialId, sku: row.sku, brand: row.brand, model: row.model, description: row.description, technicalSpecs: row.technicalSpecs ?? {}, updatedAt: row.updatedAt, categoryId: row.categoryId, category: row.category || 'Diğer', categoryActive: row.categoryActive, location: row.locationPublic ? row.location : null, media: media.filter(medium => medium.materialId === row.id && ((['image', 'video'].includes(medium.type) && medium.path) || (medium.type === 'link' && medium.externalUrl?.startsWith('https://')))).sort((a, b) => a.sortOrder - b.sortOrder || a.id - b.id).map(medium => ({ id: medium.id, type: medium.type, url: medium.type === 'link' ? medium.externalUrl : `/api/public/materials/${row.id}/media/${medium.id}`, title: medium.title, altText: medium.altText, isCover: medium.isCover })) })) });
+  const loansByMaterial = new Map<number, typeof active>();
+  for (const loan of active) {
+    const group = loansByMaterial.get(loan.materialId) || [];
+    group.push(loan);
+    loansByMaterial.set(loan.materialId, group);
+  }
+  const mediaByMaterial = new Map<number, typeof media>();
+  for (const medium of media) {
+    if (!((['image', 'video'].includes(medium.type) && medium.path) || (medium.type === 'link' && medium.externalUrl?.startsWith('https://')))) continue;
+    const group = mediaByMaterial.get(medium.materialId) || [];
+    group.push(medium);
+    mediaByMaterial.set(medium.materialId, group);
+  }
+  return c.json({ materials: rows.map(row => ({ ...publicMaterialView(row, availableQuantity(row.kind, row.quantity, loansByMaterial.get(row.id))), legacyMaterialId: row.legacyMaterialId, sku: row.sku, brand: row.brand, model: row.model, description: row.description, technicalSpecs: row.technicalSpecs ?? {}, updatedAt: row.updatedAt, categoryId: row.categoryId, category: row.category || 'Diğer', categoryActive: row.categoryActive, location: row.locationPublic ? row.location : null, media: (mediaByMaterial.get(row.id) || []).sort((a, b) => a.sortOrder - b.sortOrder || a.id - b.id).map(medium => ({ id: medium.id, type: medium.type, url: medium.type === 'link' ? medium.externalUrl : `/api/public/materials/${row.id}/media/${medium.id}`, title: medium.title, altText: medium.altText, isCover: medium.isCover })) })) });
 });
 app.get('/api/public/materials/legacy-map', async c => {
   const raw = new URL(c.req.url).searchParams.get('ids') || '';
