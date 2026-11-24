@@ -306,3 +306,4 @@ Veri geçişinin alan, tarih, stok, dosya ve yetki kuralları: [V1→V2 veri ge�
 ### 24 Kasım 2026 — mobil yönetim gezinmesi
 
 - Mobil hızlı menü artık masaüstü menüsüyle aynı yetki filtresinden geçen sayfaları gösterir; üye/yönetim geçişi ve çıkış düğmesi eklendi. Yalnız duyuru izni olan hesabın duyuru rotasına yönlendirilip tekrar geri çevrilmesi düzeltildi. Etkin sayfa hızlı menüde işaretlenir. TypeScript kontrolü ve üretim derlemesi geçti. Etkileşimli tarayıcı hizmeti kullanılamadığı için gerçek dokunma/klavye kabulü açık.
+- Çıkışın sunucuda başarısız olması artık oturumu arayüzde başarılıymış gibi kapatmaz; yeniden deneme mesajı gösterilir. Sunucu 401 döndürdüğünde oturum zaten geçersiz olduğundan yerel oturum temizlenir. Masaüstü ve mobil çıkış aynı hata işleyicisini kullanır. Üretim derlemesi geçti; sunucu kesintisiyle etkileşimli tarayıcı kabulü açık.
