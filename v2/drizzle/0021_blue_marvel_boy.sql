@@ -1,0 +1,2 @@
+ALTER TABLE `blackout_periods` ADD `legacy_blackout_id` bigint unsigned;--> statement-breakpoint
+ALTER TABLE `blackout_periods` ADD CONSTRAINT `blackout_periods_legacy_id_uq` UNIQUE(`legacy_blackout_id`);

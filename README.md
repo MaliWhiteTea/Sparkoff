@@ -267,6 +267,8 @@ TypeScript tip denetimi, üretim derlemesi ve PHP kod biçimi kontrolleri de yay
 
 ## Dokümantasyon
 
+- Ayrı V2 uygulaması ve güncel açık işler: [V2 yol haritası](./md/SPARKOFF_V2_YENI_ROADMAP.md). Stok kodu ve karekod etiketleme paketi burada planlanmıştır; henüz uygulanmadı.
+- V1 verisinin V2'ye taşınma kuralları: [veri geçişi sözleşmesi](./md/SPARKOFF_V1_V2_VERI_GECIS_SOZLESMESI.md)
 - Bugüne kadar yapılan işler, kod/veri konumları ve altyapı haritası: [PROJE_GECMISI_VE_ALTYAPI_HARITASI_2026-11-08.md](./PROJE_GECMISI_VE_ALTYAPI_HARITASI_2026-11-08.md)
 - Ayrıntılı geliştirme planı: [ROADMAP.md](./ROADMAP.md)
 - cPanel dağıtım ve canlı kabul rehberi: [CPANEL_DEPLOYMENT.md](./CPANEL_DEPLOYMENT.md)

@@ -1,0 +1,1 @@
+ALTER TABLE `activation_codes` ADD `custom_role_id` bigint unsigned;

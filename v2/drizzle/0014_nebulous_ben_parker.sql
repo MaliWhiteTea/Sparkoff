@@ -1,0 +1,1 @@
+ALTER TABLE `custom_roles` ADD `is_system` boolean DEFAULT false NOT NULL;

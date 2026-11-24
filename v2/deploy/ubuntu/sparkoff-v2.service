@@ -1,0 +1,25 @@
+[Unit]
+Description=Sparkoff V2 API and web application
+After=network-online.target mariadb.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=sparkoff
+Group=sparkoff
+WorkingDirectory=/srv/sparkoff-v2
+Environment=NODE_ENV=production
+Environment=PORT=3000
+Environment=HOST=127.0.0.1
+EnvironmentFile=/etc/sparkoff-v2.env
+ExecStart=/usr/bin/node /srv/sparkoff-v2/dist/server/index.js
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/sparkoff-v2/uploads
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
