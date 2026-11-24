@@ -105,11 +105,36 @@ try {
   for (const row of data.categories) maps.categories.set(row.id, await stage('categories', 'legacy_category_id', row.id, { name: row.name, slug: row.slug, description: row.description, sort_order: row.sort_order, is_active: row.is_active, created_at: date(row.created_at), updated_at: date(row.updated_at) }));
   for (const row of data.locations) maps.locations.set(row.id, await stage('locations', 'legacy_location_id', row.id, { name: row.name, code: row.code, description: row.description, is_public: row.is_public, is_active: row.is_active, created_at: date(row.created_at), updated_at: date(row.updated_at) }));
   for (const row of data.materials) {
-    if (row.image_path) throw new Error('V1 eski malzeme görsel yolu için eşleme henüz yok');
     const specs = row.technical_specs == null ? null : JSON.stringify(JSON.parse(row.technical_specs));
     const kind = row.item_type === 'fixed_asset' ? 'equipment' : row.item_type;
     if (!['consumable', 'loanable', 'equipment'].includes(kind) || !['exact', 'status', 'hidden'].includes(row.public_visibility)) throw new Error('V1 malzeme türü veya görünürlüğü geçersiz');
-    maps.materials.set(row.id, await stage('materials', 'legacy_material_id', row.id, { name: row.name, slug: row.slug, sku: row.sku, brand: row.brand, model: row.model, kind, unit: row.unit, category_id: mapped(maps.categories, row.category_id, 'kategori'), location_id: mapped(maps.locations, row.location_id, 'konum'), quantity: decimal(row.quantity), minimum_stock: decimal(row.minimum_stock), public_visibility: row.public_visibility, is_public: row.public_visibility === 'hidden' ? 0 : 1, description: row.description, technical_specs: specs, image_path: null, is_active: row.is_active, archived_at: date(row.archived_at), created_at: date(row.created_at), updated_at: date(row.updated_at) }));
+    const materialId = await stage('materials', 'legacy_material_id', row.id, { name: row.name, slug: row.slug, sku: row.sku, brand: row.brand, model: row.model, kind, unit: row.unit, category_id: mapped(maps.categories, row.category_id, 'kategori'), location_id: mapped(maps.locations, row.location_id, 'konum'), quantity: decimal(row.quantity), minimum_stock: decimal(row.minimum_stock), public_visibility: row.public_visibility, is_public: row.public_visibility === 'hidden' ? 0 : 1, description: row.description, technical_specs: specs, is_active: row.is_active, archived_at: date(row.archived_at), created_at: date(row.created_at), updated_at: date(row.updated_at) });
+    maps.materials.set(row.id, materialId);
+    const [stored] = await connection.execute('SELECT image_path FROM materials WHERE id=? FOR UPDATE', [materialId]);
+    if (!row.image_path) {
+      if (stored[0].image_path) throw new Error('V1 eski malzeme görseli kaynakta yok, hedefte var');
+      continue;
+    }
+    if (typeof row.image_path !== 'string' || row.image_path.length > 512 || row.image_path.startsWith('/') || row.image_path.includes('\\') || row.image_path.split('/').some(part => !part || part === '.' || part === '..') || /[\u0000-\u001f\u007f]/.test(row.image_path) || !/\.(jpg|jpeg|png|webp)$/i.test(row.image_path)) throw new Error('V1 eski malzeme görsel yolu geçersiz');
+    const sourceImagePath = await realpath(resolve(sourceRoot, row.image_path));
+    if (!sourceImagePath.startsWith(sourceRoot + sep)) throw new Error('V1 eski malzeme görseli kaynak kök dışına çıkıyor');
+    const bytes = await readFile(sourceImagePath);
+    const type = imageType(bytes);
+    if (!type?.mime.startsWith('image/') || bytes.length > 8 * 1024 * 1024) throw new Error('V1 eski malzeme görselinin türü veya boyutu geçersiz');
+    const relative = `inventory-legacy/${materialId}/${sha(bytes)}.${type.extension}`;
+    if (stored[0].image_path) {
+      if (stored[0].image_path !== relative) throw new Error('Önceden taşınan eski malzeme görsel yolu farklı');
+      const actual = await realpath(resolve(targetRoot, relative));
+      if (!actual.startsWith(targetRoot + sep) || sha(await readFile(actual)) !== sha(bytes)) throw new Error('Önceden taşınan eski malzeme görseli farklı');
+      continue;
+    }
+    const target = resolve(targetRoot, relative);
+    await mkdir(dirname(target), { recursive: true, mode: 0o700 });
+    if (!(await realpath(dirname(target))).startsWith(targetRoot + sep)) throw new Error('Hedef eski malzeme görsel yolu kök dışına çıkıyor');
+    await writeFile(target, bytes, { flag: 'wx', mode: 0o600 });
+    savedFiles.push(target);
+    if (sha(await readFile(target)) !== sha(bytes)) throw new Error('Hedef eski malzeme görseli hash doğrulaması başarısız');
+    await connection.execute('UPDATE materials SET image_path=? WHERE id=?', [relative, materialId]);
   }
   for (const row of data.loans) {
     const name = decrypt(row.recipient_name), email = decrypt(row.recipient_email);
