@@ -92,6 +92,25 @@ try {
     if ((row.item_type === 'fixed_asset' ? 'equipment' : row.item_type) !== target.kind) throw new Error('V1/V2 malzeme türü farklı');
   }
   const materialFieldChecks = sourceMaterials.length * (identityFields.length + 1);
+  async function compareRelations(sourceTable, targetTable, legacyColumn, relations) {
+    const sourceRows = source.prepare(`SELECT id, ${relations.map(([from]) => from).join(', ')} FROM ${sourceTable}`).all();
+    const [targetRows] = await db.query(`SELECT ${legacyColumn} AS legacy_id, ${relations.map(([, to]) => to).join(', ')} FROM ${targetTable} WHERE ${legacyColumn} IS NOT NULL`);
+    const targetMap = new Map(targetRows.map(row => [Number(row.legacy_id), row]));
+    if (targetMap.size !== sourceRows.length) throw new Error(`V1/V2 ilişki kayıt sayısı farklı: ${sourceTable}`);
+    for (const row of sourceRows) {
+      const target = targetMap.get(Number(row.id));
+      if (!target) throw new Error(`V1/V2 ilişki kaydı eksik: ${sourceTable}`);
+      for (const [from, to, mapName] of relations) {
+        const mapped = row[from] == null ? null : targetIds.get(mapName).get(Number(row[from]));
+        if (mapped === undefined || mapped !== (target[to] == null ? null : Number(target[to]))) throw new Error(`V1/V2 ilişki farklı: ${sourceTable}.${from}`);
+      }
+    }
+    return sourceRows.length * relations.length;
+  }
+  const inventoryRelationChecks =
+    await compareRelations('inventory_transactions', 'loans', 'legacy_loan_id', [['inventory_item_id', 'material_id', 'inventory_items'], ['issued_by', 'issued_by', 'users'], ['closed_by', 'closed_by', 'users']]) +
+    await compareRelations('stock_movements', 'stock_movements', 'legacy_movement_id', [['inventory_item_id', 'material_id', 'inventory_items'], ['user_id', 'actor_id', 'users'], ['reversed_movement_id', 'reversed_movement_id', 'stock_movements']]) +
+    await compareRelations('inventory_media', 'material_media', 'legacy_media_id', [['inventory_item_id', 'material_id', 'inventory_items']]);
   const settingRows = source.prepare('SELECT key, value FROM settings ORDER BY key').all();
   const [targetSettings] = await db.query('SELECT `key`, value FROM system_settings ORDER BY `key`');
   if (settingRows.length !== targetSettings.length || settingRows.some((row, index) => row.key !== targetSettings[index].key || JSON.stringify(JSON.parse(row.value)) !== JSON.stringify(targetSettings[index].value))) throw new Error('V1/V2 ayar anahtarı veya JSON değeri farklı');
@@ -143,5 +162,5 @@ try {
   if (Number(audit[0].missing_actors || 0)) throw new Error('V1 etkinlik kullanıcı bağı eksik');
   const sourceHash = createHash('sha256').update(await readFile(resolve(sourcePath))).digest('hex');
   const totals = Object.entries(report).filter(([table]) => !['permissions', 'permission_role', 'inventoryLegacyImages'].includes(table)).reduce((result, [, row]) => ({ source: result.source + row.source, migrated: result.migrated + row.migrated, excluded: result.excluded + row.excluded }), { source: 0, migrated: 0, excluded: 0 });
-  process.stdout.write(`${JSON.stringify({ sourceHash, totals, tables: report, inventoryAmountChecks, materialFieldChecks, missingActivitySubjects: Number(audit[0].missing_subjects || 0) })}\n`);
+  process.stdout.write(`${JSON.stringify({ sourceHash, totals, tables: report, inventoryAmountChecks, materialFieldChecks, inventoryRelationChecks, missingActivitySubjects: Number(audit[0].missing_subjects || 0) })}\n`);
 } finally { source.close(); await db.end(); }
