@@ -4,8 +4,8 @@ import { readFile, realpath } from 'node:fs/promises';
 import { resolve, sep } from 'node:path';
 import mysql from 'mysql2/promise';
 
-const sourcePath = process.argv[2], sourcePublicPath = process.argv[3];
-if (!sourcePath) throw new Error('Kullanım: verify-v1-stage.mjs <V1 SQLite> [V1 public dosya kökü]');
+const sourcePath = process.argv[2], sourcePublicPath = process.argv[3], sourcePrivatePath = process.argv[4];
+if (!sourcePath) throw new Error('Kullanım: verify-v1-stage.mjs <V1 SQLite> [V1 public dosya kökü] [V1 özel dosya kökü]');
 const url = new URL(process.env.DATABASE_URL || 'mysql://invalid/');
 if (url.hostname !== '127.0.0.1' || url.port !== '4319' || !['/sparkoff_v2_migration', '/sparkoff_v2_migration_clean'].includes(url.pathname)) throw new Error('Doğrulama yalnız ayrı yerel migration veritabanında çalışır');
 const source = new DatabaseSync(resolve(sourcePath), { readOnly: true });
@@ -152,6 +152,26 @@ try {
     if (createHash('sha256').update(await readFile(sourceFile)).digest('hex') !== createHash('sha256').update(await readFile(targetFile)).digest('hex')) throw new Error('V1/V2 medya dosya özeti farklı');
   }
   const inventoryMediaFiles = mediaFiles.length;
+  const sourceFeedbackImages = source.prepare('SELECT id, image_path, image_size, image_mime_type FROM feedback_reports ORDER BY id').all();
+  const [targetFeedbackImages] = await db.query('SELECT id, legacy_feedback_id, image_path, image_size, image_mime_type FROM feedbacks WHERE legacy_feedback_id IS NOT NULL');
+  const feedbackMap = new Map(targetFeedbackImages.map(row => [Number(row.legacy_feedback_id), row]));
+  const feedbackFiles = sourceFeedbackImages.filter(row => row.image_path);
+  if (feedbackFiles.length && (!sourcePrivatePath || !process.env.PRIVATE_UPLOAD_DIR)) throw new Error('Geri bildirim görseli doğrulaması için özel dosya kökleri gerekli');
+  const feedbackSourceRoot = feedbackFiles.length ? await realpath(resolve(sourcePrivatePath)) : null;
+  const feedbackTargetRoot = feedbackFiles.length ? await realpath(resolve(process.env.PRIVATE_UPLOAD_DIR)) : null;
+  if (feedbackTargetRoot && !feedbackTargetRoot.startsWith(resolve('../storage/framework/local-test-v2') + sep)) throw new Error('Geri bildirim görseli hedefi yalnız yerel prova dizininde olabilir');
+  for (const row of sourceFeedbackImages) {
+    const target = feedbackMap.get(Number(row.id));
+    if (!target || Boolean(row.image_path) !== Boolean(target.image_path) || row.image_size !== target.image_size || row.image_mime_type !== target.image_mime_type) throw new Error('V1/V2 geri bildirim görsel meta verisi farklı');
+    if (!row.image_path) continue;
+    if (!/^feedback\/\d+\/[^/]+\.(jpg|jpeg|png|webp)$/i.test(row.image_path) || Number(row.image_path.split('/')[1]) !== Number(row.id) || !new RegExp(`^feedback/${target.id}/[a-f0-9]{32}\\.(jpg|png|webp)$`).test(target.image_path)) throw new Error('V1/V2 geri bildirim görsel yolu geçersiz');
+    const sourceFile = await realpath(resolve(feedbackSourceRoot, row.image_path));
+    const targetFile = await realpath(resolve(feedbackTargetRoot, target.image_path));
+    if (!sourceFile.startsWith(feedbackSourceRoot + sep) || !targetFile.startsWith(feedbackTargetRoot + sep)) throw new Error('V1/V2 geri bildirim görseli kök dışına çıkıyor');
+    const sourceBytes = await readFile(sourceFile), targetBytes = await readFile(targetFile);
+    if (sourceBytes.length !== Number(row.image_size) || targetBytes.length !== sourceBytes.length || createHash('sha256').update(sourceBytes).digest('hex') !== createHash('sha256').update(targetBytes).digest('hex')) throw new Error('V1/V2 geri bildirim görsel dosya özeti farklı');
+  }
+  const feedbackImageFiles = feedbackFiles.length;
   const settingRows = source.prepare('SELECT key, value FROM settings ORDER BY key').all();
   const [targetSettings] = await db.query('SELECT `key`, value FROM system_settings ORDER BY `key`');
   if (settingRows.length !== targetSettings.length || settingRows.some((row, index) => row.key !== targetSettings[index].key || JSON.stringify(JSON.parse(row.value)) !== JSON.stringify(targetSettings[index].value))) throw new Error('V1/V2 ayar anahtarı veya JSON değeri farklı');
@@ -203,5 +223,5 @@ try {
   if (Number(audit[0].missing_actors || 0)) throw new Error('V1 etkinlik kullanıcı bağı eksik');
   const sourceHash = createHash('sha256').update(await readFile(resolve(sourcePath))).digest('hex');
   const totals = Object.entries(report).filter(([table]) => !['permissions', 'permission_role', 'inventoryLegacyImages'].includes(table)).reduce((result, [, row]) => ({ source: result.source + row.source, migrated: result.migrated + row.migrated, excluded: result.excluded + row.excluded }), { source: 0, migrated: 0, excluded: 0 });
-  process.stdout.write(`${JSON.stringify({ sourceHash, totals, tables: report, inventoryAmountChecks, materialFieldChecks, inventoryRelationChecks, movementSourceChecks, movementHistoryChecks, inventoryMediaFiles, missingActivitySubjects: Number(audit[0].missing_subjects || 0) })}\n`);
+  process.stdout.write(`${JSON.stringify({ sourceHash, totals, tables: report, inventoryAmountChecks, materialFieldChecks, inventoryRelationChecks, movementSourceChecks, movementHistoryChecks, inventoryMediaFiles, feedbackImageFiles, missingActivitySubjects: Number(audit[0].missing_subjects || 0) })}\n`);
 } finally { source.close(); await db.end(); }
