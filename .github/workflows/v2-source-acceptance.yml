@@ -1,0 +1,36 @@
+name: V2 kaynak kabulü
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  v2-source-tests:
+    name: TypeScript, test ve derleme
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: v2
+    steps:
+      - name: Kaynak kodu al
+        uses: actions/checkout@v7
+
+      - name: Node.js'i hazırla
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: v2/package-lock.json
+
+      - name: Bağımlılıkları kur
+        run: npm ci
+
+      - name: Birim testlerini çalıştır
+        run: npm test
+
+      - name: Üretim derlemesini doğrula
+        run: npm run build
