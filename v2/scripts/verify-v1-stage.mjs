@@ -254,9 +254,33 @@ try {
     const expectedPreferences = { v1: { interfacePreferences: parse(user.interface_preferences), tablePreferences: parse(user.table_preferences), savedFilters: parse(user.saved_filters) } };
     if (!target || target.legacy_role_label !== user.role || target.email_verified_at !== (user.email_verified_at == null ? null : utc(user.email_verified_at)) || target.created_at !== utc(user.created_at) || target.updated_at !== utc(user.updated_at) || JSON.stringify(target.preferences) !== JSON.stringify(expectedPreferences)) throw new Error('V1/V2 kullanıcı eski etiketi, tercihi veya zamanı farklı');
   }
+  const auditSubjects = new Map([
+    ['App/Models/InventoryCategory', ['category', 'inventory_categories']],
+    ['App/Models/InventoryItem', ['material', 'inventory_items']],
+    ['App/Models/InventoryMedia', ['material_media', 'inventory_media']],
+    ['App/Models/InventoryTransaction', ['loan', 'inventory_transactions']],
+    ['App/Models/Printer', ['printer', 'printers']],
+    ['App/Models/Role', ['role', 'roles']],
+    ['App/Models/User', ['user', 'users']],
+    ['App/Models/FeedbackReport', ['feedback', 'feedback_reports']],
+  ]);
+  const sourceAudit = source.prepare('SELECT id, user_id, action, subject_type, subject_id, changed_fields, created_at FROM activity_logs ORDER BY id').all();
+  const [targetAudit] = await db.query('SELECT legacy_activity_log_id, actor_id, action, entity, entity_id, `before`, `after`, created_at FROM audit_logs WHERE legacy_activity_log_id IS NOT NULL');
+  const auditMap = new Map(targetAudit.map(row => [Number(row.legacy_activity_log_id), row]));
+  if (auditMap.size !== sourceAudit.length) throw new Error('V1/V2 etkinlik alanı kayıt sayısı farklı');
+  for (const row of sourceAudit) {
+    const target = auditMap.get(Number(row.id));
+    const subject = auditSubjects.get(row.subject_type?.split('\\').join('/'));
+    if (!subject) throw new Error('V1 etkinlik konu türü eşlenemedi');
+    const actorId = targetIds.get('users').get(Number(row.user_id));
+    const entityId = row.subject_id == null ? null : targetIds.get(subject[1]).get(Number(row.subject_id)) ?? null;
+    const after = { legacySubjectType: row.subject_type, legacySubjectId: row.subject_id, changedFields: row.changed_fields == null ? null : JSON.parse(row.changed_fields), subjectPresent: entityId !== null };
+    if (!target || actorId !== Number(target.actor_id) || `legacy.${row.action}` !== target.action || subject[0] !== target.entity || entityId !== (target.entity_id == null ? null : Number(target.entity_id)) || target.before !== null || JSON.stringify(after) !== JSON.stringify(target.after) || sourceUtc(row.created_at) !== target.created_at) throw new Error('V1/V2 etkinlik geçmiş alanı farklı');
+  }
+  const auditFieldChecks = sourceAudit.length * 7;
   const [audit] = await db.query('SELECT SUM(entity_id IS NULL) AS missing_subjects, SUM(actor_id IS NULL) AS missing_actors FROM audit_logs WHERE legacy_activity_log_id IS NOT NULL');
   if (Number(audit[0].missing_actors || 0)) throw new Error('V1 etkinlik kullanıcı bağı eksik');
   const sourceHash = createHash('sha256').update(await readFile(resolve(sourcePath))).digest('hex');
   const totals = Object.entries(report).filter(([table]) => !['permissions', 'permission_role', 'inventoryLegacyImages'].includes(table)).reduce((result, [, row]) => ({ source: result.source + row.source, migrated: result.migrated + row.migrated, excluded: result.excluded + row.excluded }), { source: 0, migrated: 0, excluded: 0 });
-  process.stdout.write(`${JSON.stringify({ sourceHash, totals, tables: report, inventoryAmountChecks, materialFieldChecks, inventoryRelationChecks, movementSourceChecks, movementHistoryChecks, inventoryMediaFiles, feedbackImageFiles, feedbackFieldChecks, loanFieldChecks, printerFieldChecks, missingActivitySubjects: Number(audit[0].missing_subjects || 0) })}\n`);
+  process.stdout.write(`${JSON.stringify({ sourceHash, totals, tables: report, inventoryAmountChecks, materialFieldChecks, inventoryRelationChecks, movementSourceChecks, movementHistoryChecks, inventoryMediaFiles, feedbackImageFiles, feedbackFieldChecks, loanFieldChecks, printerFieldChecks, auditFieldChecks, missingActivitySubjects: Number(audit[0].missing_subjects || 0) })}\n`);
 } finally { source.close(); await db.end(); }
