@@ -58,6 +58,28 @@ try {
     }
   }
   report.inventoryLegacyImages = { source: legacyImages.length, migrated: legacyImages.length, excluded: 0 };
+  function milli(value) {
+    if (value == null) return null;
+    const amount = Number(value);
+    const scaled = Math.round(amount * 1000);
+    if (!Number.isSafeInteger(scaled) || Math.abs(amount * 1000 - scaled) > 1e-6) throw new Error('V1/V2 stok sayısı veya hassasiyeti geçersiz');
+    return scaled;
+  }
+  async function compareAmounts(sourceTable, targetTable, legacyColumn, columns) {
+    const sourceRows = source.prepare(`SELECT id, ${columns.map(([from]) => from).join(', ')} FROM ${sourceTable}`).all();
+    const [targetRows] = await db.query(`SELECT ${legacyColumn} AS legacy_id, ${columns.map(([, to]) => to).join(', ')} FROM ${targetTable} WHERE ${legacyColumn} IS NOT NULL`);
+    const targetMap = new Map(targetRows.map(row => [Number(row.legacy_id), row]));
+    if (targetMap.size !== sourceRows.length) throw new Error(`V1/V2 sayısal kayıt sayısı farklı: ${sourceTable}`);
+    for (const row of sourceRows) {
+      const target = targetMap.get(Number(row.id));
+      for (const [from, to] of columns) if (!target || milli(row[from]) !== milli(target[to])) throw new Error(`V1/V2 sayısal alan farklı: ${sourceTable}.${from}`);
+    }
+    return sourceRows.length * columns.length;
+  }
+  const inventoryAmountChecks =
+    await compareAmounts('inventory_items', 'materials', 'legacy_material_id', [['quantity', 'quantity'], ['minimum_stock', 'minimum_stock']]) +
+    await compareAmounts('inventory_transactions', 'loans', 'legacy_loan_id', [['quantity', 'quantity'], ['quantity_returned', 'returned_quantity']]) +
+    await compareAmounts('stock_movements', 'stock_movements', 'legacy_movement_id', [['quantity_change', 'delta'], ['balance_after', 'balance_after']]);
   const settingRows = source.prepare('SELECT key, value FROM settings ORDER BY key').all();
   const [targetSettings] = await db.query('SELECT `key`, value FROM system_settings ORDER BY `key`');
   if (settingRows.length !== targetSettings.length || settingRows.some((row, index) => row.key !== targetSettings[index].key || JSON.stringify(JSON.parse(row.value)) !== JSON.stringify(targetSettings[index].value))) throw new Error('V1/V2 ayar anahtarı veya JSON değeri farklı');
@@ -109,5 +131,5 @@ try {
   if (Number(audit[0].missing_actors || 0)) throw new Error('V1 etkinlik kullanıcı bağı eksik');
   const sourceHash = createHash('sha256').update(await readFile(resolve(sourcePath))).digest('hex');
   const totals = Object.entries(report).filter(([table]) => !['permissions', 'permission_role', 'inventoryLegacyImages'].includes(table)).reduce((result, [, row]) => ({ source: result.source + row.source, migrated: result.migrated + row.migrated, excluded: result.excluded + row.excluded }), { source: 0, migrated: 0, excluded: 0 });
-  process.stdout.write(`${JSON.stringify({ sourceHash, totals, tables: report, missingActivitySubjects: Number(audit[0].missing_subjects || 0) })}\n`);
+  process.stdout.write(`${JSON.stringify({ sourceHash, totals, tables: report, inventoryAmountChecks, missingActivitySubjects: Number(audit[0].missing_subjects || 0) })}\n`);
 } finally { source.close(); await db.end(); }

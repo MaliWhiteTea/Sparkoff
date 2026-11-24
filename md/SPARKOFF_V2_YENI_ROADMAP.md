@@ -274,6 +274,8 @@ Veri geçişinin alan, tarih, stok, dosya ve yetki kuralları: [V1→V2 veri ge�
 
 - Bağımsız `verify-v1-stage.mjs` artık eski tekil görsellerin sayısını, hedef yolunu ve kaynak/hedef dosya SHA-256 değerini de karşılaştırıyor. Görsel içeren geçici kaynakta 1/1 ve toplam 960/960 doğrulandı; hedef dosya bozulunca reddedildi. Geçici kayıt ve dosya temizlendikten sonra özgün kaynakta 0 tekil görsel ve 960/960 kayıt yeniden doğrulandı. Görsel içeren kaynakta kullanım: `node scripts/verify-v1-stage.mjs <V1 SQLite> <V1 public dosya kökü>`.
 
+- Bağımsız doğrulayıcı malzeme miktarı/eşiği, teslim ve iade miktarı, stok hareketi farkı/bakiyesi olmak üzere 694 sayısal alanı binde birim hassasiyetle kaynakla karşılaştırıyor. Özgün yerel kaynakta 694/694 ve 960/960 geçti; geçici stok değişikliği reddedildi, değer geri yüklendi.
+
 ### 11 Kasım 2026 — kişisel tercihler ve randevu takibi
 
 - Profil, V1'den taşınan tema/ölçek/yoğunluk/yan menü ayarlarını okur; kullanıcı yeni etkin ayarı kaydedebilir veya varsayılana dönebilir. V1 kaynak JSON kopyası denetim için değişmeden kalır. Sistem teması işletim sistemi tercihini izler; açık tema ve yoğunluk/ölçek görsel kuralları eklendi. Yerel SQL kabulünde geçersiz değer 400, kayıt/okuma/sıfırlama ve V1 kopyasının korunması geçti. V1 kayıtlı filtreleri ve tablo alanı tercihleri ilgili V2 yönetim listelerinde uygulanıp yerel SQL kabulünden geçti; gerçek tarayıcı etkileşim kabulü açık.
