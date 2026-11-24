@@ -122,6 +122,15 @@ try {
     if (!target || sourceType === undefined || sourceId === undefined || sourceType !== target.source_type || sourceId !== (target.source_id == null ? null : Number(target.source_id))) throw new Error('V1/V2 stok hareketi kaynak bağı farklı');
   }
   const movementSourceChecks = sourceMovements.length * 2;
+  const sourceMovementHistory = source.prepare('SELECT id, movement_type, reason, created_at, updated_at FROM stock_movements ORDER BY id').all();
+  const [targetMovementHistory] = await db.query('SELECT legacy_movement_id, movement_type, reason, created_at, updated_at FROM stock_movements WHERE legacy_movement_id IS NOT NULL');
+  const movementHistoryMap = new Map(targetMovementHistory.map(row => [Number(row.legacy_movement_id), row]));
+  function sourceUtc(value) { return value == null ? null : new Date(value.replace(' ', 'T') + '+03:00').toISOString().slice(0, 19).replace('T', ' '); }
+  for (const row of sourceMovementHistory) {
+    const target = movementHistoryMap.get(Number(row.id));
+    if (!target || row.movement_type !== target.movement_type || row.reason !== target.reason || sourceUtc(row.created_at) !== target.created_at || sourceUtc(row.updated_at) !== target.updated_at) throw new Error('V1/V2 stok hareketi geçmiş alanı farklı');
+  }
+  const movementHistoryChecks = sourceMovementHistory.length * 4;
   const settingRows = source.prepare('SELECT key, value FROM settings ORDER BY key').all();
   const [targetSettings] = await db.query('SELECT `key`, value FROM system_settings ORDER BY `key`');
   if (settingRows.length !== targetSettings.length || settingRows.some((row, index) => row.key !== targetSettings[index].key || JSON.stringify(JSON.parse(row.value)) !== JSON.stringify(targetSettings[index].value))) throw new Error('V1/V2 ayar anahtarı veya JSON değeri farklı');
@@ -173,5 +182,5 @@ try {
   if (Number(audit[0].missing_actors || 0)) throw new Error('V1 etkinlik kullanıcı bağı eksik');
   const sourceHash = createHash('sha256').update(await readFile(resolve(sourcePath))).digest('hex');
   const totals = Object.entries(report).filter(([table]) => !['permissions', 'permission_role', 'inventoryLegacyImages'].includes(table)).reduce((result, [, row]) => ({ source: result.source + row.source, migrated: result.migrated + row.migrated, excluded: result.excluded + row.excluded }), { source: 0, migrated: 0, excluded: 0 });
-  process.stdout.write(`${JSON.stringify({ sourceHash, totals, tables: report, inventoryAmountChecks, materialFieldChecks, inventoryRelationChecks, movementSourceChecks, missingActivitySubjects: Number(audit[0].missing_subjects || 0) })}\n`);
+  process.stdout.write(`${JSON.stringify({ sourceHash, totals, tables: report, inventoryAmountChecks, materialFieldChecks, inventoryRelationChecks, movementSourceChecks, movementHistoryChecks, missingActivitySubjects: Number(audit[0].missing_subjects || 0) })}\n`);
 } finally { source.close(); await db.end(); }
