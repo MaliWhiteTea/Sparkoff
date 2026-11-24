@@ -1,11 +1,11 @@
 import { DatabaseSync } from 'node:sqlite';
 import { createHash } from 'node:crypto';
-import { readFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
+import { readFile, realpath } from 'node:fs/promises';
+import { resolve, sep } from 'node:path';
 import mysql from 'mysql2/promise';
 
-const sourcePath = process.argv[2];
-if (!sourcePath) throw new Error('Kullanım: verify-v1-stage.mjs <V1 SQLite>');
+const sourcePath = process.argv[2], sourcePublicPath = process.argv[3];
+if (!sourcePath) throw new Error('Kullanım: verify-v1-stage.mjs <V1 SQLite> [V1 public dosya kökü]');
 const url = new URL(process.env.DATABASE_URL || 'mysql://invalid/');
 if (url.hostname !== '127.0.0.1' || url.port !== '4319' || !['/sparkoff_v2_migration', '/sparkoff_v2_migration_clean'].includes(url.pathname)) throw new Error('Doğrulama yalnız ayrı yerel migration veritabanında çalışır');
 const source = new DatabaseSync(resolve(sourcePath), { readOnly: true });
@@ -35,6 +35,29 @@ try {
     report[sourceTable] = { source: sourceIds.length, migrated: targetSourceIds.length, excluded: 0 };
     targetIds.set(sourceTable, new Map(targetRows.map(row => [Number(row.legacy_id), Number(row.id)])));
   }
+  const legacyImages = source.prepare('SELECT id, image_path FROM inventory_items WHERE image_path IS NOT NULL AND image_path <> \'\' ORDER BY id').all();
+  const [targetImageRows] = await db.query('SELECT legacy_material_id, image_path FROM materials WHERE legacy_material_id IS NOT NULL');
+  const imagePaths = new Map(targetImageRows.map(row => [Number(row.legacy_material_id), row.image_path]));
+  if (targetImageRows.length !== report.inventory_items.source) throw new Error('Tekil görsel için malzeme sayısı farklı');
+  if (targetImageRows.filter(row => row.image_path).length !== legacyImages.length) throw new Error('V1/V2 tekil görsel sayısı farklı');
+  if (legacyImages.length) {
+    if (!sourcePublicPath || !process.env.PUBLIC_UPLOAD_DIR) throw new Error('Tekil görsel doğrulaması için kaynak ve hedef dosya kökü gerekli');
+    const sourceRoot = await realpath(resolve(sourcePublicPath));
+    const targetRoot = await realpath(resolve(process.env.PUBLIC_UPLOAD_DIR));
+    if (!targetRoot.startsWith(resolve('../storage/framework/local-test-v2') + sep)) throw new Error('Tekil görsel hedefi yalnız yerel prova dizininde olabilir');
+    for (const row of legacyImages) {
+      if (typeof row.image_path !== 'string' || row.image_path.length > 512 || row.image_path.startsWith('/') || row.image_path.includes('\\') || row.image_path.split('/').some(part => !part || part === '.' || part === '..') || /[\u0000-\u001f\u007f]/.test(row.image_path) || !/\.(jpg|jpeg|png|webp)$/i.test(row.image_path)) throw new Error('V1 tekil görsel yolu geçersiz');
+      const sourceFile = await realpath(resolve(sourceRoot, row.image_path));
+      if (!sourceFile.startsWith(sourceRoot + sep)) throw new Error('V1 tekil görseli kaynak kök dışına çıkıyor');
+      const sourceDigest = createHash('sha256').update(await readFile(sourceFile)).digest('hex');
+      const materialId = targetIds.get('inventory_items').get(Number(row.id));
+      const targetRelative = imagePaths.get(Number(row.id));
+      if (!materialId || !new RegExp(`^inventory-legacy/${materialId}/${sourceDigest}\\.(jpg|png|webp)$`).test(targetRelative || '')) throw new Error('V2 tekil görsel yolu veya özeti farklı');
+      const targetFile = await realpath(resolve(targetRoot, targetRelative));
+      if (!targetFile.startsWith(targetRoot + sep) || createHash('sha256').update(await readFile(targetFile)).digest('hex') !== sourceDigest) throw new Error('V1/V2 tekil görsel dosya özeti farklı');
+    }
+  }
+  report.inventoryLegacyImages = { source: legacyImages.length, migrated: legacyImages.length, excluded: 0 };
   const settingRows = source.prepare('SELECT key, value FROM settings ORDER BY key').all();
   const [targetSettings] = await db.query('SELECT `key`, value FROM system_settings ORDER BY `key`');
   if (settingRows.length !== targetSettings.length || settingRows.some((row, index) => row.key !== targetSettings[index].key || JSON.stringify(JSON.parse(row.value)) !== JSON.stringify(targetSettings[index].value))) throw new Error('V1/V2 ayar anahtarı veya JSON değeri farklı');
@@ -85,6 +108,6 @@ try {
   const [audit] = await db.query('SELECT SUM(entity_id IS NULL) AS missing_subjects, SUM(actor_id IS NULL) AS missing_actors FROM audit_logs WHERE legacy_activity_log_id IS NOT NULL');
   if (Number(audit[0].missing_actors || 0)) throw new Error('V1 etkinlik kullanıcı bağı eksik');
   const sourceHash = createHash('sha256').update(await readFile(resolve(sourcePath))).digest('hex');
-  const totals = Object.entries(report).filter(([table]) => !['permissions', 'permission_role'].includes(table)).reduce((result, [, row]) => ({ source: result.source + row.source, migrated: result.migrated + row.migrated, excluded: result.excluded + row.excluded }), { source: 0, migrated: 0, excluded: 0 });
+  const totals = Object.entries(report).filter(([table]) => !['permissions', 'permission_role', 'inventoryLegacyImages'].includes(table)).reduce((result, [, row]) => ({ source: result.source + row.source, migrated: result.migrated + row.migrated, excluded: result.excluded + row.excluded }), { source: 0, migrated: 0, excluded: 0 });
   process.stdout.write(`${JSON.stringify({ sourceHash, totals, tables: report, missingActivitySubjects: Number(audit[0].missing_subjects || 0) })}\n`);
 } finally { source.close(); await db.end(); }
