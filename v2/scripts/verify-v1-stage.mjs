@@ -178,6 +178,17 @@ try {
   }
   const feedbackImageFiles = feedbackFiles.length;
   const feedbackFieldChecks = sourceFeedbackImages.length * 9;
+  const sourceLoans = source.prepare('SELECT id, item_type, status, issued_at, due_at, completed_at, anonymized_at, created_at, updated_at, notes, closure_note FROM inventory_transactions ORDER BY id').all();
+  const [targetLoanRows] = await db.query('SELECT legacy_loan_id, item_type, status, issued_at, due_at, closed_at, anonymized_at, created_at, updated_at, notes, closure_note FROM loans WHERE legacy_loan_id IS NOT NULL');
+  const loanMap = new Map(targetLoanRows.map(row => [Number(row.legacy_loan_id), row]));
+  if (loanMap.size !== sourceLoans.length) throw new Error('V1/V2 teslim alanı kayıt sayısı farklı');
+  const loanDates = [['issued_at', 'issued_at'], ['due_at', 'due_at'], ['completed_at', 'closed_at'], ['anonymized_at', 'anonymized_at'], ['created_at', 'created_at'], ['updated_at', 'updated_at']];
+  for (const row of sourceLoans) {
+    const target = loanMap.get(Number(row.id));
+    if (!target || (row.item_type === 'fixed_asset' ? 'equipment' : row.item_type) !== target.item_type || (row.status === 'active' ? 'open' : row.status) !== target.status || row.notes !== target.notes || row.closure_note !== target.closure_note) throw new Error('V1/V2 teslim iş alanı farklı');
+    for (const [from, to] of loanDates) if (sourceUtc(row[from]) !== target[to]) throw new Error(`V1/V2 teslim zamanı farklı: ${from}`);
+  }
+  const loanFieldChecks = sourceLoans.length * 10;
   const settingRows = source.prepare('SELECT key, value FROM settings ORDER BY key').all();
   const [targetSettings] = await db.query('SELECT `key`, value FROM system_settings ORDER BY `key`');
   if (settingRows.length !== targetSettings.length || settingRows.some((row, index) => row.key !== targetSettings[index].key || JSON.stringify(JSON.parse(row.value)) !== JSON.stringify(targetSettings[index].value))) throw new Error('V1/V2 ayar anahtarı veya JSON değeri farklı');
@@ -229,5 +240,5 @@ try {
   if (Number(audit[0].missing_actors || 0)) throw new Error('V1 etkinlik kullanıcı bağı eksik');
   const sourceHash = createHash('sha256').update(await readFile(resolve(sourcePath))).digest('hex');
   const totals = Object.entries(report).filter(([table]) => !['permissions', 'permission_role', 'inventoryLegacyImages'].includes(table)).reduce((result, [, row]) => ({ source: result.source + row.source, migrated: result.migrated + row.migrated, excluded: result.excluded + row.excluded }), { source: 0, migrated: 0, excluded: 0 });
-  process.stdout.write(`${JSON.stringify({ sourceHash, totals, tables: report, inventoryAmountChecks, materialFieldChecks, inventoryRelationChecks, movementSourceChecks, movementHistoryChecks, inventoryMediaFiles, feedbackImageFiles, feedbackFieldChecks, missingActivitySubjects: Number(audit[0].missing_subjects || 0) })}\n`);
+  process.stdout.write(`${JSON.stringify({ sourceHash, totals, tables: report, inventoryAmountChecks, materialFieldChecks, inventoryRelationChecks, movementSourceChecks, movementHistoryChecks, inventoryMediaFiles, feedbackImageFiles, feedbackFieldChecks, loanFieldChecks, missingActivitySubjects: Number(audit[0].missing_subjects || 0) })}\n`);
 } finally { source.close(); await db.end(); }
