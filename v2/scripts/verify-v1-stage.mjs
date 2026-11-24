@@ -131,6 +131,27 @@ try {
     if (!target || row.movement_type !== target.movement_type || row.reason !== target.reason || sourceUtc(row.created_at) !== target.created_at || sourceUtc(row.updated_at) !== target.updated_at) throw new Error('V1/V2 stok hareketi geçmiş alanı farklı');
   }
   const movementHistoryChecks = sourceMovementHistory.length * 4;
+  const sourceMedia = source.prepare('SELECT id, file_path, external_url, type FROM inventory_media ORDER BY id').all();
+  const [targetMediaRows] = await db.query('SELECT legacy_media_id, material_id, path, external_url, type FROM material_media WHERE legacy_media_id IS NOT NULL');
+  const mediaMap = new Map(targetMediaRows.map(row => [Number(row.legacy_media_id), row]));
+  const mediaFiles = sourceMedia.filter(row => row.file_path);
+  if (mediaFiles.length && (!sourcePublicPath || !process.env.PUBLIC_UPLOAD_DIR)) throw new Error('Medya doğrulaması için kaynak ve hedef dosya kökü gerekli');
+  const mediaSourceRoot = mediaFiles.length ? await realpath(resolve(sourcePublicPath)) : null;
+  const mediaTargetRoot = mediaFiles.length ? await realpath(resolve(process.env.PUBLIC_UPLOAD_DIR)) : null;
+  if (mediaTargetRoot && !mediaTargetRoot.startsWith(resolve('../storage/framework/local-test-v2') + sep)) throw new Error('Medya hedefi yalnız yerel prova dizininde olabilir');
+  for (const row of sourceMedia) {
+    const target = mediaMap.get(Number(row.id));
+    if (!target || row.type !== target.type || row.external_url !== target.external_url || Boolean(row.file_path) !== Boolean(target.path)) throw new Error('V1/V2 envanter medya meta verisi farklı');
+    if (!row.file_path) continue;
+    if (!/^inventory-media\/\d+\/[^/]+\.(jpg|jpeg|png|webp|mp4|webm)$/i.test(row.file_path)) throw new Error('V1 medya yolu geçersiz');
+    const materialId = targetIds.get('inventory_items').get(Number(row.file_path.split('/')[1]));
+    if (!materialId || materialId !== Number(target.material_id) || !new RegExp(`^inventory-media/${materialId}/[a-f0-9]{32}\\.(jpg|png|webp|mp4|webm)$`).test(target.path)) throw new Error('V2 medya yolu geçersiz');
+    const sourceFile = await realpath(resolve(mediaSourceRoot, row.file_path));
+    const targetFile = await realpath(resolve(mediaTargetRoot, target.path));
+    if (!sourceFile.startsWith(mediaSourceRoot + sep) || !targetFile.startsWith(mediaTargetRoot + sep)) throw new Error('V1/V2 medya dosyası kök dışına çıkıyor');
+    if (createHash('sha256').update(await readFile(sourceFile)).digest('hex') !== createHash('sha256').update(await readFile(targetFile)).digest('hex')) throw new Error('V1/V2 medya dosya özeti farklı');
+  }
+  const inventoryMediaFiles = mediaFiles.length;
   const settingRows = source.prepare('SELECT key, value FROM settings ORDER BY key').all();
   const [targetSettings] = await db.query('SELECT `key`, value FROM system_settings ORDER BY `key`');
   if (settingRows.length !== targetSettings.length || settingRows.some((row, index) => row.key !== targetSettings[index].key || JSON.stringify(JSON.parse(row.value)) !== JSON.stringify(targetSettings[index].value))) throw new Error('V1/V2 ayar anahtarı veya JSON değeri farklı');
@@ -182,5 +203,5 @@ try {
   if (Number(audit[0].missing_actors || 0)) throw new Error('V1 etkinlik kullanıcı bağı eksik');
   const sourceHash = createHash('sha256').update(await readFile(resolve(sourcePath))).digest('hex');
   const totals = Object.entries(report).filter(([table]) => !['permissions', 'permission_role', 'inventoryLegacyImages'].includes(table)).reduce((result, [, row]) => ({ source: result.source + row.source, migrated: result.migrated + row.migrated, excluded: result.excluded + row.excluded }), { source: 0, migrated: 0, excluded: 0 });
-  process.stdout.write(`${JSON.stringify({ sourceHash, totals, tables: report, inventoryAmountChecks, materialFieldChecks, inventoryRelationChecks, movementSourceChecks, movementHistoryChecks, missingActivitySubjects: Number(audit[0].missing_subjects || 0) })}\n`);
+  process.stdout.write(`${JSON.stringify({ sourceHash, totals, tables: report, inventoryAmountChecks, materialFieldChecks, inventoryRelationChecks, movementSourceChecks, movementHistoryChecks, inventoryMediaFiles, missingActivitySubjects: Number(audit[0].missing_subjects || 0) })}\n`);
 } finally { source.close(); await db.end(); }

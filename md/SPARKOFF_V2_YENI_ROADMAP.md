@@ -284,6 +284,8 @@ Veri geçişinin alan, tarih, stok, dosya ve yetki kuralları: [V1→V2 veri ge�
 
 - 173 stok hareketinin türü, gerekçesi, oluşturulma ve güncellenme zamanları İstanbul→UTC dönüşümüyle yeniden karşılaştırıldı: 692/692 alan eşleşti. Geçici gerekçe sapması reddedildi ve geri alındı.
 
+- Bağımsız doğrulayıcı envanter medya meta verisini ve kaynak/hedef dosya SHA-256 değerini de okuyor. Yerel kaynaktaki 1 galeri dosyası eşleşti; bozuk hedef dosya reddedildi, geri yüklendi ve 960/960 kayıt yeniden doğrulandı.
+
 ### 11 Kasım 2026 — kişisel tercihler ve randevu takibi
 
 - Profil, V1'den taşınan tema/ölçek/yoğunluk/yan menü ayarlarını okur; kullanıcı yeni etkin ayarı kaydedebilir veya varsayılana dönebilir. V1 kaynak JSON kopyası denetim için değişmeden kalır. Sistem teması işletim sistemi tercihini izler; açık tema ve yoğunluk/ölçek görsel kuralları eklendi. Yerel SQL kabulünde geçersiz değer 400, kayıt/okuma/sıfırlama ve V1 kopyasının korunması geçti. V1 kayıtlı filtreleri ve tablo alanı tercihleri ilgili V2 yönetim listelerinde uygulanıp yerel SQL kabulünden geçti; gerçek tarayıcı etkileşim kabulü açık.
