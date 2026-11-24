@@ -108,6 +108,7 @@ try {
     return sourceRows.length * relations.length;
   }
   const inventoryRelationChecks =
+    await compareRelations('inventory_items', 'materials', 'legacy_material_id', [['category_id', 'category_id', 'inventory_categories'], ['location_id', 'location_id', 'inventory_locations']]) +
     await compareRelations('inventory_transactions', 'loans', 'legacy_loan_id', [['inventory_item_id', 'material_id', 'inventory_items'], ['issued_by', 'issued_by', 'users'], ['closed_by', 'closed_by', 'users']]) +
     await compareRelations('stock_movements', 'stock_movements', 'legacy_movement_id', [['inventory_item_id', 'material_id', 'inventory_items'], ['user_id', 'actor_id', 'users'], ['reversed_movement_id', 'reversed_movement_id', 'stock_movements']]) +
     await compareRelations('inventory_media', 'material_media', 'legacy_media_id', [['inventory_item_id', 'material_id', 'inventory_items']]);

@@ -58,7 +58,7 @@
 
 **Malzeme kimliği karşılaştırması:** Doğrulayıcı 171 malzemenin adını, slug değerini, stok kodunu, marka/modelini, birimini, görünürlüğünü, etkinliğini ve tür dönüşümünü ayrıca karşılaştırır. Yerel kaynakta 1539/1539 alan eşleşti; geçici marka değişikliği reddedildi ve geri alındı.
 
-**Bağ karşılaştırması:** Doğrulayıcı teslimin malzeme/düzenleyen/kapatan, stok hareketinin malzeme/kullanıcı/ters hareket ve medyanın malzeme bağlarını kaynak kimlikleriyle yeniden hesaplar. Yerelde 529/529 bağ eşleşti; geçici yanlış malzeme bağı reddedilip geri alındı.
+**Bağ karşılaştırması:** Doğrulayıcı malzemenin kategori/konum, teslimin malzeme/düzenleyen/kapatan, stok hareketinin malzeme/kullanıcı/ters hareket ve medyanın malzeme bağlarını kaynak kimlikleriyle yeniden hesaplar. Yerelde 871/871 bağ eşleşti; geçici yanlış malzeme ve kategori bağları reddedilip geri alındı.
 
 **11 Kasım yerel yazıcı ve ayar provası:** `0017` kaynak ID alanları ve `stage-v1-printers.mjs` ile 2 yazıcı, 4 filament ve 7 çalışma saati aynı migration DB'sine taşındı; ikinci çalışmada 0 yeni/13 eşleşen kayıt ve kaynak adında değişiklik reddi görüldü. `stage-v1-settings.mjs` 12 ayarın tamamını V2 `system_settings` içine JSON tipi ve UTC güncelleme zamanı ile taşıdı; ikinci çalışmada 0 yeni/12 eşleşen kayıt. V1 ayar `id`, `group`, `created_at` alanları V2 çalışma tablosunda yoktur; kaynak raporunda saklanacak meta veridir. Canlı yedekte ek ayar anahtarları veya farklı enum/saat biçimleri yeniden sınıflandırılmalıdır. Bu VDS veya canlı kaynak kabulü değildir.
 

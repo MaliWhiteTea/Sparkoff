@@ -278,7 +278,7 @@ Veri geçişinin alan, tarih, stok, dosya ve yetki kuralları: [V1→V2 veri ge�
 
 - Bağımsız doğrulayıcı artık 171 malzemenin ad, slug, stok kodu, marka, model, birim, görünürlük, etkinlik ve tür dönüşümünü de denetliyor: yerel kaynakta 1539/1539 alan eşleşti. Geçici marka sapması reddedildi ve değer geri yüklendi.
 
-- Teslim, stok hareketi ve medya kayıtlarının malzeme/kullanıcı/ters hareket ilişkileri kaynak kimliklerinden bağımsız olarak yeniden hesaplandı: 529/529 bağ eşleşti. Bir stok hareketi geçici olarak başka malzemeye bağlandığında doğrulayıcı reddetti; bağ geri yüklendi.
+- Malzemenin kategori/konum ve teslim, stok hareketi, medya kayıtlarının malzeme/kullanıcı/ters hareket ilişkileri kaynak kimliklerinden bağımsız olarak yeniden hesaplandı: 871/871 bağ eşleşti. Yanlış stok hareketi malzeme bağı ve yanlış kategori bağı ayrı ayrı reddedildi; bağlar geri yüklendi.
 
 ### 11 Kasım 2026 — kişisel tercihler ve randevu takibi
 
