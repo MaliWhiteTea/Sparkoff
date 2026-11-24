@@ -80,18 +80,21 @@ try {
     await compareAmounts('inventory_items', 'materials', 'legacy_material_id', [['quantity', 'quantity'], ['minimum_stock', 'minimum_stock']]) +
     await compareAmounts('inventory_transactions', 'loans', 'legacy_loan_id', [['quantity', 'quantity'], ['quantity_returned', 'returned_quantity']]) +
     await compareAmounts('stock_movements', 'stock_movements', 'legacy_movement_id', [['quantity_change', 'delta'], ['balance_after', 'balance_after']]);
-  const sourceMaterials = source.prepare('SELECT id, name, slug, sku, brand, model, item_type, unit, public_visibility, is_active FROM inventory_items ORDER BY id').all();
-  const [targetMaterials] = await db.query('SELECT legacy_material_id, name, slug, sku, brand, model, kind, unit, public_visibility, is_active FROM materials WHERE legacy_material_id IS NOT NULL');
+  const sourceMaterials = source.prepare('SELECT id, name, slug, sku, brand, model, item_type, unit, public_visibility, is_active, description, technical_specs, archived_at, created_at, updated_at FROM inventory_items ORDER BY id').all();
+  const [targetMaterials] = await db.query('SELECT legacy_material_id, name, slug, sku, brand, model, kind, unit, public_visibility, is_active, is_public, description, technical_specs, archived_at, created_at, updated_at FROM materials WHERE legacy_material_id IS NOT NULL');
   const materialMap = new Map(targetMaterials.map(row => [Number(row.legacy_material_id), row]));
   if (materialMap.size !== sourceMaterials.length) throw new Error('V1/V2 malzeme kimlik alanı kayıt sayısı farklı');
-  const identityFields = [['name', 'name'], ['slug', 'slug'], ['sku', 'sku'], ['brand', 'brand'], ['model', 'model'], ['unit', 'unit'], ['public_visibility', 'public_visibility'], ['is_active', 'is_active']];
+  const identityFields = [['name', 'name'], ['slug', 'slug'], ['sku', 'sku'], ['brand', 'brand'], ['model', 'model'], ['unit', 'unit'], ['public_visibility', 'public_visibility'], ['is_active', 'is_active'], ['description', 'description']];
   for (const row of sourceMaterials) {
     const target = materialMap.get(Number(row.id));
     if (!target) throw new Error('V1/V2 malzeme kimliği eksik');
     for (const [from, to] of identityFields) if (row[from] !== target[to]) throw new Error(`V1/V2 malzeme alanı farklı: ${from}`);
     if ((row.item_type === 'fixed_asset' ? 'equipment' : row.item_type) !== target.kind) throw new Error('V1/V2 malzeme türü farklı');
+    if (JSON.stringify(row.technical_specs == null ? null : JSON.parse(row.technical_specs)) !== JSON.stringify(target.technical_specs)) throw new Error('V1/V2 malzeme teknik özellikleri farklı');
+    if (Number(target.is_public) !== Number(row.public_visibility !== 'hidden')) throw new Error('V1/V2 malzeme kamu görünürlüğü farklı');
+    for (const field of ['archived_at', 'created_at', 'updated_at']) if (sourceUtc(row[field]) !== target[field]) throw new Error(`V1/V2 malzeme zamanı farklı: ${field}`);
   }
-  const materialFieldChecks = sourceMaterials.length * (identityFields.length + 1);
+  const materialFieldChecks = sourceMaterials.length * (identityFields.length + 6);
   async function compareRelations(sourceTable, targetTable, legacyColumn, relations) {
     const sourceRows = source.prepare(`SELECT id, ${relations.map(([from]) => from).join(', ')} FROM ${sourceTable}`).all();
     const [targetRows] = await db.query(`SELECT ${legacyColumn} AS legacy_id, ${relations.map(([, to]) => to).join(', ')} FROM ${targetTable} WHERE ${legacyColumn} IS NOT NULL`);
