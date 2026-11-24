@@ -12,7 +12,7 @@ Deneme önerisi:
 
 1. Ana sayfa, yazıcılar, malzemeler ve geri bildirim sayfalarını gez.
 2. `/admin/overview`, `/admin/tasks`, `/admin/inventory`, `/admin/members`, `/admin/announce` ekranlarını aç.
-3. Görev, malzeme, stok hareketi, teslim ve duyuru oluştur; sohbet mesajı gönder.
+3. Görev, malzeme, stok hareketi, teslim ve duyuru oluştur; sohbet mesajı gönder. Yönetim envanterinde arama, filtre ve sayfa düğmelerini; medya kartında sayfa düğmelerini de dene.
 4. Rol seçicisiyle Üye ve Hoca görünümüne geç; menülerin ve kanalların farklılaştığını incele.
 
 Örnek mod yalnız arayüz etkileşimini gösterir. Gerçek SQL, oturum güvenliği, e-posta, dosya yükleme, randevu kabulü ve eşzamanlı stok işlemlerini doğrulamaz. Bu alanlar V2 kabul planında açıktır.
@@ -29,4 +29,22 @@ Ardından `http://127.0.0.1:5174/` açılır. Port meşgulse önce o porttaki ö
 
 ## Gerçek V2 veritabanı testi
 
-Gerçek API testi için ayrı bir MySQL 8.x/MariaDB 10.11+ kabul veritabanı gerekir. Bu makinede bu oturum sırasında sunucu bulunmadı. Veritabanı kurulduğunda `.env.example` kopyasıyla yalnız V2 için `DATABASE_URL` ayarlanır; `npm run db:migrate`, `npm run bootstrap:admin` ve `npm run dev` çalıştırılır. V1 SQLite veya canlı SQL veritabanına V2 migration uygulanmaz.
+Yerel kabul MariaDB'si `storage/framework/local-test-v2/mariadb-runtime/` altındadır. Veritabanı `127.0.0.1:4319/sparkoff_v2_acceptance`, API `127.0.0.1:4320` üzerinden çalışır. Bağlantı ve test yöneticisi bilgileri git dışında tutulan `acceptance.env` dosyasındadır. Bu dosyanın içeriğini çıktı olarak paylaşma.
+
+Çalışan servisleri kontrol et:
+
+```bash
+ss -ltn | rg ':(4319|4320|5174)\b'
+```
+
+MariaDB ve kabul API'si açıksa, sentetik kayıtlar yazan geniş SQL kabulünü yalnız bu ayrı veritabanında çalıştır:
+
+```bash
+cd /home/mert/Documents/Proje/Sparkoff/v2
+set -a
+source ../storage/framework/local-test-v2/mariadb-runtime/acceptance.env
+set +a
+PRIVATE_UPLOAD_DIR="$PWD/../storage/framework/local-test-v2/private-appointment-files" node scripts/sql-acceptance.mjs
+```
+
+Betik yalnız yerel `4319/sparkoff_v2_acceptance` adresini kabul eder. V1 SQLite, canlı SQL ve VDS bu testte kullanılmaz. Birim testleri ve üretim derlemesi için `npm test` ile `npm run build` çalıştırılır. GitHub Actions bunları ve temiz MariaDB migration tekrarını ayrıca doğrular; gerçek tarayıcı, VDS, SMTP ve yedek geri yükleme kabulü hâlâ ayrıdır. Çevrimiçi randevu bayrağı bu kabul tamamlanmadan açılmaz.

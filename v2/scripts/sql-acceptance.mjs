@@ -57,7 +57,17 @@ const lowInventory = fullInventory.filter(row => !row.archivedAt && row.isActive
 assert.equal((await call('/inventory/search?status=low', 'GET', undefined, 200)).result.total, lowInventory.length);
 assert.equal((await call('/inventory/search?status=out', 'GET', undefined, 200)).result.total, fullInventory.filter(row => !row.archivedAt && row.isActive && Number(row.quantity) <= 0).length);
 assert.equal((await call('/inventory/search?status=archived', 'GET', undefined, 200)).result.total, fullInventory.filter(row => row.archivedAt).length);
+const inventoryByQuantity = activeInventory.slice().sort((a, b) => Number(a.quantity) - Number(b.quantity) || a.id - b.id);
+assert.deepEqual((await call('/inventory/search?sort=quantity', 'GET', undefined, 200)).result.materials.map(row => row.id), inventoryByQuantity.slice(0, 24).map(row => row.id));
+for (const term of ['i', 'ı', 'ş']) {
+  const found = (await call(`/inventory/search?status=all&search=${encodeURIComponent(term)}`, 'GET', undefined, 200)).result;
+  const expected = fullInventory.filter(row => !row.archivedAt && [row.name, row.sku, row.brand, row.model].filter(Boolean).join(' ').toLocaleLowerCase('tr-TR').includes(term));
+  assert.equal(found.total, expected.length, `Yönetim envanteri araması farklı: ${term}`);
+}
+const categoryFromInventory = fullInventory.find(row => !row.archivedAt && row.categoryId)?.categoryId;
+if (categoryFromInventory) assert.equal((await call(`/inventory/search?status=all&category=${categoryFromInventory}`, 'GET', undefined, 200)).result.total, fullInventory.filter(row => !row.archivedAt && row.categoryId === categoryFromInventory).length);
 await call('/inventory/search?page=0', 'GET', undefined, 400);
+await call('/inventory/search?status=unknown', 'GET', undefined, 400);
 const originalPreferences = (await call('/org/me', 'GET', undefined, 200)).result.user.preferences ?? {};
 const legacyFilterId = randomUUID();
 const preferencePool = mysql.createPool(process.env.DATABASE_URL);
