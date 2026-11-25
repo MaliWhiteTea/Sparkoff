@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 
 export type IconName = 'home' | 'tasks' | 'chat' | 'announce' | 'inventory' | 'printer' | 'members' | 'settings' | 'search' | 'arrow' | 'calendar' | 'spark' | 'box' | 'menu' | 'user' | 'check' | 'clock' | 'chart';
 export function Icon({ name, size = 20 }: { name: IconName; size?: number }) {
@@ -56,9 +56,30 @@ export function Card({ title, children, className = '' }: { title?: string; chil
 export function Empty({ children }: { children: ReactNode }) { return <p className="empty">{children}</p>; }
 export function Button({ children, onClick, type = 'button', variant = 'primary', disabled = false, form }: { children: ReactNode; onClick?: () => void; type?: 'button' | 'submit'; variant?: 'primary' | 'quiet'; disabled?: boolean; form?: string }) { return <button type={type} form={form} onClick={onClick} disabled={disabled} className={`button button-${variant}`}>{children}</button>; }
 export function Sheet({ open, onClose, title, children, footer }: { open: boolean; onClose: () => void; title: string; children: ReactNode; footer?: ReactNode }) {
-  useEffect(() => { if (!open) return; const key = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); }; window.addEventListener('keydown', key); return () => window.removeEventListener('keydown', key); }, [open, onClose]);
+  const dialogRef = useRef<HTMLElement>(null);
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
+  useEffect(() => {
+    if (!open) return;
+    const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const dialog = dialogRef.current;
+    const focusable = () => [...(dialog?.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])') || [])].filter(element => element.getClientRects().length > 0);
+    (focusable()[0] || dialog)?.focus();
+    const key = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') { event.preventDefault(); closeRef.current(); return; }
+      if (event.key !== 'Tab' || !dialog) return;
+      const elements = focusable();
+      if (!elements.length) { event.preventDefault(); dialog.focus(); return; }
+      const first = elements[0];
+      const last = elements[elements.length - 1];
+      if (event.shiftKey && (document.activeElement === first || !dialog.contains(document.activeElement))) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && (document.activeElement === last || !dialog.contains(document.activeElement))) { event.preventDefault(); first.focus(); }
+    };
+    window.addEventListener('keydown', key);
+    return () => { window.removeEventListener('keydown', key); if (previous?.isConnected) previous.focus(); };
+  }, [open]);
   if (!open) return null;
-  return <div className="sheet-host" role="presentation"><button className="sheet-backdrop" aria-label="Pencereyi kapat" onClick={onClose}/><section className="sheet" role="dialog" aria-modal="true" aria-label={title}><header><h2>{title}</h2><button className="icon-button" onClick={onClose} aria-label="Kapat">×</button></header><div className="sheet-scroll">{children}</div>{footer && <footer>{footer}</footer>}</section></div>;
+  return <div className="sheet-host" role="presentation"><button className="sheet-backdrop" aria-label="Pencereyi kapat" onClick={onClose}/><section ref={dialogRef} className="sheet" role="dialog" aria-modal="true" aria-label={title} tabIndex={-1}><header><h2>{title}</h2><button className="icon-button" onClick={onClose} aria-label="Kapat">×</button></header><div className="sheet-scroll">{children}</div>{footer && <footer>{footer}</footer>}</section></div>;
 }
 export function Modal({ open, onClose, title, children, action }: { open: boolean; onClose: () => void; title: string; children: ReactNode; action: ReactNode }) { return open ? <div className="modal-host"><div className="modal-backdrop" onClick={onClose}/><div className="modal" role="alertdialog" aria-modal="true" aria-label={title}><h2>{title}</h2>{children}<div className="row"><Button variant="quiet" onClick={onClose}>Vazgeç</Button>{action}</div></div></div> : null; }
 export function MemberCard({ name, unit, role, email, action }: { name: string; unit: string; role: string; email?: string | null; action?: ReactNode }) {
