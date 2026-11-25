@@ -322,10 +322,10 @@ function MemberPage({ path, me, onPreferences = () => {} }: { path: string; me: 
   }
   return <Profile me={me} onPreferences={onPreferences}/>;
 }
-function AdminSystem({ role, permissions }: { role: string; permissions: string[] }) {
-  const canEdit = permissions.includes('privacy_settings_update');
+function AdminSystem({ permissions }: { permissions: string[] }) {
   const canViewPrivacy = permissions.includes('privacy_settings_update');
-  const logs = useData<{ logs: { id: number; action: string; entity: string; createdAt: string }[] }>('/activity/logs', permissions.includes('audit_logs_view'));
+  const canViewLogs = permissions.includes('audit_logs_view');
+  const logs = useData<{ logs: { id: number; action: string; entity: string; createdAt: string }[] }>('/activity/logs', canViewLogs);
   const privacy = useData<{ retentionDays: number }>('/activity/privacy/loans', canViewPrivacy);
   const appointmentPrivacy = useData<{ fileRetentionDays: number; appointmentRetentionMonths: number }>('/activity/privacy/appointments', canViewPrivacy);
   const [days, setDays] = useState(30);
@@ -344,7 +344,10 @@ function AdminSystem({ role, permissions }: { role: string; permissions: string[
     try { await api('/activity/privacy/appointments', { method: 'PUT', body: JSON.stringify({ fileRetentionDays: fileDays }) }); setError(''); setMessage('Model dosyası saklama süresi kaydedildi.'); appointmentPrivacy.reload(); logs.reload(); }
     catch (cause) { setMessage(''); setError((cause as Error).message); }
   };
-  return <Screen title="Sistem" subtitle="Veri saklama ve işlem geçmişi."><div className="grid"><Card title="Teslim kayıtlarında kişisel veriler"><p>Kapanan teslimlerin ad, e-posta ve notları belirlenen süre sonunda temizlenir. Açık teslimler bu işlemden etkilenmez.</p><form onSubmit={save}><label>Saklama süresi (gün)<input type="number" min={1} max={36500} step={1} value={days} onChange={event => setDays(Number(event.target.value))} disabled={!canEdit} required/></label>{canEdit && <Button type="submit">Süreyi kaydet</Button>}</form>{message && <p role="status">{message}</p>}{error && <p role="alert" className="form-error">{error}</p>}{privacy.error && <p role="alert" className="form-error">{privacy.error}</p>}</Card><Card title="Randevu model dosyaları"><p>Dosyalar belirlenen süre sonunda günlük temizlikte silinir. İleri tarihli saklama istisnası olan randevular ertelenir.</p><form onSubmit={saveFileDays}><label>Dosya saklama süresi (gün)<input type="number" min={1} max={365} step={1} value={fileDays} onChange={event => setFileDays(Number(event.target.value))} disabled={!canEdit} required/></label>{canEdit && <Button type="submit">Süreyi kaydet</Button>}</form>{appointmentPrivacy.error && <p role="alert" className="form-error">{appointmentPrivacy.error}</p>}</Card><Card title="Son işlemler">{logs.data?.logs.map(log => <div className="list-item" key={log.id}><strong>{log.action}</strong> · {log.entity} <small>{new Date(log.createdAt).toLocaleString('tr-TR')}</small></div>)}{logs.data && !logs.data.logs.length && <Empty>İşlem kaydı yok.</Empty>}{logs.error && <p role="alert" className="form-error">{logs.error}</p>}</Card></div></Screen>;
+  return <Screen title="Sistem" subtitle="Veri saklama ve işlem geçmişi."><div className="grid">
+    {canViewPrivacy && <><Card title="Teslim kayıtlarında kişisel veriler"><p>Kapanan teslimlerin ad, e-posta ve notları belirlenen süre sonunda temizlenir. Açık teslimler bu işlemden etkilenmez.</p><form onSubmit={save}><label>Saklama süresi (gün)<input type="number" min={1} max={36500} step={1} value={days} onChange={event => setDays(Number(event.target.value))} required/></label><Button type="submit">Süreyi kaydet</Button></form>{message && <p role="status">{message}</p>}{error && <p role="alert" className="form-error">{error}</p>}{privacy.error && <p role="alert" className="form-error">{privacy.error}</p>}</Card><Card title="Randevu model dosyaları"><p>Dosyalar belirlenen süre sonunda günlük temizlikte silinir. İleri tarihli saklama istisnası olan randevular ertelenir.</p><form onSubmit={saveFileDays}><label>Dosya saklama süresi (gün)<input type="number" min={1} max={365} step={1} value={fileDays} onChange={event => setFileDays(Number(event.target.value))} required/></label><Button type="submit">Süreyi kaydet</Button></form>{appointmentPrivacy.error && <p role="alert" className="form-error">{appointmentPrivacy.error}</p>}</Card></>}
+    {canViewLogs && <Card title="Son işlemler">{logs.data?.logs.map(log => <div className="list-item" key={log.id}><strong>{log.action}</strong> · {log.entity} <small>{new Date(log.createdAt).toLocaleString('tr-TR')}</small></div>)}{logs.data && !logs.data.logs.length && <Empty>İşlem kaydı yok.</Empty>}{logs.error && <p role="alert" className="form-error">{logs.error}</p>}</Card>}
+  </div></Screen>;
 }
 function AdminPage({ path, me }: { path: string; me: Me }) {
   const overview = path === '/admin/overview';
@@ -355,7 +358,7 @@ function AdminPage({ path, me }: { path: string; me: Me }) {
   const inventory = useData<{ total: number }>('/inventory/count', overview && canSeeInventory);
   const announce = useData<{ announcements: { id: number; title: string; body: string }[] }>('/announce', overview && canSeeAnnouncements);
   if (path === '/admin/members') return <AdminMembers currentUserId={me.user.id} globalRole={me.user.role} permissions={me.permissions}/>;
-  if (path === '/admin/system') return <AdminSystem role={me.user.role} permissions={me.permissions}/>;
+  if (path === '/admin/system') return <AdminSystem permissions={me.permissions}/>;
   if (path === '/admin/tasks') return <AdminTasks manageableUnitIds={me.scopes.manageIds}/>;
   if (path === '/admin/inventory') return <AdminInventory globalRole={me.user.role} permissions={me.permissions}/>;
   if (path === '/admin/printers') return <AdminPrinters globalRole={me.user.role} permissions={me.permissions}/>;
