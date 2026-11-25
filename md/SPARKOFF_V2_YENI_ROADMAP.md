@@ -18,6 +18,21 @@ Bu dosyanın sonundaki **Çalışma kaydı** yapılan değişiklikleri ve test k
 
 **Sıradaki sıra:** (1) Yerel SQL'de kalan rol/rota ve işlem matrisi ile mobil/erişilebilirlik hatalarını kapat. (2) Güncel canlı V1 yedeğinden ayrı kabul veritabanına tam aktarım yapıp sayı, bakiye, zaman ve dosya SHA-256 farklarını raporla. (3) VDS, SMTP, zamanlayıcı, yedek geri yükleme ve geri dönüş kabulünü tamamla. (4) Yayın kararından sonra V2'ye özgü genişletmelere geç.
 
+### Yerel iş takip listesi
+
+Bu kutular dar kapsamlı, doğrulanmış yerel işleri gösterir. Aşağıdaki aşama kabul kutuları ayrıca değerlendirilir.
+
+- [x] Yazıcı yönetim rotasını ilgili izne bağla; salt pano/geri bildirim rolüyle yanlış girişi engelle (`6335e24`, gerçek SQL ve 320 px tarayıcı kabulü).
+- [x] Üyeler yönetim rotasını sekme ve yetkiyle bağla (`7db1aad`, gerçek SQL ve 320 px tarayıcı kabulü).
+- [x] Duyuru yönetim rotasında sekme ve yetki koşullarını eşleştir (`bb69409`, gezinme testi).
+- [x] Görev oluşturma düğmesini ve birim seçeneklerini yönetim kapsamıyla sınırla (`132397a`, gerçek SQL ve 320 px tarayıcı kabulü).
+- [x] Sistem kartlarını gizlilik/denetim izinlerine göre göster (`943ba68`, gerçek SQL ve 320 px tarayıcı kabulü).
+- [x] Yazıcı oluşturma izni olup listeleme izni olmayan hesapta kayıt sonucunu görünür biçimde doğrula (gerçek SQL, 320 px tarayıcı, başarı mesajı, taşma ve hata kontrolü).
+- [ ] Kalan rol/rota/işlem ve başarısızlık yolu matrisini gerçek SQL'de tamamla.
+- [ ] Kalan mobil düzen, odak ve ekran okuyucu kontrollerini tamamla.
+- [ ] Güncel canlı V1 yedeğiyle tam veri/dosya aktarım ve fark kabulünü tamamla.
+- [ ] Ubuntu VDS ve yayın kapılarını tamamla.
+
 ## Hedef ve sıralama kararı
 
 1. V2, V1'in bugün çalışan davranışlarıyla **işlevsel eşitliğe** ulaşır. V1 [ROADMAP.md](../ROADMAP.md) içindeki işaretler V2 için tamamlanma kanıtı değildir.
@@ -369,3 +384,4 @@ Veri geçişinin alan, tarih, stok, dosya ve yetki kuralları: [V1→V2 veri ge�
 - Duyurular yönetim menüsü ve ilk yönetim rotası artık sunucunun `requireTab('announcements')` koşuluyla aynı sekme+izin birleşimini kullanıyor. Yalnız izin veya yalnız sekme sahibi hesaplarda yönetim bağlantısı açılmıyor; ikisi birlikte olan hesapta açılıyor. Odaklı gezinme testi eklendi.
 - Görev panosunda `+ Yeni görev` eylemi yalnız en az bir yönetilebilir birimi olan hesapta gösteriliyor; formun birim seçenekleri de sunucunun `canManageUnit` kapsamıyla sınırlı. Gerçek yerel SQL'de 320 px mobil tarayıcıyla `board`+`tasks` sekmeli fakat yönetim birimi olmayan hesapta düğme gizli, Sistem Yöneticisi'nde düğme ve 147 yönetilebilir birim seçeneği görünür; iki akışta da yatay taşma ve beklenmeyen API/JavaScript hatası yok. Geçici hesap/rol temizlendi; 40/40 test ve üretim derlemesi geçti.
 - Sistem ekranı yalnız `audit_logs_view` izni olan hesapta saklama ayarlarını varsayılan 30 gün değeriyle göstermiyor; yalnız `privacy_settings_update` izni olan hesapta boş işlem geçmişi kartını göstermiyor. Gerçek yerel SQL'de iki geçici rolle 320 px mobil tarayıcıda ilgili kartlar, rota, yatay taşma ve API/JavaScript hataları kontrol edildi; hesaplar temizlendi, üretim derlemesi geçti.
+- Yazıcı oluşturma izni olup listeleme izni olmayan hesapta kayıt sonrası boş ekrana dönme belirsizliği giderildi. Yazıcı ve filament kayıtlarında başarı mesajı gösteriliyor. Gerçek yerel SQL'de geçici `printers_create` rolüyle 320 px tarayıcıda yazıcı oluşturuldu, mesaj ve yatay taşma/beklenmeyen hata kontrol edildi; test yazıcısı, oturum, hesap ve rol temizlendi. 40/40 birim testi ve üretim derlemesi geçti.

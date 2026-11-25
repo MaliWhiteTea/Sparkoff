@@ -309,19 +309,20 @@ export function AdminPrinters({ globalRole, permissions }: { globalRole: string;
   const [fileEntries, setFileEntries] = useState<{ id: number; originalName: string; sizeBytes: number; downloadUrl: string }[]>([]);
   const [noteTarget, setNoteTarget] = useState<{ id: number; status: string } | null>(null); const [statusNote, setStatusNote] = useState('');
   const [statusMessage, setStatusMessage] = useState('');
+  const [printerMessage, setPrinterMessage] = useState('');
   const [appointmentSearch, setAppointmentSearch] = useState(''); const [appointmentStatus, setAppointmentStatus] = useState('');
   const [originalPrinterCode, setOriginalPrinterCode] = useState(''); const [confirmCodeChange, setConfirmCodeChange] = useState(false); const [savingPrinter, setSavingPrinter] = useState(false);
   const [printer, setPrinter] = useState({ code: '', name: '', status: 'inactive', description: '' });
   const [filament, setFilament] = useState({ name: '', color: '', brand: '', diameterMm: '1.75', spoolWeightGrams: '', nozzleTempMin: '', nozzleTempMax: '', bedTempMin: '', bedTempMax: '', technicalNotes: '', available: true, unavailableReason: '' });
-  const startPrinter = (item?: Printer) => { setError(''); setConfirmCodeChange(false); setEditingId(item?.id || null); setOriginalPrinterCode(item?.code || ''); setPrinter({ code: item?.code || '', name: item?.name || '', status: item?.status || 'inactive', description: item?.description || '' }); setPanel('printer'); };
-  const startFilament = (item?: Filament) => { setError(''); setEditingId(item?.id || null); setFilament({ name: item?.name || '', color: item?.color || '', brand: item?.brand || '', diameterMm: item?.diameterMm || '1.75', spoolWeightGrams: String(item?.spoolWeightGrams || ''), nozzleTempMin: String(item?.nozzleTempMin || ''), nozzleTempMax: String(item?.nozzleTempMax || ''), bedTempMin: String(item?.bedTempMin || ''), bedTempMax: String(item?.bedTempMax || ''), technicalNotes: item?.technicalNotes || '', available: item?.available ?? true, unavailableReason: item?.unavailableReason || '' }); setPanel('filament'); };
+  const startPrinter = (item?: Printer) => { setError(''); setPrinterMessage(''); setConfirmCodeChange(false); setEditingId(item?.id || null); setOriginalPrinterCode(item?.code || ''); setPrinter({ code: item?.code || '', name: item?.name || '', status: item?.status || 'inactive', description: item?.description || '' }); setPanel('printer'); };
+  const startFilament = (item?: Filament) => { setError(''); setPrinterMessage(''); setEditingId(item?.id || null); setFilament({ name: item?.name || '', color: item?.color || '', brand: item?.brand || '', diameterMm: item?.diameterMm || '1.75', spoolWeightGrams: String(item?.spoolWeightGrams || ''), nozzleTempMin: String(item?.nozzleTempMin || ''), nozzleTempMax: String(item?.nozzleTempMax || ''), bedTempMin: String(item?.bedTempMin || ''), bedTempMax: String(item?.bedTempMax || ''), technicalNotes: item?.technicalNotes || '', available: item?.available ?? true, unavailableReason: item?.unavailableReason || '' }); setPanel('filament'); };
   const optionalNumber = (value: string) => value.trim() ? Number(value) : null;
   const savePrinter = async () => {
     if (savingPrinter) return;
     setSavingPrinter(true); setError('');
     try {
       await api(editingId ? `/printers/manage/printers/${editingId}` : '/printers/manage/printers', { method: editingId ? 'PATCH' : 'POST', body: JSON.stringify({ ...printer, description: printer.description || null }) });
-      setConfirmCodeChange(false); setPanel(null); printers.reload();
+      setConfirmCodeChange(false); setPanel(null); setPrinterMessage(editingId ? 'Yazıcı güncellendi.' : 'Yazıcı oluşturuldu.'); printers.reload();
     } catch (err) { setConfirmCodeChange(false); setError((err as Error).message); }
     finally { setSavingPrinter(false); }
   };
@@ -336,7 +337,7 @@ export function AdminPrinters({ globalRole, permissions }: { globalRole: string;
       if (panel === 'filament') {
         const body = { name: filament.name, color: filament.color, brand: filament.brand || null, diameterMm: Number(filament.diameterMm), spoolWeightGrams: optionalNumber(filament.spoolWeightGrams), nozzleTempMin: optionalNumber(filament.nozzleTempMin), nozzleTempMax: optionalNumber(filament.nozzleTempMax), bedTempMin: optionalNumber(filament.bedTempMin), bedTempMax: optionalNumber(filament.bedTempMax), technicalNotes: filament.technicalNotes || null, available: filament.available, unavailableReason: filament.available ? null : filament.unavailableReason };
         await api(editingId ? `/printers/manage/filaments/${editingId}` : '/printers/manage/filaments', { method: editingId ? 'PATCH' : 'POST', body: JSON.stringify(body) });
-        filaments.reload();
+        filaments.reload(); setPrinterMessage(editingId ? 'Filament güncellendi.' : 'Filament oluşturuldu.');
       }
       setPanel(null);
     } catch (err) { setError((err as Error).message); }
@@ -353,6 +354,7 @@ export function AdminPrinters({ globalRole, permissions }: { globalRole: string;
     catch (err) { setError((err as Error).message); }
   };
   return <Screen title="Yazıcılar ve filamentler" subtitle="Cihaz durumu, filament seçenekleri ve randevular." actions={<>{canCreatePrinter && <Button onClick={() => startPrinter()}>+ Yazıcı</Button>}{canManageFilaments && <Button variant="quiet" onClick={() => startFilament()}>+ Filament</Button>}{canExportAppointments && import.meta.env.VITE_DEMO_MODE !== 'true' && <a className="button button-quiet" href="/api/printers/appointments/export.csv">Randevu CSV indir</a>}</>}>
+    {printerMessage && <p role="status">{printerMessage}</p>}
     <div className="grid">
       {permissions.includes('printers_view') && <Card title="Yazıcılar">{printers.data?.printers.map(item => <div className="list-item resource-row" key={item.id}>
         <div className="resource-copy"><strong>{item.name}</strong><p>{[item.code, item.description].filter(Boolean).join(' · ') || 'Açıklama eklenmedi'}</p></div>
