@@ -282,6 +282,23 @@ try {
     if (!target || sourceUtc(row.read_at) !== target.read_at || sourceUtc(row.acknowledged_at) !== target.acknowledged_at) throw new Error('V1/V2 duyuru okundu veya onay zamanı farklı');
   }
   const announcementReadChecks = sourceAnnouncementReads.length * 2;
+  const sourceAppointments = source.prepare('SELECT * FROM appointments ORDER BY id').all();
+  const [targetAppointments] = await db.query('SELECT * FROM appointments WHERE legacy_appointment_id IS NOT NULL');
+  const appointmentMap = new Map(targetAppointments.map(row => [Number(row.legacy_appointment_id), row]));
+  if (appointmentMap.size !== sourceAppointments.length) throw new Error('V1/V2 randevu alanı kayıt sayısı farklı');
+  const appointmentScalars = ['public_id', 'status', 'first_name', 'last_name', 'email', 'phone', 'duration_minutes', 'filament_source', 'filament_material', 'filament_color', 'user_note', 'admin_note', 'verification_token_hash', 'privacy_notice_version', 'retention_exemption_reason'];
+  const appointmentDates = ['starts_at', 'ends_at', 'email_verified_at', 'verification_expires_at', 'canceled_at', 'privacy_notice_seen_at', 'rules_accepted_at', 'retention_exempt_until', 'created_at', 'updated_at'];
+  for (const row of sourceAppointments) {
+    const target = appointmentMap.get(Number(row.id));
+    if (!target) throw new Error('V1/V2 randevu kaydı eksik');
+    for (const field of appointmentScalars) if (row[field] !== target[field]) throw new Error(`V1/V2 randevu alanı farklı: ${field}`);
+    for (const field of appointmentDates) if (sourceUtc(row[field]) !== target[field]) throw new Error(`V1/V2 randevu zamanı farklı: ${field}`);
+    const printerId = targetIds.get('printers').get(Number(row.printer_id));
+    const filamentId = row.filament_id == null ? null : targetIds.get('filaments').get(Number(row.filament_id));
+    if (printerId === undefined || filamentId === undefined || printerId !== Number(target.printer_id) || filamentId !== (target.filament_id == null ? null : Number(target.filament_id))) throw new Error('V1/V2 randevu yazıcı veya filament bağı farklı');
+    if (row.tracking_token_hash !== target.track_token_hash || target.name !== null || target.model_path !== null) throw new Error('V1/V2 randevu türetilmiş alanı farklı');
+  }
+  const appointmentFieldChecks = sourceAppointments.length * (appointmentScalars.length + appointmentDates.length + 5);
   const permissions = source.prepare('SELECT id, key FROM permissions').all();
   const permissionKeys = new Map(permissions.map(row => [row.id, row.key]));
   const permissionLinks = source.prepare('SELECT role_id, permission_id FROM permission_role').all();
@@ -359,5 +376,5 @@ try {
   if (Number(audit[0].missing_actors || 0)) throw new Error('V1 etkinlik kullanıcı bağı eksik');
   const sourceHash = createHash('sha256').update(await readFile(resolve(sourcePath))).digest('hex');
   const totals = Object.entries(report).filter(([table]) => !['permissions', 'permission_role', 'inventoryLegacyImages'].includes(table)).reduce((result, [, row]) => ({ source: result.source + row.source, migrated: result.migrated + row.migrated, excluded: result.excluded + row.excluded }), { source: 0, migrated: 0, excluded: 0 });
-  process.stdout.write(`${JSON.stringify({ sourceHash, totals, tables: report, roleFieldChecks, userFieldChecks, effectivePermissionChecks, lookupFieldChecks, inventoryAmountChecks, materialFieldChecks, inventoryRelationChecks, movementSourceChecks, movementHistoryChecks, inventoryMediaFiles, inventoryMediaFieldChecks, feedbackImageFiles, feedbackFieldChecks, loanFieldChecks, printerFieldChecks, announcementFieldChecks, announcementReadChecks, auditFieldChecks, missingActivitySubjects: Number(audit[0].missing_subjects || 0) })}\n`);
+  process.stdout.write(`${JSON.stringify({ sourceHash, totals, tables: report, roleFieldChecks, userFieldChecks, effectivePermissionChecks, lookupFieldChecks, inventoryAmountChecks, materialFieldChecks, inventoryRelationChecks, movementSourceChecks, movementHistoryChecks, inventoryMediaFiles, inventoryMediaFieldChecks, feedbackImageFiles, feedbackFieldChecks, loanFieldChecks, printerFieldChecks, announcementFieldChecks, announcementReadChecks, appointmentFieldChecks, auditFieldChecks, missingActivitySubjects: Number(audit[0].missing_subjects || 0) })}\n`);
 } finally { source.close(); await db.end(); }
