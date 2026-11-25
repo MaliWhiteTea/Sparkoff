@@ -242,7 +242,7 @@ html.nav-resizing,html.nav-resizing * { cursor:ew-resize!important; user-select:
 .profile-link { font-weight:600; color:var(--accent); }
 .selected-channel { color:var(--text); background:var(--surface-2); }
 .modal-host { z-index:100; align-items:center; }
-.modal { z-index:1; width:min(90vw,440px); padding:24px; border-radius:var(--r-card); background:rgba(30,42,72,.95); }
+.modal { z-index:1; width:min(90vw,440px); max-height:calc(100dvh - 24px); overflow-y:auto; overscroll-behavior:contain; padding:24px; border-radius:var(--r-card); background:rgba(30,42,72,.95); }
 .modal h2 { margin:0 0 12px; font-size:21px; line-height:26px; font-weight:600; }
 .modal p { margin:0 0 24px; color:var(--text-2); font-size:14px; line-height:1.55; }
 .modal p strong { color:var(--text); font-weight:600; }
