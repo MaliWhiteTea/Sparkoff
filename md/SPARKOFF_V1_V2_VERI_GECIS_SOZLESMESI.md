@@ -104,6 +104,8 @@
 
 **Medya MIME kabulü:** Bağımsız doğrulayıcı kaynak dosya imzasından JPEG/PNG/WebP/MP4/WebM türünü belirler; hedef `mime` ve `image`/`video` alanlarını dosya özetiyle birlikte karşılaştırır. Yerel tek medya iki migration DB'de eşleşti; yanlış MIME reddedilip geri alındı.
 
+**Geri bildirim görsel türü:** Özel görselin dosya imzasından JPEG/PNG/WebP MIME değeri bağımsız türetilir ve kaynakta kayıtlı MIME ile karşılaştırılır. Yerel tek görsel iki migration DB doğrulamasından geçti.
+
 - Her tablo için kaynak sayısı, taşınan sayısı, kasıtlı dışarıda bırakılan sayısı ve hata sayısı yazılır. **Kaynak = taşınan + belgeli dışarıda bırakılan** eşitliği, tüm foreign key bağları, benzersiz anahtarlar ve medya hash'leri sağlanır.
 - Stok `quantity` toplamı, malzeme bazında son `balance_after`, hareket sırası/türü, teslim miktarı/durumu ve anonimleştirme durumu karşılaştırılır. Kayıt zamanları UTC dönüşümünden sonra beklenen ana eşit olmalıdır.
 - Hedefi sıfırlayıp aynı sabit kaynaktan ikinci aktarım aynı sayıları ve kimlik eşlemesini vermelidir. Hata olursa hedef kabul verisi temizlenir; V1'e geri yazılmaz.

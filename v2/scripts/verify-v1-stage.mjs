@@ -207,6 +207,10 @@ try {
     if (!sourceFile.startsWith(feedbackSourceRoot + sep) || !targetFile.startsWith(feedbackTargetRoot + sep)) throw new Error('V1/V2 geri bildirim görseli kök dışına çıkıyor');
     const sourceBytes = await readFile(sourceFile), targetBytes = await readFile(targetFile);
     if (sourceBytes.length !== Number(row.image_size) || targetBytes.length !== sourceBytes.length || createHash('sha256').update(sourceBytes).digest('hex') !== createHash('sha256').update(targetBytes).digest('hex')) throw new Error('V1/V2 geri bildirim görsel dosya özeti farklı');
+    const actualMime = sourceBytes.length >= 3 && sourceBytes[0] === 255 && sourceBytes[1] === 216 && sourceBytes[2] === 255 ? 'image/jpeg'
+      : sourceBytes.length >= 8 && [137, 80, 78, 71, 13, 10, 26, 10].every((n, i) => sourceBytes[i] === n) ? 'image/png'
+      : sourceBytes.length >= 12 && sourceBytes.toString('ascii', 0, 4) === 'RIFF' && sourceBytes.toString('ascii', 8, 12) === 'WEBP' ? 'image/webp' : null;
+    if (!actualMime || actualMime !== row.image_mime_type) throw new Error('V1 geri bildirim görselinin gerçek MIME türü farklı');
   }
   const feedbackImageFiles = feedbackFiles.length;
   const feedbackFieldChecks = sourceFeedbackImages.length * 9;

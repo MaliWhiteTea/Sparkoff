@@ -310,6 +310,8 @@ Veri geçişinin alan, tarih, stok, dosya ve yetki kuralları: [V1→V2 veri ge�
 
 - Envanter medyasının kaynak dosya imzasından gerçek MIME türü de bağımsız türetilip hedef `mime` ve medya türüyle karşılaştırıldı. İki migration DB'de 1/1 dosya eşleşti; geçici yanlış MIME reddedildi, geri yükleme sonrası 960/960 geçti.
 
+- Özel geri bildirim görselinin kaynak dosya imzası da kaynakta kayıtlı MIME ile karşılaştırıldı. İki migration DB'de 1/1 görselin gerçek JPEG/PNG/WebP türü uydu; 960/960 genel doğrulama korundu.
+
 ### 11 Kasım 2026 — kişisel tercihler ve randevu takibi
 
 - Profil, V1'den taşınan tema/ölçek/yoğunluk/yan menü ayarlarını okur; kullanıcı yeni etkin ayarı kaydedebilir veya varsayılana dönebilir. V1 kaynak JSON kopyası denetim için değişmeden kalır. Sistem teması işletim sistemi tercihini izler; açık tema ve yoğunluk/ölçek görsel kuralları eklendi. Yerel SQL kabulünde geçersiz değer 400, kayıt/okuma/sıfırlama ve V1 kopyasının korunması geçti. V1 kayıtlı filtreleri ve tablo alanı tercihleri ilgili V2 yönetim listelerinde uygulanıp yerel SQL kabulünden geçti; gerçek tarayıcı etkileşim kabulü açık.
