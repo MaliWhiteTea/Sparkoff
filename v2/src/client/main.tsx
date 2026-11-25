@@ -356,7 +356,7 @@ function AdminPage({ path, me }: { path: string; me: Me }) {
   const announce = useData<{ announcements: { id: number; title: string; body: string }[] }>('/announce', overview && canSeeAnnouncements);
   if (path === '/admin/members') return <AdminMembers currentUserId={me.user.id} globalRole={me.user.role} permissions={me.permissions}/>;
   if (path === '/admin/system') return <AdminSystem role={me.user.role} permissions={me.permissions}/>;
-  if (path === '/admin/tasks') return <AdminTasks/>;
+  if (path === '/admin/tasks') return <AdminTasks manageableUnitIds={me.scopes.manageIds}/>;
   if (path === '/admin/inventory') return <AdminInventory globalRole={me.user.role} permissions={me.permissions}/>;
   if (path === '/admin/printers') return <AdminPrinters globalRole={me.user.role} permissions={me.permissions}/>;
   if (path === '/admin/announce') return <AdminAnnouncements permissions={me.permissions}/>;
