@@ -65,6 +65,23 @@ try {
     if (!Number.isSafeInteger(scaled) || Math.abs(amount * 1000 - scaled) > 1e-6) throw new Error('V1/V2 stok sayısı veya hassasiyeti geçersiz');
     return scaled;
   }
+  async function compareLookupFields(sourceTable, targetTable, legacyColumn, fields) {
+    const sourceRows = source.prepare(`SELECT id, ${fields.join(', ')} FROM ${sourceTable} ORDER BY id`).all();
+    const [targetRows] = await db.query(`SELECT ${legacyColumn} AS legacy_id, ${fields.join(', ')} FROM ${targetTable} WHERE ${legacyColumn} IS NOT NULL`);
+    const targetMap = new Map(targetRows.map(row => [Number(row.legacy_id), row]));
+    if (targetMap.size !== sourceRows.length) throw new Error(`V1/V2 tanım kayıt sayısı farklı: ${sourceTable}`);
+    for (const row of sourceRows) {
+      const target = targetMap.get(Number(row.id));
+      for (const field of fields) {
+        const expected = field === 'created_at' || field === 'updated_at' ? sourceUtc(row[field]) : row[field];
+        if (!target || expected !== target[field]) throw new Error(`V1/V2 tanım alanı farklı: ${sourceTable}.${field}`);
+      }
+    }
+    return sourceRows.length * fields.length;
+  }
+  const lookupFieldChecks =
+    await compareLookupFields('inventory_categories', 'categories', 'legacy_category_id', ['name', 'slug', 'description', 'sort_order', 'is_active', 'created_at', 'updated_at']) +
+    await compareLookupFields('inventory_locations', 'locations', 'legacy_location_id', ['name', 'code', 'description', 'is_public', 'is_active', 'created_at', 'updated_at']);
   async function compareAmounts(sourceTable, targetTable, legacyColumn, columns) {
     const sourceRows = source.prepare(`SELECT id, ${columns.map(([from]) => from).join(', ')} FROM ${sourceTable}`).all();
     const [targetRows] = await db.query(`SELECT ${legacyColumn} AS legacy_id, ${columns.map(([, to]) => to).join(', ')} FROM ${targetTable} WHERE ${legacyColumn} IS NOT NULL`);
@@ -282,5 +299,5 @@ try {
   if (Number(audit[0].missing_actors || 0)) throw new Error('V1 etkinlik kullanıcı bağı eksik');
   const sourceHash = createHash('sha256').update(await readFile(resolve(sourcePath))).digest('hex');
   const totals = Object.entries(report).filter(([table]) => !['permissions', 'permission_role', 'inventoryLegacyImages'].includes(table)).reduce((result, [, row]) => ({ source: result.source + row.source, migrated: result.migrated + row.migrated, excluded: result.excluded + row.excluded }), { source: 0, migrated: 0, excluded: 0 });
-  process.stdout.write(`${JSON.stringify({ sourceHash, totals, tables: report, inventoryAmountChecks, materialFieldChecks, inventoryRelationChecks, movementSourceChecks, movementHistoryChecks, inventoryMediaFiles, feedbackImageFiles, feedbackFieldChecks, loanFieldChecks, printerFieldChecks, auditFieldChecks, missingActivitySubjects: Number(audit[0].missing_subjects || 0) })}\n`);
+  process.stdout.write(`${JSON.stringify({ sourceHash, totals, tables: report, lookupFieldChecks, inventoryAmountChecks, materialFieldChecks, inventoryRelationChecks, movementSourceChecks, movementHistoryChecks, inventoryMediaFiles, feedbackImageFiles, feedbackFieldChecks, loanFieldChecks, printerFieldChecks, auditFieldChecks, missingActivitySubjects: Number(audit[0].missing_subjects || 0) })}\n`);
 } finally { source.close(); await db.end(); }
