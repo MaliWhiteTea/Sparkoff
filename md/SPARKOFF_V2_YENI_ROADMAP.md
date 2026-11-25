@@ -318,6 +318,8 @@ Veri geçişinin alan, tarih, stok, dosya ve yetki kuralları: [V1→V2 veri ge�
 
 - Randevunun yazıcı/filament bağı, temel alanları, takip özeti, KVKK ve saklama bilgisi ile UTC zamanları bağımsız doğrulayıcıya eklendi. Ayrı SQLite kopyasındaki 1 dosyasız randevu ilk aktarımda 1 yeni, tekrarında 0 yeni kayıt verdi; 961/961 toplam, 30/30 randevu alanı eşleşti. Geçici bozuk durum reddedildi ve temizlik sonrası özgün 960/960 geçti. Dosya/geçmiş alanları ve canlı randevu kabulü açık.
 
+- Randevu özel dosyasının randevu bağı, yol/ad/uzantı/MIME/boyut/dört zamanı ve kaynak/hedef SHA-256 içeriği; durum geçmişinin randevu/kullanıcı bağı, geçiş/not/iki zamanı bağımsız doğrulayıcıya eklendi. Ayrı SQLite ve özel dosya kopyasındaki 1 randevu/1 dosya/1 geçmiş ilk aktarımda 3 yeni, tekrarında 0 yeni kayıt verdi: 963/963 toplam, 30/30 randevu, 11/11 dosya, 7/7 geçmiş alanı eşleşti. Geçici bozuk geçmiş notu ve hedef dosya reddedildi; temizlik sonrası özgün 960/960 geçti. Canlı dosya çeşitleri ve VDS kabulü açık.
+
 ### 11 Kasım 2026 — kişisel tercihler ve randevu takibi
 
 - Profil, V1'den taşınan tema/ölçek/yoğunluk/yan menü ayarlarını okur; kullanıcı yeni etkin ayarı kaydedebilir veya varsayılana dönebilir. V1 kaynak JSON kopyası denetim için değişmeden kalır. Sistem teması işletim sistemi tercihini izler; açık tema ve yoğunluk/ölçek görsel kuralları eklendi. Yerel SQL kabulünde geçersiz değer 400, kayıt/okuma/sıfırlama ve V1 kopyasının korunması geçti. V1 kayıtlı filtreleri ve tablo alanı tercihleri ilgili V2 yönetim listelerinde uygulanıp yerel SQL kabulünden geçti; gerçek tarayıcı etkileşim kabulü açık.

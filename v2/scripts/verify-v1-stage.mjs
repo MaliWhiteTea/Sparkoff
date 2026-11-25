@@ -299,6 +299,42 @@ try {
     if (row.tracking_token_hash !== target.track_token_hash || target.name !== null || target.model_path !== null) throw new Error('V1/V2 randevu türetilmiş alanı farklı');
   }
   const appointmentFieldChecks = sourceAppointments.length * (appointmentScalars.length + appointmentDates.length + 5);
+  const sourceAppointmentFiles = source.prepare('SELECT * FROM appointment_files ORDER BY id').all();
+  const [targetAppointmentFiles] = await db.query('SELECT * FROM appointment_files WHERE legacy_appointment_file_id IS NOT NULL');
+  const appointmentFileMap = new Map(targetAppointmentFiles.map(row => [Number(row.legacy_appointment_file_id), row]));
+  if (appointmentFileMap.size !== sourceAppointmentFiles.length) throw new Error('V1/V2 randevu dosyası kayıt sayısı farklı');
+  const activeAppointmentFiles = sourceAppointmentFiles.filter(row => row.deleted_at == null);
+  if (activeAppointmentFiles.length && (!sourcePrivatePath || !process.env.PRIVATE_UPLOAD_DIR)) throw new Error('Randevu dosyası için özel dosya kökleri gerekli');
+  const appointmentSourceRoot = activeAppointmentFiles.length ? await realpath(resolve(sourcePrivatePath)) : null;
+  const appointmentTargetRoot = activeAppointmentFiles.length ? await realpath(resolve(process.env.PRIVATE_UPLOAD_DIR)) : null;
+  if (appointmentTargetRoot && !appointmentTargetRoot.startsWith(resolve('../storage/framework/local-test-v2') + sep)) throw new Error('Randevu dosyası hedefi yalnız yerel prova dizininde olabilir');
+  for (const row of sourceAppointmentFiles) {
+    const target = appointmentFileMap.get(Number(row.id));
+    const appointmentId = targetIds.get('appointments').get(Number(row.appointment_id));
+    if (!target || appointmentId === undefined || appointmentId !== Number(target.appointment_id)) throw new Error('V1/V2 randevu dosyası bağı farklı');
+    for (const field of ['disk', 'path', 'original_name', 'mime_type']) if (row[field] !== target[field]) throw new Error(`V1/V2 randevu dosyası alanı farklı: ${field}`);
+    if (row.extension?.toLowerCase() !== target.extension || Number(row.size_bytes) !== Number(target.size_bytes)) throw new Error('V1/V2 randevu dosyası uzantısı veya boyutu farklı');
+    for (const field of ['scheduled_deletion_at', 'deleted_at', 'created_at', 'updated_at']) if (sourceUtc(row[field]) !== target[field]) throw new Error(`V1/V2 randevu dosyası zamanı farklı: ${field}`);
+    if (!/^appointments\/[0-9a-f-]{36}\/[0-9a-f-]{36}\.(gcode|3mf|stl|step|stp|obj)$/i.test(row.path)) throw new Error('V1 randevu dosyası yolu geçersiz');
+    if (row.deleted_at != null) continue;
+    const sourceFile = await realpath(resolve(appointmentSourceRoot, row.path));
+    const targetFile = await realpath(resolve(appointmentTargetRoot, target.path));
+    if (!sourceFile.startsWith(appointmentSourceRoot + sep) || !targetFile.startsWith(appointmentTargetRoot + sep)) throw new Error('V1/V2 randevu dosyası kök dışına çıkıyor');
+    const sourceBytes = await readFile(sourceFile), targetBytes = await readFile(targetFile);
+    if (sourceBytes.length !== Number(row.size_bytes) || targetBytes.length !== sourceBytes.length || createHash('sha256').update(sourceBytes).digest('hex') !== createHash('sha256').update(targetBytes).digest('hex')) throw new Error('V1/V2 randevu dosyası özeti farklı');
+  }
+  const appointmentFileChecks = sourceAppointmentFiles.length * 11;
+  const sourceAppointmentHistory = source.prepare('SELECT * FROM appointment_status_histories ORDER BY id').all();
+  const [targetAppointmentHistory] = await db.query('SELECT * FROM appointment_status_histories WHERE legacy_appointment_history_id IS NOT NULL');
+  const appointmentHistoryMap = new Map(targetAppointmentHistory.map(row => [Number(row.legacy_appointment_history_id), row]));
+  if (appointmentHistoryMap.size !== sourceAppointmentHistory.length) throw new Error('V1/V2 randevu geçmişi kayıt sayısı farklı');
+  for (const row of sourceAppointmentHistory) {
+    const target = appointmentHistoryMap.get(Number(row.id));
+    const appointmentId = targetIds.get('appointments').get(Number(row.appointment_id));
+    const actorId = row.actor_id == null ? null : targetIds.get('users').get(Number(row.actor_id));
+    if (!target || appointmentId === undefined || actorId === undefined || appointmentId !== Number(target.appointment_id) || actorId !== (target.actor_id == null ? null : Number(target.actor_id)) || row.from_status !== target.from_status || row.to_status !== target.to_status || row.note !== target.note || sourceUtc(row.created_at) !== target.created_at || sourceUtc(row.updated_at) !== target.updated_at) throw new Error('V1/V2 randevu geçmişi alanı farklı');
+  }
+  const appointmentHistoryChecks = sourceAppointmentHistory.length * 7;
   const permissions = source.prepare('SELECT id, key FROM permissions').all();
   const permissionKeys = new Map(permissions.map(row => [row.id, row.key]));
   const permissionLinks = source.prepare('SELECT role_id, permission_id FROM permission_role').all();
@@ -376,5 +412,5 @@ try {
   if (Number(audit[0].missing_actors || 0)) throw new Error('V1 etkinlik kullanıcı bağı eksik');
   const sourceHash = createHash('sha256').update(await readFile(resolve(sourcePath))).digest('hex');
   const totals = Object.entries(report).filter(([table]) => !['permissions', 'permission_role', 'inventoryLegacyImages'].includes(table)).reduce((result, [, row]) => ({ source: result.source + row.source, migrated: result.migrated + row.migrated, excluded: result.excluded + row.excluded }), { source: 0, migrated: 0, excluded: 0 });
-  process.stdout.write(`${JSON.stringify({ sourceHash, totals, tables: report, roleFieldChecks, userFieldChecks, effectivePermissionChecks, lookupFieldChecks, inventoryAmountChecks, materialFieldChecks, inventoryRelationChecks, movementSourceChecks, movementHistoryChecks, inventoryMediaFiles, inventoryMediaFieldChecks, feedbackImageFiles, feedbackFieldChecks, loanFieldChecks, printerFieldChecks, announcementFieldChecks, announcementReadChecks, appointmentFieldChecks, auditFieldChecks, missingActivitySubjects: Number(audit[0].missing_subjects || 0) })}\n`);
+  process.stdout.write(`${JSON.stringify({ sourceHash, totals, tables: report, roleFieldChecks, userFieldChecks, effectivePermissionChecks, lookupFieldChecks, inventoryAmountChecks, materialFieldChecks, inventoryRelationChecks, movementSourceChecks, movementHistoryChecks, inventoryMediaFiles, inventoryMediaFieldChecks, feedbackImageFiles, feedbackFieldChecks, loanFieldChecks, printerFieldChecks, announcementFieldChecks, announcementReadChecks, appointmentFieldChecks, appointmentFileChecks, appointmentHistoryChecks, auditFieldChecks, missingActivitySubjects: Number(audit[0].missing_subjects || 0) })}\n`);
 } finally { source.close(); await db.end(); }
