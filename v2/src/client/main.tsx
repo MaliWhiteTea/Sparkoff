@@ -190,6 +190,9 @@ function PublicPage({ path, go }: { path: string; go: (s: string) => void }) {
   const workshop = useData<{ contact: { phone: string; whatsapp: string; email: string; contactHours: string } }>('/workshop', path === '/');
   const privacy = useData<{ controllerName: string; controllerAddress: string; contactEmail: string; appointmentRetentionMonths: number; fileRetentionDays: number; noticeVersion: string; isDraft: boolean }>('/public/privacy', path === '/kvkk');
   const [feedback, setFeedback] = useState(''); const [kind, setKind] = useState('suggestion'); const [feedbackImage, setFeedbackImage] = useState<File | null>(null); const [sent, setSent] = useState(false); const [error, setError] = useState('');
+  const [feedbackBusy, setFeedbackBusy] = useState(false);
+  const feedbackSubmitting = useRef(false);
+  useEffect(() => { setSent(false); setError(''); }, [path]);
   if (path === '/') return <main className="screen public-home"><div className="hero"><div className="hero-copy"><span className="eyebrow">SPARKOFF</span><h2>Fikirlerin<br/><em>hayat bulduğu yer.</em></h2><p>Üretmek, denemek ve paylaşmak için bir araya gel. Atölyedeki yazıcıları ve malzemeleri keşfet.</p><div className="hero-actions"><Button onClick={() => go('/yazicilar')}>Yazıcıları keşfet <Icon name="arrow" size={18}/></Button><Button variant="quiet" onClick={() => go('/malzemeler')}>Malzemelere bak</Button></div></div><WorkshopArt/></div><div className="grid"><Card title="3D yazıcılar" className="feature-card"><div className="tile-icon"><Icon name="printer"/></div><p>Yazıcıların durumunu ve uygun filamentleri gör.</p><Button variant="quiet" onClick={() => go('/yazicilar')}>Yazıcıları aç →</Button></Card><Card title="Malzeme kataloğu" className="feature-card"><div className="tile-icon"><Icon name="inventory"/></div><p>Üretim için ihtiyacın olanları atölyede bul.</p><Button variant="quiet" onClick={() => go('/malzemeler')}>Kataloğa git →</Button></Card><Card title="Bize yaz" className="feature-card"><div className="tile-icon"><Icon name="chat"/></div><p>Önerini paylaş, bir sorunu veya fikrini ilet.</p><Button variant="quiet" onClick={() => go('/geri-bildirim')}>Geri bildirim →</Button></Card></div><Card title="Atölyeden haberler" className="news-card">{news.data?.announcements.length ? news.data.announcements.map(a => <article key={a.id} className="list-item"><strong>{a.title}</strong><p>{a.body}</p></article>) : <Empty>Henüz duyuru yok.</Empty>}</Card>{workshop.data && <PublicContactCard contact={workshop.data.contact}/>}</main>;
   if (path === '/kvkk') return <Screen title="3D yazıcı randevu başvuruları" subtitle={privacy.data ? `KVKK aydınlatma metni · Sürüm ${privacy.data.noticeVersion}` : 'KVKK aydınlatma metni'}>
     {privacy.error && <Card><p role="alert">{privacy.error}</p></Card>}
@@ -207,7 +210,26 @@ function PublicPage({ path, go }: { path: string; go: (s: string) => void }) {
   if (path === '/yazicilar') return <Screen title="3D yazıcılar" subtitle="Yazıcı durumu ve kullanılabilir filamentler."><div className="grid">{printers.data?.printers.map(p => <Card key={p.id} title={p.name}><Badge tone={p.status === 'active' ? 'good' : 'warn'}>{p.status === 'active' ? 'Kullanılabilir' : p.status === 'maintenance' ? 'Bakımda' : 'Pasif'}</Badge></Card>)}</div><Card title="Filamentler">{printers.data?.filaments.map(f => <div className="list-item" key={f.id}><strong>{f.name} · {f.color}</strong><p>{[f.brand, f.diameterMm ? `${f.diameterMm} mm` : null].filter(Boolean).join(' · ')}</p>{f.available === false && <Badge tone="warn">{f.unavailableReason || 'Kullanılamıyor'}</Badge>}</div>)}</Card>{printerNews.data && printerNews.data.announcements.length > 0 && <Card title="Yazıcı duyuruları">{printerNews.data.announcements.map(item => <article className="list-item" key={item.id}><strong>{item.title}</strong><p>{item.body}</p></article>)}</Card>}</Screen>;
   if (path === '/malzemeler') return <PublicMaterials/>;
   if (path !== '/geri-bildirim') return <Screen title="Sayfa bulunamadı"><Card><Button onClick={() => go('/')}>Ana sayfaya dön</Button></Card></Screen>;
-  return <Screen title="Geri bildirim" subtitle="Öneri, şikâyet veya hata bildirin."><Card><form onSubmit={async (e: FormEvent) => { e.preventDefault(); const element = e.currentTarget as HTMLFormElement; try { const form = new FormData(); form.set('kind', kind); form.set('message', feedback); if (feedbackImage) form.set('image', feedbackImage); await api('/public/feedback', { method: 'POST', body: form }); setSent(true); setFeedback(''); setFeedbackImage(null); element.reset(); setError(''); } catch (err) { setError((err as Error).message); } }}><label>Tür<select value={kind} onChange={e => setKind(e.target.value)}><option value="suggestion">Öneri</option><option value="complaint">Şikâyet</option><option value="bug">Hata</option></select></label><label>Mesaj<textarea value={feedback} onChange={e => setFeedback(e.target.value)} required minLength={10} maxLength={3000}/></label><label>Görsel (isteğe bağlı, en fazla 5 MB)<input type="file" accept="image/jpeg,image/png,image/webp" onChange={e => setFeedbackImage(e.target.files?.[0] || null)}/></label>{error && <p role="alert">{error}</p>}{sent && <p role="status">Geri bildiriminiz alındı.</p>}<Button type="submit">Gönder</Button></form></Card></Screen>;
+  return <Screen title="Geri bildirim" subtitle="Öneri, şikâyet veya hata bildirin."><Card><form onSubmit={async (e: FormEvent) => {
+    e.preventDefault();
+    if (feedbackSubmitting.current) return;
+    feedbackSubmitting.current = true;
+    setFeedbackBusy(true);
+    const element = e.currentTarget as HTMLFormElement;
+    try {
+      const form = new FormData();
+      form.set('kind', kind);
+      form.set('message', feedback);
+      if (feedbackImage) form.set('image', feedbackImage);
+      await api('/public/feedback', { method: 'POST', body: form });
+      setSent(true);
+      setFeedback('');
+      setFeedbackImage(null);
+      element.reset();
+      setError('');
+    } catch (err) { setSent(false); setError((err as Error).message); }
+    finally { feedbackSubmitting.current = false; setFeedbackBusy(false); }
+  }}><label>Tür<select value={kind} onChange={e => { setKind(e.target.value); setSent(false); }}><option value="suggestion">Öneri</option><option value="complaint">Şikâyet</option><option value="bug">Hata</option></select></label><label>Mesaj<textarea value={feedback} onChange={e => { setFeedback(e.target.value); setSent(false); }} required minLength={10} maxLength={3000}/></label><label>Görsel (isteğe bağlı, en fazla 5 MB)<input type="file" accept="image/jpeg,image/png,image/webp" onChange={e => { setFeedbackImage(e.target.files?.[0] || null); setSent(false); }}/></label>{error && <p role="alert">{error}</p>}{sent && <p role="status">Geri bildiriminiz alındı.</p>}<Button type="submit" disabled={feedbackBusy}>{feedbackBusy ? 'Gönderiliyor…' : 'Gönder'}</Button></form></Card></Screen>;
 }
 type TrackedAppointment = { publicId: string; status: string; statusLabel: string; printer: string | null; startsAt: string | null; endsAt: string | null; durationMinutes: number | null; filament: string; fileName: string | null; canCancel: boolean; history: { status: string; label: string; note: string | null; date: string }[] };
 function VerifyAppointment({ path, go }: { path: string; go: (s: string) => void }) {
