@@ -314,6 +314,8 @@ Veri geçişinin alan, tarih, stok, dosya ve yetki kuralları: [V1→V2 veri ge�
 
 - Özel geri bildirim görselinin kaynak dosya imzası da kaynakta kayıtlı MIME ile karşılaştırıldı. İki migration DB'de 1/1 görselin gerçek JPEG/PNG/WebP türü uydu; 960/960 genel doğrulama korundu.
 
+- Duyurunun başlık, metin, tür, yerleşim, `staff→internal` hedefi, yayın/sabitleme/onay bayrakları, başlangıç/bitiş/oluşturulma/güncellenme/yayın zamanları ve boş V1 karşılığı alanları bağımsız doğrulayıcıya eklendi; okundu/onay zamanları da kaynakla karşılaştırılıyor. Yerel kaynak sıfır olduğundan ayrı SQLite kopyasında 1 duyuru, 1 hedef rol, 1 okundu kaydı aktarıldı: ilk çalışma 1 yeni, tekrar 0 yeni; 963/963 kayıt, 16/16 duyuru alanı, 2/2 okundu zamanı eşleşti. Bozuk metin ve onay zamanı reddedildi. Temizlik sonrası özgün 960/960 geçti; canlı duyuru kabulü açık.
+
 ### 11 Kasım 2026 — kişisel tercihler ve randevu takibi
 
 - Profil, V1'den taşınan tema/ölçek/yoğunluk/yan menü ayarlarını okur; kullanıcı yeni etkin ayarı kaydedebilir veya varsayılana dönebilir. V1 kaynak JSON kopyası denetim için değişmeden kalır. Sistem teması işletim sistemi tercihini izler; açık tema ve yoğunluk/ölçek görsel kuralları eklendi. Yerel SQL kabulünde geçersiz değer 400, kayıt/okuma/sıfırlama ve V1 kopyasının korunması geçti. V1 kayıtlı filtreleri ve tablo alanı tercihleri ilgili V2 yönetim listelerinde uygulanıp yerel SQL kabulünden geçti; gerçek tarayıcı etkileşim kabulü açık.

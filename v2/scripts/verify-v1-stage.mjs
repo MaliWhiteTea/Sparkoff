@@ -262,6 +262,26 @@ try {
   await pivot('role_user', 'user_custom_roles', ['user_id', 'role_id'], ['user_id', 'role_id'], ['users', 'roles']);
   await pivot('announcement_role', 'announcement_roles', ['announcement_id', 'role_id'], ['announcement_id', 'role_id'], ['announcements', 'roles']);
   await pivot('announcement_user', 'announcement_reads', ['announcement_id', 'user_id'], ['announcement_id', 'user_id'], ['announcements', 'users']);
+  const sourceAnnouncements = source.prepare('SELECT id, title, body, type, placement, audience, is_published, is_pinned, requires_acknowledgement, starts_at, ends_at, created_at, updated_at FROM announcements ORDER BY id').all();
+  const [targetAnnouncements] = await db.query('SELECT legacy_announcement_id, title, body, type, placement, audience, is_published, pinned, requires_acknowledgement, starts_at, ends_at, published_at, expires_at, unit_id, created_by, created_at, updated_at FROM announcements WHERE legacy_announcement_id IS NOT NULL');
+  const announcementMap = new Map(targetAnnouncements.map(row => [Number(row.legacy_announcement_id), row]));
+  if (announcementMap.size !== sourceAnnouncements.length) throw new Error('V1/V2 duyuru alanı kayıt sayısı farklı');
+  for (const row of sourceAnnouncements) {
+    const target = announcementMap.get(Number(row.id));
+    if (!target || row.title !== target.title || row.body !== target.body || row.type !== target.type || row.placement !== target.placement || (row.audience === 'staff' ? 'internal' : row.audience) !== target.audience || Number(row.is_published) !== Number(target.is_published) || Number(row.is_pinned) !== Number(target.pinned) || Number(row.requires_acknowledgement) !== Number(target.requires_acknowledgement) || sourceUtc(row.starts_at) !== target.starts_at || sourceUtc(row.ends_at) !== target.ends_at || sourceUtc(row.created_at) !== target.created_at || sourceUtc(row.updated_at) !== target.updated_at || (row.is_published ? sourceUtc(row.created_at) : null) !== target.published_at || target.expires_at !== null || target.unit_id !== null || target.created_by !== null) throw new Error('V1/V2 duyuru içerik veya yayın alanı farklı');
+  }
+  const announcementFieldChecks = sourceAnnouncements.length * 16;
+  const sourceAnnouncementReads = source.prepare('SELECT announcement_id, user_id, read_at, acknowledged_at FROM announcement_user').all();
+  const [targetAnnouncementReads] = await db.query('SELECT announcement_id, user_id, read_at, acknowledged_at FROM announcement_reads');
+  const readMap = new Map(targetAnnouncementReads.map(row => [`${row.announcement_id}:${row.user_id}`, row]));
+  if (readMap.size !== sourceAnnouncementReads.length) throw new Error('V1/V2 duyuru okundu zamanı kayıt sayısı farklı');
+  for (const row of sourceAnnouncementReads) {
+    const announcementId = targetIds.get('announcements').get(Number(row.announcement_id));
+    const userId = targetIds.get('users').get(Number(row.user_id));
+    const target = readMap.get(`${announcementId}:${userId}`);
+    if (!target || sourceUtc(row.read_at) !== target.read_at || sourceUtc(row.acknowledged_at) !== target.acknowledged_at) throw new Error('V1/V2 duyuru okundu veya onay zamanı farklı');
+  }
+  const announcementReadChecks = sourceAnnouncementReads.length * 2;
   const permissions = source.prepare('SELECT id, key FROM permissions').all();
   const permissionKeys = new Map(permissions.map(row => [row.id, row.key]));
   const permissionLinks = source.prepare('SELECT role_id, permission_id FROM permission_role').all();
@@ -339,5 +359,5 @@ try {
   if (Number(audit[0].missing_actors || 0)) throw new Error('V1 etkinlik kullanıcı bağı eksik');
   const sourceHash = createHash('sha256').update(await readFile(resolve(sourcePath))).digest('hex');
   const totals = Object.entries(report).filter(([table]) => !['permissions', 'permission_role', 'inventoryLegacyImages'].includes(table)).reduce((result, [, row]) => ({ source: result.source + row.source, migrated: result.migrated + row.migrated, excluded: result.excluded + row.excluded }), { source: 0, migrated: 0, excluded: 0 });
-  process.stdout.write(`${JSON.stringify({ sourceHash, totals, tables: report, roleFieldChecks, userFieldChecks, effectivePermissionChecks, lookupFieldChecks, inventoryAmountChecks, materialFieldChecks, inventoryRelationChecks, movementSourceChecks, movementHistoryChecks, inventoryMediaFiles, inventoryMediaFieldChecks, feedbackImageFiles, feedbackFieldChecks, loanFieldChecks, printerFieldChecks, auditFieldChecks, missingActivitySubjects: Number(audit[0].missing_subjects || 0) })}\n`);
+  process.stdout.write(`${JSON.stringify({ sourceHash, totals, tables: report, roleFieldChecks, userFieldChecks, effectivePermissionChecks, lookupFieldChecks, inventoryAmountChecks, materialFieldChecks, inventoryRelationChecks, movementSourceChecks, movementHistoryChecks, inventoryMediaFiles, inventoryMediaFieldChecks, feedbackImageFiles, feedbackFieldChecks, loanFieldChecks, printerFieldChecks, announcementFieldChecks, announcementReadChecks, auditFieldChecks, missingActivitySubjects: Number(audit[0].missing_subjects || 0) })}\n`);
 } finally { source.close(); await db.end(); }
