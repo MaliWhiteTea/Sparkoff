@@ -302,6 +302,8 @@ Veri geçişinin alan, tarih, stok, dosya ve yetki kuralları: [V1→V2 veri ge�
 
 - Kategori ve konumların ad, kod/slug, açıklama, sıralama, görünürlük, etkinlik ve UTC tarih alanları da kaynakla bağımsız karşılaştırılıyor. Yerel kaynakta 2 kategori, 0 konum var; iki migration DB'de 14/14 kategori alanı eşleşti. Geçici bozuk kategori açıklaması reddedildi ve geri alındı. Konum alanlarının dolu kaynakla kabulü açık.
 
+- Boş kaynak konum tablosu için ayrı SQLite kopyasına 1 sentetik konum eklendi. Yerel aktarım ilk çalışmada 1 yeni, tekrarında 0 yeni kayıt verdi; bağımsız doğrulayıcı 961/961 kayıt ve 21/21 kategori/konum alanını eşledi. Bozuk konum açıklamasını reddetti. Sentetik kaynak ve hedef kayıt temizlenince özgün 960/960 kayıt ile 14/14 alan yeniden geçti. Gerçek canlı konum verisi kabulü açık.
+
 - Rol adı/slug/bayrak/açıklama/tarih ve kullanıcı adı/e-posta/bcrypt özeti/etkinlik/rol etiketi/tercih/tarih alanları iki yerel migration DB'de bağımsız doğrulandı: rol 14/14, kullanıcı 10/10. Parola özeti geçici bozulunca hem doğrulayıcı hem tekrar aktarım reddetti; kayıt geri yüklenince aktarım 0 yeni/1 mevcut ve toplam 960/960 geçti. Canlı hesap sayısı ve gerçek giriş kabulü açık.
 
 - Kaynak rol izinleri V1→V2 eşlemesinden yeniden hesaplanıp etkin izin ve sekmelerle karşılaştırıldı: iki yerel migration DB'de 74/74 eşleşti. Geçici yanlış sekme reddedildi; geri yükleme sonrası 960/960 tekrar doğrulandı. Kaynakta eşlemesi olmayan izinlerin işlev eşitliği ayrı açık kapıdır.

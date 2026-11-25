@@ -96,6 +96,8 @@
 
 **Kategori/konum alan kabulü:** Bağımsız doğrulayıcı kaynak kimliği dışında ad, slug/kod, açıklama, sıralama, görünürlük, etkinlik ve UTC zamanını karşılaştırır. İki yerel migration DB'de 2 kategorinin 14/14 alanı eşleşti; yerel V1 kaynağında konum yok. Geçici açıklama bozulması reddedildi ve geri alındı. Konum alanları dolu canlı yedekle ayrıca kabul edilecek.
 
+**Sentetik konum provası:** Salt okunur özgün V1 dosyasının ayrı SQLite kopyasına 1 konum eklendi. `stage-v1-inventory.mjs` ilk çalışmada 1 yeni, tekrarında 0 yeni kayıt üretti. `verify-v1-stage.mjs` 961/961 kayıt ve 21/21 tanım alanını eşledi; bozuk konum açıklamasını reddetti. Sentetik kayıt ve kopya temizlenince özgün 960/960 ile 14/14 alan yeniden doğrulandı. Bu prova canlı kaynak kabulü yerine geçmez.
+
 **Hesap kimliği kabulü:** Bağımsız doğrulayıcı V1 rol adını, slug değerini, sistem/koruma bayraklarını ve zamanları; kullanıcı adını, normalize e-postasını, bcrypt parola özetini, etkinlik durumunu, sistem rolünden türeyen küresel rolü, eski rol etiketini, tercihleri ve zamanları karşılaştırır. İki migration DB'de rol 14/14, kullanıcı 10/10 alan eşleşti. Tekrar aktarım da mevcut kullanıcı parola özeti farklıysa reddeder. Geçici özet bozulması iki yoldan reddedildi, geri yüklendi ve 960/960 toplam yeniden doğrulandı.
 
 **Etkin rol kabulü:** Kaynak rol-izin bağlarından eşleme JSON'u kullanılarak etkin V2 izinleri ve sekmeler yeniden türetilir; hedefte fazladan/eksik izin veya sekme reddedilir. İki yerel migration DB'de 74/74 etkin izin ve sekme eşleşti. Bozuk sekme reddedilip geri yüklendi; ardından 960/960 toplam tekrar doğrulandı.
