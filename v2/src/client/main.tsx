@@ -96,13 +96,14 @@ function PublicContactCard({ contact }: { contact: { phone: string; whatsapp: st
   const email = contact.email?.trim();
   const hours = contact.contactHours?.trim();
   const phoneDigits = phone?.replace(/\D/g, '') || '';
+  const phoneHref = phoneDigits.length >= 7 ? `tel:${phone?.startsWith('+') ? '+' : ''}${phoneDigits}` : null;
   const whatsappDigits = whatsapp?.replace(/\D/g, '') || '';
   const whatsappInternational = whatsappDigits.length === 11 && whatsappDigits.startsWith('0') ? `90${whatsappDigits.slice(1)}` : whatsappDigits;
   if (!phone && !whatsapp && !email && !hours) return null;
   return <Card title="İletişim" className="public-contact">
     <p className="contact-intro">Atölyeye ulaşmak için size uygun kanalı seçin.</p>
     <div className="contact-channels">
-      {phone && <div className="contact-channel"><span className="contact-label">Telefon</span><strong>{phone}</strong>{phoneDigits && <a href={`tel:${phoneDigits}`} aria-label={`${phone} numarasını ara`}>Ara <span aria-hidden="true">↗</span></a>}</div>}
+      {phone && <div className="contact-channel"><span className="contact-label">Telefon</span><strong>{phone}</strong>{phoneHref && <a href={phoneHref} aria-label={`${phone} numarasını ara`}>Ara <span aria-hidden="true">↗</span></a>}</div>}
       {whatsapp && <div className="contact-channel"><span className="contact-label">WhatsApp</span><strong>{whatsapp}</strong>{whatsappInternational && <a href={`https://wa.me/${whatsappInternational}`} target="_blank" rel="noopener noreferrer" aria-label={`${whatsapp} numarasına WhatsApp mesajı gönder`}>Mesaj gönder <span aria-hidden="true">↗</span></a>}</div>}
       {email && <div className="contact-channel"><span className="contact-label">E-posta</span><strong>{email}</strong><a href={`mailto:${email}`} aria-label={`${email} adresine e-posta gönder`}>E-posta yaz <span aria-hidden="true">↗</span></a></div>}
     </div>
