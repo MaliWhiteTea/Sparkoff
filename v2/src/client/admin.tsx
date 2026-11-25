@@ -735,7 +735,8 @@ export function AdminWorkshop({ permissions }: { permissions: Permission[] }) {
     setEmail(data.data.contact.email); setContactHours(data.data.contact.contactHours);
     setHours(data.data.hours);
   }, [data.data]);
-  const changeDay = (weekday: number, patch: Partial<Day>) => setHours(current => current.map(day => day.weekday === weekday ? { ...day, ...patch } : day));
+  const markDirty = () => { setSaved(false); setError(''); };
+  const changeDay = (weekday: number, patch: Partial<Day>) => { markDirty(); setHours(current => current.map(day => day.weekday === weekday ? { ...day, ...patch } : day)); };
   const save = async (event: FormEvent) => {
     event.preventDefault();
     try {
@@ -746,10 +747,10 @@ export function AdminWorkshop({ permissions }: { permissions: Permission[] }) {
   const dayNames = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'];
   return <Screen title="Atölye ve iletişim" subtitle="İletişim bilgileri ve çalışma saatleri.">
     <Card><form onSubmit={save}>
-      <label>Telefon<input type="tel" value={phone} onChange={event => setPhone(event.target.value)} maxLength={30}/></label>
-      <label>WhatsApp<input type="tel" value={whatsapp} onChange={event => setWhatsapp(event.target.value)} maxLength={30}/></label>
-      <label>E-posta<input type="email" value={email} onChange={event => setEmail(event.target.value)} maxLength={255}/></label>
-      <label>İletişim saatleri<input value={contactHours} onChange={event => setContactHours(event.target.value)} maxLength={120}/></label>
+      <label>Telefon<input type="tel" value={phone} onChange={event => { markDirty(); setPhone(event.target.value); }} maxLength={30}/></label>
+      <label>WhatsApp<input type="tel" value={whatsapp} onChange={event => { markDirty(); setWhatsapp(event.target.value); }} maxLength={30}/></label>
+      <label>E-posta<input type="email" value={email} onChange={event => { markDirty(); setEmail(event.target.value); }} maxLength={255}/></label>
+      <label>İletişim saatleri<input value={contactHours} onChange={event => { markDirty(); setContactHours(event.target.value); }} maxLength={120}/></label>
       <fieldset><legend>Çalışma saatleri</legend>{hours.map(day => <div className="list-item resource-row" key={day.weekday}>
         <label><input type="checkbox" checked={day.isOpen} onChange={event => changeDay(day.weekday, { isOpen: event.target.checked, opensAt: event.target.checked ? day.opensAt || '09:00' : null, latestStartAt: event.target.checked ? day.latestStartAt || '17:00' : null })}/>{dayNames[day.weekday - 1]}</label>
         {day.isOpen && <div className="resource-actions"><label>Açılış<input type="time" value={day.opensAt || ''} onChange={event => changeDay(day.weekday, { opensAt: event.target.value })} required/></label>
