@@ -397,6 +397,11 @@ html.nav-resizing,html.nav-resizing * { cursor:ew-resize!important; user-select:
   .demo-banner span { display:none; }
 }
 @media (max-width:400px) { .mobile-island a span { display:none; } .hero { padding:22px; } .screen { padding-inline:14px; } .card { padding:15px; } }
-@media (max-height:500px) and (max-width:899px) { .mobile-island { display:none; } }
+@media (max-height:500px) and (max-width:899px) {
+  .mobile-island { height:48px; bottom:calc(env(safe-area-inset-bottom) + 6px); }
+  .mobile-island a { width:42px; height:42px; }
+  .mobile-island a[aria-current=page] { transform:translateY(-6px); }
+  .mobile-island .orb { width:34px; height:34px; }
+}
 @media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none!important; transition:none!important; scroll-behavior:auto!important; } }
 .form-row { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem; }
