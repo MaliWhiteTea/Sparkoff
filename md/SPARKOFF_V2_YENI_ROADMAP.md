@@ -4,6 +4,20 @@
 **Durum:** Çalışma planı; V1 canlı sistem korunur.  
 **Hedef ortam:** Satın alınan 3 GB RAM'li Ubuntu VDS. cPanel dağıtımı yapılmayacak.
 
+## Güncel durum — 26 Kasım 2026
+
+Bu dosyanın sonundaki **Çalışma kaydı** yapılan değişiklikleri ve test kanıtlarını tutar. Aşağıdaki aşama kutuları ise işlevin bütün ortam ve rollerle kabulünü ifade eder; yerel kod veya örnek mod tamamlandığında tek başına işaretlenmez.
+
+| Alan | Durum | Kanıt ve kalan iş |
+| --- | --- | --- |
+| Yerel V2 temeli | İlerledi | Envanter/teslim, yazıcı/randevu, hesap/rol, duyuru, geri bildirim, ziyaretçi ekranları ve V1 veri aktarım araçları geliştirildi. Son yerel çalışmada 40 birim testi ve üretim derlemesi geçti; `943ba68` için kaynak ve veritabanı CI kabulü başarılı. Bu, tüm V1 işlevlerinin kabul edildiği anlamına gelmez. |
+| Yerel gerçek SQL ve mobil | Kısmi kabul | Geçici sınırlı rollerle 320 px yönetim/üye gezinmesi, geri bildirim görseli, iletişim ayarları, görev oluşturma kapsamı ve Sistem kartları sınandı. Test kayıtları temizlendi. Kalan rol kombinasyonları, işlemler, başarısızlık yolları, fiziksel cihaz ve ekran okuyucu kabulü açık. |
+| V1 veri geçişi | Prova yapıldı | Yerel salt okunur V1 kaynağından ayrı MariaDB'ye dönüşüm ve bağımsız karşılaştırma araçları var. Güncel **canlı** SQL/dosya yedeğiyle tam aktarım, fark raporu ve baştan kurma provası yapılmadı. |
+| Ubuntu VDS ve yayın | Bekliyor | Ayrı V2 kabul ortamı, HTTPS/systemd, gerçek SMTP ve SPF/DKIM, zamanlayıcı, 3 GB yük ölçümü, yedek geri yükleme ve geri dönüş provası tamamlanmadı. V1 canlı site korunuyor; çevrimiçi randevu bayrağı kapalı. |
+| Stok kodu ve karekod | Planlandı | Fiziksel parça kodu, kod üretimi, etiket, tarama ve teslim akışı aşağıda tanımlı; kullanıcının isteği gereği geliştirmeye başlanmadı. V1 eşitliği ve temel yayın kabulünden sonra ele alınacak. |
+
+**Sıradaki sıra:** (1) Yerel SQL'de kalan rol/rota ve işlem matrisi ile mobil/erişilebilirlik hatalarını kapat. (2) Güncel canlı V1 yedeğinden ayrı kabul veritabanına tam aktarım yapıp sayı, bakiye, zaman ve dosya SHA-256 farklarını raporla. (3) VDS, SMTP, zamanlayıcı, yedek geri yükleme ve geri dönüş kabulünü tamamla. (4) Yayın kararından sonra V2'ye özgü genişletmelere geç.
+
 ## Hedef ve sıralama kararı
 
 1. V2, V1'in bugün çalışan davranışlarıyla **işlevsel eşitliğe** ulaşır. V1 [ROADMAP.md](../ROADMAP.md) içindeki işaretler V2 için tamamlanma kanıtı değildir.
