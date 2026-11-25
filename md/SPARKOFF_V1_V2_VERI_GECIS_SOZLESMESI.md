@@ -100,6 +100,8 @@
 
 **Etkin rol kabulü:** Kaynak rol-izin bağlarından eşleme JSON'u kullanılarak etkin V2 izinleri ve sekmeler yeniden türetilir; hedefte fazladan/eksik izin veya sekme reddedilir. İki yerel migration DB'de 74/74 etkin izin ve sekme eşleşti. Bozuk sekme reddedilip geri yüklendi; ardından 960/960 toplam tekrar doğrulandı.
 
+**Envanter medya alan kabulü:** Kaynak/hedef dosya özeti yanında başlık, alternatif metin, sıralama, kapak ve iki UTC zaman alanı karşılaştırılır. İki migration DB'de yerel tek medyanın 6/6 alanı eşleşti; bozuk başlık reddedilip geri alındı ve 960/960 toplam yeniden doğrulandı.
+
 - Her tablo için kaynak sayısı, taşınan sayısı, kasıtlı dışarıda bırakılan sayısı ve hata sayısı yazılır. **Kaynak = taşınan + belgeli dışarıda bırakılan** eşitliği, tüm foreign key bağları, benzersiz anahtarlar ve medya hash'leri sağlanır.
 - Stok `quantity` toplamı, malzeme bazında son `balance_after`, hareket sırası/türü, teslim miktarı/durumu ve anonimleştirme durumu karşılaştırılır. Kayıt zamanları UTC dönüşümünden sonra beklenen ana eşit olmalıdır.
 - Hedefi sıfırlayıp aynı sabit kaynaktan ikinci aktarım aynı sayıları ve kimlik eşlemesini vermelidir. Hata olursa hedef kabul verisi temizlenir; V1'e geri yazılmaz.

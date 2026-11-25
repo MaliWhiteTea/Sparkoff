@@ -151,8 +151,8 @@ try {
     if (!target || row.movement_type !== target.movement_type || row.reason !== target.reason || sourceUtc(row.created_at) !== target.created_at || sourceUtc(row.updated_at) !== target.updated_at) throw new Error('V1/V2 stok hareketi geçmiş alanı farklı');
   }
   const movementHistoryChecks = sourceMovementHistory.length * 4;
-  const sourceMedia = source.prepare('SELECT id, file_path, external_url, type FROM inventory_media ORDER BY id').all();
-  const [targetMediaRows] = await db.query('SELECT legacy_media_id, material_id, path, external_url, type FROM material_media WHERE legacy_media_id IS NOT NULL');
+  const sourceMedia = source.prepare('SELECT id, file_path, external_url, type, title, alt_text, sort_order, is_cover, created_at, updated_at FROM inventory_media ORDER BY id').all();
+  const [targetMediaRows] = await db.query('SELECT legacy_media_id, material_id, path, external_url, type, title, alt_text, sort_order, is_cover, created_at, updated_at FROM material_media WHERE legacy_media_id IS NOT NULL');
   const mediaMap = new Map(targetMediaRows.map(row => [Number(row.legacy_media_id), row]));
   const mediaFiles = sourceMedia.filter(row => row.file_path);
   if (mediaFiles.length && (!sourcePublicPath || !process.env.PUBLIC_UPLOAD_DIR)) throw new Error('Medya doğrulaması için kaynak ve hedef dosya kökü gerekli');
@@ -162,6 +162,10 @@ try {
   for (const row of sourceMedia) {
     const target = mediaMap.get(Number(row.id));
     if (!target || row.type !== target.type || row.external_url !== target.external_url || Boolean(row.file_path) !== Boolean(target.path)) throw new Error('V1/V2 envanter medya meta verisi farklı');
+    for (const field of ['title', 'alt_text', 'sort_order', 'is_cover', 'created_at', 'updated_at']) {
+      const expected = field === 'created_at' || field === 'updated_at' ? sourceUtc(row[field]) : row[field];
+      if (expected !== target[field]) throw new Error(`V1/V2 envanter medya alanı farklı: ${field}`);
+    }
     if (!row.file_path) continue;
     if (!/^inventory-media\/\d+\/[^/]+\.(jpg|jpeg|png|webp|mp4|webm)$/i.test(row.file_path)) throw new Error('V1 medya yolu geçersiz');
     const materialId = targetIds.get('inventory_items').get(Number(row.file_path.split('/')[1]));
@@ -172,6 +176,7 @@ try {
     if (createHash('sha256').update(await readFile(sourceFile)).digest('hex') !== createHash('sha256').update(await readFile(targetFile)).digest('hex')) throw new Error('V1/V2 medya dosya özeti farklı');
   }
   const inventoryMediaFiles = mediaFiles.length;
+  const inventoryMediaFieldChecks = sourceMedia.length * 6;
   const sourceFeedbackImages = source.prepare('SELECT id, type, message, status, admin_note, handled_by, handled_at, created_at, updated_at, image_path, image_original_name, image_size, image_mime_type FROM feedback_reports ORDER BY id').all();
   const [targetFeedbackImages] = await db.query('SELECT id, legacy_feedback_id, kind, message, status, admin_note, handled_by, handled_at, created_at, updated_at, image_path, image_original_name, image_size, image_mime_type FROM feedbacks WHERE legacy_feedback_id IS NOT NULL');
   const feedbackMap = new Map(targetFeedbackImages.map(row => [Number(row.legacy_feedback_id), row]));
@@ -320,5 +325,5 @@ try {
   if (Number(audit[0].missing_actors || 0)) throw new Error('V1 etkinlik kullanıcı bağı eksik');
   const sourceHash = createHash('sha256').update(await readFile(resolve(sourcePath))).digest('hex');
   const totals = Object.entries(report).filter(([table]) => !['permissions', 'permission_role', 'inventoryLegacyImages'].includes(table)).reduce((result, [, row]) => ({ source: result.source + row.source, migrated: result.migrated + row.migrated, excluded: result.excluded + row.excluded }), { source: 0, migrated: 0, excluded: 0 });
-  process.stdout.write(`${JSON.stringify({ sourceHash, totals, tables: report, roleFieldChecks, userFieldChecks, effectivePermissionChecks, lookupFieldChecks, inventoryAmountChecks, materialFieldChecks, inventoryRelationChecks, movementSourceChecks, movementHistoryChecks, inventoryMediaFiles, feedbackImageFiles, feedbackFieldChecks, loanFieldChecks, printerFieldChecks, auditFieldChecks, missingActivitySubjects: Number(audit[0].missing_subjects || 0) })}\n`);
+  process.stdout.write(`${JSON.stringify({ sourceHash, totals, tables: report, roleFieldChecks, userFieldChecks, effectivePermissionChecks, lookupFieldChecks, inventoryAmountChecks, materialFieldChecks, inventoryRelationChecks, movementSourceChecks, movementHistoryChecks, inventoryMediaFiles, inventoryMediaFieldChecks, feedbackImageFiles, feedbackFieldChecks, loanFieldChecks, printerFieldChecks, auditFieldChecks, missingActivitySubjects: Number(audit[0].missing_subjects || 0) })}\n`);
 } finally { source.close(); await db.end(); }
