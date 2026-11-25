@@ -254,23 +254,28 @@ try {
   }
   report.permissions = { source: permissions.length, migratedMetadata: permissions.length, excluded: 0 };
   report.permission_role = { source: permissionLinks.length, migratedMetadata: permissionLinks.length, excluded: 0 };
-  const sourceRoles = source.prepare('SELECT id, description, created_at, updated_at FROM roles').all();
-  const [targetRoles] = await db.query('SELECT legacy_role_id, description, created_at, updated_at FROM custom_roles WHERE legacy_role_id IS NOT NULL');
+  const sourceRoles = source.prepare('SELECT id, name, slug, description, is_system, is_protected, created_at, updated_at FROM roles').all();
+  const [targetRoles] = await db.query('SELECT legacy_role_id, name, legacy_slug, description, is_system, is_protected, created_at, updated_at FROM custom_roles WHERE legacy_role_id IS NOT NULL');
   const targetRoleMap = new Map(targetRoles.map(role => [Number(role.legacy_role_id), role]));
   function utc(value) { return new Date(value.replace(' ', 'T') + '+03:00').toISOString().slice(0, 19).replace('T', ' '); }
   for (const role of sourceRoles) {
     const target = targetRoleMap.get(role.id);
-    if (!target || role.description !== target.description || utc(role.created_at) !== target.created_at || utc(role.updated_at) !== target.updated_at) throw new Error('V1/V2 rol açıklaması veya zamanı farklı');
+    if (!target || role.name !== target.name || role.slug !== target.legacy_slug || role.description !== target.description || Number(role.is_system) !== Number(target.is_system) || Number(role.is_protected) !== Number(target.is_protected) || utc(role.created_at) !== target.created_at || utc(role.updated_at) !== target.updated_at) throw new Error('V1/V2 rol kimliği, bayrağı veya zamanı farklı');
   }
-  const sourceUsers = source.prepare('SELECT id, role, email_verified_at, interface_preferences, table_preferences, saved_filters, created_at, updated_at FROM users').all();
-  const [targetUsers] = await db.query('SELECT legacy_user_id, legacy_role_label, email_verified_at, preferences, created_at, updated_at FROM users WHERE legacy_user_id IS NOT NULL');
+  const roleFieldChecks = sourceRoles.length * 7;
+  const sourceUsers = source.prepare('SELECT id, name, email, password, role, is_active, email_verified_at, interface_preferences, table_preferences, saved_filters, created_at, updated_at FROM users').all();
+  const [targetUsers] = await db.query('SELECT legacy_user_id, name, email, password_hash, global_role, is_active, legacy_role_label, email_verified_at, preferences, created_at, updated_at FROM users WHERE legacy_user_id IS NOT NULL');
   const targetUserMap = new Map(targetUsers.map(user => [Number(user.legacy_user_id), user]));
+  const systemRoleIds = new Set(sourceRoles.filter(role => role.is_system).map(role => role.id));
+  const sourceRoleLinks = source.prepare('SELECT user_id, role_id FROM role_user').all();
+  const systemUsers = new Set(sourceRoleLinks.filter(link => systemRoleIds.has(link.role_id)).map(link => link.user_id));
   for (const user of sourceUsers) {
     const target = targetUserMap.get(user.id);
     const parse = value => value == null ? null : JSON.parse(value);
     const expectedPreferences = { v1: { interfacePreferences: parse(user.interface_preferences), tablePreferences: parse(user.table_preferences), savedFilters: parse(user.saved_filters) } };
-    if (!target || target.legacy_role_label !== user.role || target.email_verified_at !== (user.email_verified_at == null ? null : utc(user.email_verified_at)) || target.created_at !== utc(user.created_at) || target.updated_at !== utc(user.updated_at) || JSON.stringify(target.preferences) !== JSON.stringify(expectedPreferences)) throw new Error('V1/V2 kullanıcı eski etiketi, tercihi veya zamanı farklı');
+    if (!target || target.name !== user.name || target.email !== user.email.trim().toLowerCase() || target.password_hash !== user.password || target.global_role !== (systemUsers.has(user.id) ? 'super_admin' : 'member') || Number(target.is_active) !== Number(user.is_active) || target.legacy_role_label !== user.role || target.email_verified_at !== (user.email_verified_at == null ? null : utc(user.email_verified_at)) || target.created_at !== utc(user.created_at) || target.updated_at !== utc(user.updated_at) || JSON.stringify(target.preferences) !== JSON.stringify(expectedPreferences)) throw new Error('V1/V2 kullanıcı hesap alanı, tercihi veya zamanı farklı');
   }
+  const userFieldChecks = sourceUsers.length * 10;
   const auditSubjects = new Map([
     ['App/Models/InventoryCategory', ['category', 'inventory_categories']],
     ['App/Models/InventoryItem', ['material', 'inventory_items']],
@@ -299,5 +304,5 @@ try {
   if (Number(audit[0].missing_actors || 0)) throw new Error('V1 etkinlik kullanıcı bağı eksik');
   const sourceHash = createHash('sha256').update(await readFile(resolve(sourcePath))).digest('hex');
   const totals = Object.entries(report).filter(([table]) => !['permissions', 'permission_role', 'inventoryLegacyImages'].includes(table)).reduce((result, [, row]) => ({ source: result.source + row.source, migrated: result.migrated + row.migrated, excluded: result.excluded + row.excluded }), { source: 0, migrated: 0, excluded: 0 });
-  process.stdout.write(`${JSON.stringify({ sourceHash, totals, tables: report, lookupFieldChecks, inventoryAmountChecks, materialFieldChecks, inventoryRelationChecks, movementSourceChecks, movementHistoryChecks, inventoryMediaFiles, feedbackImageFiles, feedbackFieldChecks, loanFieldChecks, printerFieldChecks, auditFieldChecks, missingActivitySubjects: Number(audit[0].missing_subjects || 0) })}\n`);
+  process.stdout.write(`${JSON.stringify({ sourceHash, totals, tables: report, roleFieldChecks, userFieldChecks, lookupFieldChecks, inventoryAmountChecks, materialFieldChecks, inventoryRelationChecks, movementSourceChecks, movementHistoryChecks, inventoryMediaFiles, feedbackImageFiles, feedbackFieldChecks, loanFieldChecks, printerFieldChecks, auditFieldChecks, missingActivitySubjects: Number(audit[0].missing_subjects || 0) })}\n`);
 } finally { source.close(); await db.end(); }

@@ -96,6 +96,8 @@
 
 **Kategori/konum alan kabulü:** Bağımsız doğrulayıcı kaynak kimliği dışında ad, slug/kod, açıklama, sıralama, görünürlük, etkinlik ve UTC zamanını karşılaştırır. İki yerel migration DB'de 2 kategorinin 14/14 alanı eşleşti; yerel V1 kaynağında konum yok. Geçici açıklama bozulması reddedildi ve geri alındı. Konum alanları dolu canlı yedekle ayrıca kabul edilecek.
 
+**Hesap kimliği kabulü:** Bağımsız doğrulayıcı V1 rol adını, slug değerini, sistem/koruma bayraklarını ve zamanları; kullanıcı adını, normalize e-postasını, bcrypt parola özetini, etkinlik durumunu, sistem rolünden türeyen küresel rolü, eski rol etiketini, tercihleri ve zamanları karşılaştırır. İki migration DB'de rol 14/14, kullanıcı 10/10 alan eşleşti. Tekrar aktarım da mevcut kullanıcı parola özeti farklıysa reddeder. Geçici özet bozulması iki yoldan reddedildi, geri yüklendi ve 960/960 toplam yeniden doğrulandı.
+
 - Her tablo için kaynak sayısı, taşınan sayısı, kasıtlı dışarıda bırakılan sayısı ve hata sayısı yazılır. **Kaynak = taşınan + belgeli dışarıda bırakılan** eşitliği, tüm foreign key bağları, benzersiz anahtarlar ve medya hash'leri sağlanır.
 - Stok `quantity` toplamı, malzeme bazında son `balance_after`, hareket sırası/türü, teslim miktarı/durumu ve anonimleştirme durumu karşılaştırılır. Kayıt zamanları UTC dönüşümünden sonra beklenen ana eşit olmalıdır.
 - Hedefi sıfırlayıp aynı sabit kaynaktan ikinci aktarım aynı sayıları ve kimlik eşlemesini vermelidir. Hata olursa hedef kabul verisi temizlenir; V1'e geri yazılmaz.

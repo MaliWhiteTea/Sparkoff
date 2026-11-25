@@ -67,11 +67,11 @@ try {
     });
     const email = user.email.trim().toLowerCase();
     const fields = { legacy_role_label: user.role, email_verified_at: date(user.email_verified_at), preferences: sourcePreferences(user), created_at: date(user.created_at, true), updated_at: date(user.updated_at, true) };
-    const [matches] = await connection.execute('SELECT id, name, email, global_role, is_active, legacy_user_id, legacy_role_label, email_verified_at, preferences, created_at, updated_at FROM users WHERE legacy_user_id=? OR email=? FOR UPDATE', [user.id, email]);
+    const [matches] = await connection.execute('SELECT id, name, email, password_hash, global_role, is_active, legacy_user_id, legacy_role_label, email_verified_at, preferences, created_at, updated_at FROM users WHERE legacy_user_id=? OR email=? FOR UPDATE', [user.id, email]);
     if (matches.length > 1) throw new Error('V1 kullanıcı kimliği ve e-posta iki V2 kaydıyla çakışıyor');
     if (matches.length) {
       const target = matches[0];
-      if (Number(target.legacy_user_id) !== user.id || target.name !== user.name || target.email.toLowerCase() !== email || target.global_role !== (system ? 'super_admin' : 'member') || Boolean(target.is_active) !== Boolean(user.is_active)) throw new Error('Önceden taşınan V1 kullanıcısı değişmiş; elle inceleme gerekli');
+      if (Number(target.legacy_user_id) !== user.id || target.name !== user.name || target.email.toLowerCase() !== email || target.password_hash !== user.password || target.global_role !== (system ? 'super_admin' : 'member') || Boolean(target.is_active) !== Boolean(user.is_active)) throw new Error('Önceden taşınan V1 kullanıcısı değişmiş; elle inceleme gerekli');
       const changed = target.legacy_role_label !== fields.legacy_role_label || target.email_verified_at !== fields.email_verified_at || JSON.stringify(target.preferences) !== fields.preferences || target.created_at !== fields.created_at || target.updated_at !== fields.updated_at;
       if (changed) await connection.execute('UPDATE users SET legacy_role_label=?, email_verified_at=?, preferences=?, created_at=?, updated_at=? WHERE id=?', [fields.legacy_role_label, fields.email_verified_at, fields.preferences, fields.created_at, fields.updated_at, target.id]);
       const [assigned] = await connection.execute('SELECT role_id FROM user_custom_roles WHERE user_id=? ORDER BY role_id', [target.id]);

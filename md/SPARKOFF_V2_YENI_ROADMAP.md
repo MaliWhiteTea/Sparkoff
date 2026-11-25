@@ -302,6 +302,8 @@ Veri geçişinin alan, tarih, stok, dosya ve yetki kuralları: [V1→V2 veri ge�
 
 - Kategori ve konumların ad, kod/slug, açıklama, sıralama, görünürlük, etkinlik ve UTC tarih alanları da kaynakla bağımsız karşılaştırılıyor. Yerel kaynakta 2 kategori, 0 konum var; iki migration DB'de 14/14 kategori alanı eşleşti. Geçici bozuk kategori açıklaması reddedildi ve geri alındı. Konum alanlarının dolu kaynakla kabulü açık.
 
+- Rol adı/slug/bayrak/açıklama/tarih ve kullanıcı adı/e-posta/bcrypt özeti/etkinlik/rol etiketi/tercih/tarih alanları iki yerel migration DB'de bağımsız doğrulandı: rol 14/14, kullanıcı 10/10. Parola özeti geçici bozulunca hem doğrulayıcı hem tekrar aktarım reddetti; kayıt geri yüklenince aktarım 0 yeni/1 mevcut ve toplam 960/960 geçti. Canlı hesap sayısı ve gerçek giriş kabulü açık.
+
 ### 11 Kasım 2026 — kişisel tercihler ve randevu takibi
 
 - Profil, V1'den taşınan tema/ölçek/yoğunluk/yan menü ayarlarını okur; kullanıcı yeni etkin ayarı kaydedebilir veya varsayılana dönebilir. V1 kaynak JSON kopyası denetim için değişmeden kalır. Sistem teması işletim sistemi tercihini izler; açık tema ve yoğunluk/ölçek görsel kuralları eklendi. Yerel SQL kabulünde geçersiz değer 400, kayıt/okuma/sıfırlama ve V1 kopyasının korunması geçti. V1 kayıtlı filtreleri ve tablo alanı tercihleri ilgili V2 yönetim listelerinde uygulanıp yerel SQL kabulünden geçti; gerçek tarayıcı etkileşim kabulü açık.
