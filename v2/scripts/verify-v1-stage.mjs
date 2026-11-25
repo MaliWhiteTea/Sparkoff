@@ -152,7 +152,7 @@ try {
   }
   const movementHistoryChecks = sourceMovementHistory.length * 4;
   const sourceMedia = source.prepare('SELECT id, file_path, external_url, type, title, alt_text, sort_order, is_cover, created_at, updated_at FROM inventory_media ORDER BY id').all();
-  const [targetMediaRows] = await db.query('SELECT legacy_media_id, material_id, path, external_url, type, title, alt_text, sort_order, is_cover, created_at, updated_at FROM material_media WHERE legacy_media_id IS NOT NULL');
+  const [targetMediaRows] = await db.query('SELECT legacy_media_id, material_id, path, external_url, type, mime, title, alt_text, sort_order, is_cover, created_at, updated_at FROM material_media WHERE legacy_media_id IS NOT NULL');
   const mediaMap = new Map(targetMediaRows.map(row => [Number(row.legacy_media_id), row]));
   const mediaFiles = sourceMedia.filter(row => row.file_path);
   if (mediaFiles.length && (!sourcePublicPath || !process.env.PUBLIC_UPLOAD_DIR)) throw new Error('Medya doğrulaması için kaynak ve hedef dosya kökü gerekli');
@@ -166,14 +166,24 @@ try {
       const expected = field === 'created_at' || field === 'updated_at' ? sourceUtc(row[field]) : row[field];
       if (expected !== target[field]) throw new Error(`V1/V2 envanter medya alanı farklı: ${field}`);
     }
-    if (!row.file_path) continue;
+    if (!row.file_path) {
+      if (target.mime !== null) throw new Error('V1/V2 bağlantı medyası MIME alanı farklı');
+      continue;
+    }
     if (!/^inventory-media\/\d+\/[^/]+\.(jpg|jpeg|png|webp|mp4|webm)$/i.test(row.file_path)) throw new Error('V1 medya yolu geçersiz');
     const materialId = targetIds.get('inventory_items').get(Number(row.file_path.split('/')[1]));
     if (!materialId || materialId !== Number(target.material_id) || !new RegExp(`^inventory-media/${materialId}/[a-f0-9]{32}\\.(jpg|png|webp|mp4|webm)$`).test(target.path)) throw new Error('V2 medya yolu geçersiz');
     const sourceFile = await realpath(resolve(mediaSourceRoot, row.file_path));
     const targetFile = await realpath(resolve(mediaTargetRoot, target.path));
     if (!sourceFile.startsWith(mediaSourceRoot + sep) || !targetFile.startsWith(mediaTargetRoot + sep)) throw new Error('V1/V2 medya dosyası kök dışına çıkıyor');
-    if (createHash('sha256').update(await readFile(sourceFile)).digest('hex') !== createHash('sha256').update(await readFile(targetFile)).digest('hex')) throw new Error('V1/V2 medya dosya özeti farklı');
+    const sourceBytes = await readFile(sourceFile), targetBytes = await readFile(targetFile);
+    const mime = sourceBytes.length >= 3 && sourceBytes[0] === 255 && sourceBytes[1] === 216 && sourceBytes[2] === 255 ? 'image/jpeg'
+      : sourceBytes.length >= 8 && [137, 80, 78, 71, 13, 10, 26, 10].every((n, i) => sourceBytes[i] === n) ? 'image/png'
+      : sourceBytes.length >= 12 && sourceBytes.toString('ascii', 0, 4) === 'RIFF' && sourceBytes.toString('ascii', 8, 12) === 'WEBP' ? 'image/webp'
+      : sourceBytes.length >= 16 && sourceBytes.toString('ascii', 4, 8) === 'ftyp' ? 'video/mp4'
+      : sourceBytes.length >= 4 && sourceBytes[0] === 0x1a && sourceBytes[1] === 0x45 && sourceBytes[2] === 0xdf && sourceBytes[3] === 0xa3 ? 'video/webm' : null;
+    if (!mime || mime !== target.mime || row.type !== (mime.startsWith('image/') ? 'image' : 'video')) throw new Error('V1/V2 medya gerçek türü veya MIME alanı farklı');
+    if (createHash('sha256').update(sourceBytes).digest('hex') !== createHash('sha256').update(targetBytes).digest('hex')) throw new Error('V1/V2 medya dosya özeti farklı');
   }
   const inventoryMediaFiles = mediaFiles.length;
   const inventoryMediaFieldChecks = sourceMedia.length * 6;
