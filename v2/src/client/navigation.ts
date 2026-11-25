@@ -11,13 +11,20 @@ export function canOpenAdminInventory(me: NavigationAccess): boolean {
   return me.tabs.includes('inventory') && me.permissions.includes('inventory_view');
 }
 
+export function canOpenAdminMembers(me: NavigationAccess): boolean {
+  return me.tabs.includes('members') && (
+    ['users_view', 'roles_view', 'roles_create', 'units_manage'].some(permission => me.permissions.includes(permission as Permission)) ||
+    me.permissions.includes('users_create') && me.permissions.includes('roles_assign')
+  );
+}
+
 export function canOpenAdminPrinters(me: NavigationAccess): boolean {
   return ['printers_view', 'printers_create', 'printers_manage_schedule', 'printers_manage_hours', 'printers_manage_filaments', 'appointments_view']
     .some(permission => me.permissions.includes(permission as Permission));
 }
 
 export function canOpenAdmin(me: NavigationAccess): boolean {
-  return me.user.role === 'super_admin' || me.tabs.includes('board') || me.tabs.includes('members') ||
+  return me.user.role === 'super_admin' || me.tabs.includes('board') || canOpenAdminMembers(me) ||
     canOpenAdminInventory(me) || canOpenAdminAnnouncements(me) || canOpenAdminPrinters(me) ||
     ['feedback_view', 'workshop_settings_update', 'audit_logs_view', 'privacy_settings_update', 'system_settings_update']
       .some(permission => me.permissions.includes(permission as Permission));
@@ -25,7 +32,7 @@ export function canOpenAdmin(me: NavigationAccess): boolean {
 
 export function firstAdminRoute(me: NavigationAccess): string {
   if (me.user.role === 'super_admin') return '/admin/overview';
-  if (me.tabs.includes('members')) return '/admin/members';
+  if (canOpenAdminMembers(me)) return '/admin/members';
   if (canOpenAdminAnnouncements(me)) return '/admin/announce';
   if (me.permissions.includes('feedback_view')) return '/admin/feedback';
   if (me.permissions.includes('workshop_settings_update')) return '/admin/workshop';
