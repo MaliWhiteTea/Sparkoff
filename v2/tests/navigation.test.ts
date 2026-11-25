@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import { strict as assert } from 'node:assert';
 import type { Permission, Tab } from '../src/shared/access';
-import { canOpenAdmin, canOpenAdminAnnouncements, canOpenAdminInventory, canOpenAdminMembers, canOpenAdminPrinters, firstAdminRoute } from '../src/client/navigation';
+import { canOpenAdmin, canOpenAdminAnnouncements, canOpenAdminInventory, canOpenAdminMembers, canOpenAdminPrinters, firstAdminRoute, firstLoginRoute } from '../src/client/navigation';
 
 function access(tabs: Tab[], permissions: Permission[]) {
   return { user: { role: 'member' }, tabs, permissions };
@@ -37,6 +37,13 @@ test('yalnız yazıcı yetkisi olan hesap yönetim yazıcı ekranına ulaşır',
   assert.equal(canOpenAdminPrinters(operator), true);
   assert.equal(canOpenAdmin(operator), true);
   assert.equal(firstAdminRoute(operator), '/admin/printers');
+});
+
+test('yalnız yönetim erişimi olan hesap girişte ilgili ekrana gider', () => {
+  assert.equal(firstLoginRoute(access([], ['printers_create'])), '/admin/printers');
+  assert.equal(firstLoginRoute(access([], ['feedback_view'])), '/admin/feedback');
+  assert.equal(firstLoginRoute(access(['home'], ['printers_create'])), '/app/home');
+  assert.equal(firstLoginRoute(access([], [])), '/app/home');
 });
 
 test('üye sekmesi tek başına yönetim üyeler ekranını açmaz', () => {

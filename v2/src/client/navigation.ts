@@ -44,3 +44,8 @@ export function firstAdminRoute(me: NavigationAccess): string {
   if (canOpenAdminInventory(me)) return '/admin/inventory';
   return '/admin/overview';
 }
+
+export function firstLoginRoute(me: NavigationAccess): string {
+  const hasMemberTab = ['home', 'tasks', 'chat', 'announcements', 'inventory'].some(tab => me.tabs.includes(tab as Tab));
+  return !hasMemberTab && canOpenAdmin(me) ? firstAdminRoute(me) : '/app/home';
+}

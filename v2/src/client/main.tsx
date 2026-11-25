@@ -8,7 +8,7 @@ import { GraphyBars } from './ui/Graphy';
 import type { Permission, Tab } from '../shared/schema';
 import { defaultInterfacePreferences, interfacePreferences, type InterfacePreferences } from './preferences';
 import { PublicMaterials } from './public-materials';
-import { canOpenAdmin, canOpenAdminAnnouncements, canOpenAdminInventory, canOpenAdminMembers, canOpenAdminPrinters, firstAdminRoute } from './navigation';
+import { canOpenAdmin, canOpenAdminAnnouncements, canOpenAdminInventory, canOpenAdminMembers, canOpenAdminPrinters, firstAdminRoute, firstLoginRoute } from './navigation';
 import './style.css';
 
 type Me = { user: { id: number; name: string; email: string; role: string; preferences: unknown }; tabs: Tab[]; permissions: Permission[]; scopes: { manageIds: number[]; accessIds: number[]; viewIds: number[] } };
@@ -416,7 +416,7 @@ function App() {
     if (entry && !me.tabs.includes(entry[2]) && !(path === '/admin/system' && (me.permissions.includes('audit_logs_view') || me.permissions.includes('privacy_settings_update'))) && !(path === '/admin/feedback' && me.permissions.includes('feedback_view')) && !(path === '/admin/workshop' && me.permissions.includes('workshop_settings_update')) && !(path === '/admin/privacy' && me.permissions.includes('privacy_settings_update')) && !(path === '/admin/booking-settings' && me.permissions.includes('system_settings_update')) && !(path === '/admin/printers' && canOpenAdminPrinters(me)) && !(path === '/admin/announce' && canOpenAdminAnnouncements(me))) go(memberNav.find(([, , tab]) => me.tabs.includes(tab))?.[0] || '/app/profile');
   }, [path, me]);
   const logout = async () => { try { await api('/org/logout', { method: 'POST' }); } catch (error) { if (!(error instanceof ApiError && error.status === 401)) throw error; } setMe(null); setCsrf(''); go('/giris'); };
-  const loggedIn = (data: Me) => { setMe(data); go('/app/home'); };
+  const loggedIn = (data: Me) => { setMe(data); go(firstLoginRoute(data)); };
   if (loading) return <div className="boot">Sparkoff yükleniyor…</div>;
   if (path === '/giris') return <Login onLogin={loggedIn}/>;
   if (path === '/aktivasyon') return <Activation onLogin={loggedIn}/>;
