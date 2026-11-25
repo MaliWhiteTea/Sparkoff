@@ -55,8 +55,8 @@ export function Screen({ title, subtitle, actions, children }: { title: string; 
 export function Card({ title, children, className = '' }: { title?: string; children: ReactNode; className?: string }) { return <section className={`card ${className}`}>{title && <h2>{title}</h2>}{children}</section>; }
 export function Empty({ children }: { children: ReactNode }) { return <p className="empty">{children}</p>; }
 export function Button({ children, onClick, type = 'button', variant = 'primary', disabled = false, form }: { children: ReactNode; onClick?: () => void; type?: 'button' | 'submit'; variant?: 'primary' | 'quiet'; disabled?: boolean; form?: string }) { return <button type={type} form={form} onClick={onClick} disabled={disabled} className={`button button-${variant}`}>{children}</button>; }
-export function Sheet({ open, onClose, title, children, footer }: { open: boolean; onClose: () => void; title: string; children: ReactNode; footer?: ReactNode }) {
-  const dialogRef = useRef<HTMLElement>(null);
+function useDialogFocus<T extends HTMLElement>(open: boolean, onClose: () => void) {
+  const dialogRef = useRef<T>(null);
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
   useEffect(() => {
@@ -78,10 +78,17 @@ export function Sheet({ open, onClose, title, children, footer }: { open: boolea
     window.addEventListener('keydown', key);
     return () => { window.removeEventListener('keydown', key); if (previous?.isConnected) previous.focus(); };
   }, [open]);
+  return dialogRef;
+}
+export function Sheet({ open, onClose, title, children, footer }: { open: boolean; onClose: () => void; title: string; children: ReactNode; footer?: ReactNode }) {
+  const dialogRef = useDialogFocus<HTMLElement>(open, onClose);
   if (!open) return null;
   return <div className="sheet-host" role="presentation"><button className="sheet-backdrop" aria-label="Pencereyi kapat" onClick={onClose}/><section ref={dialogRef} className="sheet" role="dialog" aria-modal="true" aria-label={title} tabIndex={-1}><header><h2>{title}</h2><button className="icon-button" onClick={onClose} aria-label="Kapat">×</button></header><div className="sheet-scroll">{children}</div>{footer && <footer>{footer}</footer>}</section></div>;
 }
-export function Modal({ open, onClose, title, children, action }: { open: boolean; onClose: () => void; title: string; children: ReactNode; action: ReactNode }) { return open ? <div className="modal-host"><div className="modal-backdrop" onClick={onClose}/><div className="modal" role="alertdialog" aria-modal="true" aria-label={title}><h2>{title}</h2>{children}<div className="row"><Button variant="quiet" onClick={onClose}>Vazgeç</Button>{action}</div></div></div> : null; }
+export function Modal({ open, onClose, title, children, action }: { open: boolean; onClose: () => void; title: string; children: ReactNode; action: ReactNode }) {
+  const dialogRef = useDialogFocus<HTMLDivElement>(open, onClose);
+  return open ? <div className="modal-host"><div className="modal-backdrop" onClick={onClose}/><div ref={dialogRef} className="modal" role="alertdialog" aria-modal="true" aria-label={title} tabIndex={-1}><h2>{title}</h2>{children}<div className="row"><Button variant="quiet" onClick={onClose}>Vazgeç</Button>{action}</div></div></div> : null;
+}
 export function MemberCard({ name, unit, role, email, action }: { name: string; unit: string; role: string; email?: string | null; action?: ReactNode }) {
   return <article className="member-card"><div className="avatar" aria-hidden="true">{name.charAt(0).toUpperCase()}</div><div className="member-info"><strong>{name}</strong><p className="muted">{unit}</p>{email && <small>{email}</small>}</div><div className="member-actions">{role && <Badge>{roleLabel(role)}</Badge>}{action}</div></article>;
 }
