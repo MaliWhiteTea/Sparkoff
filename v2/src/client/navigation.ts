@@ -3,7 +3,7 @@ import type { Permission, Tab } from '../shared/access';
 type NavigationAccess = { user: { role: string }; tabs: Tab[]; permissions: Permission[] };
 
 export function canOpenAdminAnnouncements(me: NavigationAccess): boolean {
-  return ['announcements_view', 'announcements_create', 'staff_announcements_view', 'staff_announcements_create']
+  return me.tabs.includes('announcements') && ['announcements_view', 'announcements_create', 'staff_announcements_view', 'staff_announcements_create']
     .some(permission => me.permissions.includes(permission as Permission));
 }
 

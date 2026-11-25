@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import { strict as assert } from 'node:assert';
 import type { Permission, Tab } from '../src/shared/access';
-import { canOpenAdmin, canOpenAdminInventory, canOpenAdminMembers, canOpenAdminPrinters, firstAdminRoute } from '../src/client/navigation';
+import { canOpenAdmin, canOpenAdminAnnouncements, canOpenAdminInventory, canOpenAdminMembers, canOpenAdminPrinters, firstAdminRoute } from '../src/client/navigation';
 
 function access(tabs: Tab[], permissions: Permission[]) {
   return { user: { role: 'member' }, tabs, permissions };
@@ -54,4 +54,14 @@ test('üye veya rol görüntüleme yetkisi ekranı açar', () => {
   assert.equal(canOpenAdminMembers(access(['members'], ['users_create'])), false);
   assert.equal(canOpenAdminMembers(access(['members'], ['users_create', 'roles_assign'])), true);
   assert.equal(canOpenAdminMembers(access([], ['users_view'])), false);
+});
+
+test('duyuru yönetimi için sunucu gibi sekme ve izin birlikte gerekir', () => {
+  const permissionOnly = access([], ['announcements_view']);
+  assert.equal(canOpenAdminAnnouncements(permissionOnly), false);
+  assert.equal(canOpenAdmin(permissionOnly), false);
+  const viewer = access(['announcements'], ['announcements_view']);
+  assert.equal(canOpenAdminAnnouncements(viewer), true);
+  assert.equal(firstAdminRoute(viewer), '/admin/announce');
+  assert.equal(canOpenAdminAnnouncements(access(['announcements'], [])), false);
 });
