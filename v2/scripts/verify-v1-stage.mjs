@@ -246,11 +246,27 @@ try {
   const permissions = source.prepare('SELECT id, key FROM permissions').all();
   const permissionKeys = new Map(permissions.map(row => [row.id, row.key]));
   const permissionLinks = source.prepare('SELECT role_id, permission_id FROM permission_role').all();
-  const [roleRows] = await db.query('SELECT legacy_role_id, legacy_permission_keys FROM custom_roles WHERE legacy_role_id IS NOT NULL');
+  const permissionMapping = JSON.parse(await readFile(new URL('./v1-role-permission-map.json', import.meta.url), 'utf8'));
+  const [roleRows] = await db.query('SELECT legacy_role_id, legacy_permission_keys, permissions, tabs FROM custom_roles WHERE legacy_role_id IS NOT NULL');
+  let effectivePermissionChecks = 0;
   for (const role of roleRows) {
     const expected = permissionLinks.filter(link => link.role_id === Number(role.legacy_role_id)).map(link => permissionKeys.get(link.permission_id)).sort();
     const actual = (typeof role.legacy_permission_keys === 'string' ? JSON.parse(role.legacy_permission_keys) : role.legacy_permission_keys).slice().sort();
     if (JSON.stringify(expected) !== JSON.stringify(actual)) throw new Error('V1/V2 rol kaynak izinleri farklı');
+    const mapped = [...new Set(expected.map(key => permissionMapping[key]).filter(Boolean))].sort();
+    const effective = typeof role.permissions === 'string' ? JSON.parse(role.permissions) : role.permissions;
+    if (!Array.isArray(effective) || effective.length !== mapped.length || JSON.stringify([...effective].sort()) !== JSON.stringify(mapped)) throw new Error('V1/V2 rol etkin izinleri farklı');
+    const tabs = new Set();
+    for (const key of mapped) {
+      if (/^(inventory_|loans_)/.test(key)) tabs.add('inventory');
+      if (/^(printers_|appointments_)/.test(key)) tabs.add('board');
+      if (/^(users_|roles_)/.test(key)) tabs.add('members');
+      if (/^(announcements_|staff_announcements_)/.test(key)) tabs.add('announcements');
+      if (/^(audit_logs_|privacy_settings_|workshop_settings_|system_settings_)/.test(key)) tabs.add('board');
+    }
+    const actualTabs = typeof role.tabs === 'string' ? JSON.parse(role.tabs) : role.tabs;
+    if (!Array.isArray(actualTabs) || actualTabs.length !== tabs.size || JSON.stringify([...actualTabs].sort()) !== JSON.stringify([...tabs].sort())) throw new Error('V1/V2 rol etkin sekmeleri farklı');
+    effectivePermissionChecks += mapped.length + tabs.size;
   }
   report.permissions = { source: permissions.length, migratedMetadata: permissions.length, excluded: 0 };
   report.permission_role = { source: permissionLinks.length, migratedMetadata: permissionLinks.length, excluded: 0 };
@@ -304,5 +320,5 @@ try {
   if (Number(audit[0].missing_actors || 0)) throw new Error('V1 etkinlik kullanıcı bağı eksik');
   const sourceHash = createHash('sha256').update(await readFile(resolve(sourcePath))).digest('hex');
   const totals = Object.entries(report).filter(([table]) => !['permissions', 'permission_role', 'inventoryLegacyImages'].includes(table)).reduce((result, [, row]) => ({ source: result.source + row.source, migrated: result.migrated + row.migrated, excluded: result.excluded + row.excluded }), { source: 0, migrated: 0, excluded: 0 });
-  process.stdout.write(`${JSON.stringify({ sourceHash, totals, tables: report, roleFieldChecks, userFieldChecks, lookupFieldChecks, inventoryAmountChecks, materialFieldChecks, inventoryRelationChecks, movementSourceChecks, movementHistoryChecks, inventoryMediaFiles, feedbackImageFiles, feedbackFieldChecks, loanFieldChecks, printerFieldChecks, auditFieldChecks, missingActivitySubjects: Number(audit[0].missing_subjects || 0) })}\n`);
+  process.stdout.write(`${JSON.stringify({ sourceHash, totals, tables: report, roleFieldChecks, userFieldChecks, effectivePermissionChecks, lookupFieldChecks, inventoryAmountChecks, materialFieldChecks, inventoryRelationChecks, movementSourceChecks, movementHistoryChecks, inventoryMediaFiles, feedbackImageFiles, feedbackFieldChecks, loanFieldChecks, printerFieldChecks, auditFieldChecks, missingActivitySubjects: Number(audit[0].missing_subjects || 0) })}\n`);
 } finally { source.close(); await db.end(); }

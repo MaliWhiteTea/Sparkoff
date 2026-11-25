@@ -98,6 +98,8 @@
 
 **Hesap kimliği kabulü:** Bağımsız doğrulayıcı V1 rol adını, slug değerini, sistem/koruma bayraklarını ve zamanları; kullanıcı adını, normalize e-postasını, bcrypt parola özetini, etkinlik durumunu, sistem rolünden türeyen küresel rolü, eski rol etiketini, tercihleri ve zamanları karşılaştırır. İki migration DB'de rol 14/14, kullanıcı 10/10 alan eşleşti. Tekrar aktarım da mevcut kullanıcı parola özeti farklıysa reddeder. Geçici özet bozulması iki yoldan reddedildi, geri yüklendi ve 960/960 toplam yeniden doğrulandı.
 
+**Etkin rol kabulü:** Kaynak rol-izin bağlarından eşleme JSON'u kullanılarak etkin V2 izinleri ve sekmeler yeniden türetilir; hedefte fazladan/eksik izin veya sekme reddedilir. İki yerel migration DB'de 74/74 etkin izin ve sekme eşleşti. Bozuk sekme reddedilip geri yüklendi; ardından 960/960 toplam tekrar doğrulandı.
+
 - Her tablo için kaynak sayısı, taşınan sayısı, kasıtlı dışarıda bırakılan sayısı ve hata sayısı yazılır. **Kaynak = taşınan + belgeli dışarıda bırakılan** eşitliği, tüm foreign key bağları, benzersiz anahtarlar ve medya hash'leri sağlanır.
 - Stok `quantity` toplamı, malzeme bazında son `balance_after`, hareket sırası/türü, teslim miktarı/durumu ve anonimleştirme durumu karşılaştırılır. Kayıt zamanları UTC dönüşümünden sonra beklenen ana eşit olmalıdır.
 - Hedefi sıfırlayıp aynı sabit kaynaktan ikinci aktarım aynı sayıları ve kimlik eşlemesini vermelidir. Hata olursa hedef kabul verisi temizlenir; V1'e geri yazılmaz.
